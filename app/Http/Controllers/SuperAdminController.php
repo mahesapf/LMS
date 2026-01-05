@@ -132,22 +132,65 @@ class SuperAdminController extends Controller
 
         DB::beginTransaction();
         try {
+            $imported = 0;
             foreach ($data as $row) {
+                if (empty(array_filter($row))) continue; // Skip empty rows
+                
                 $rowData = array_combine($header, $row);
+                
+                // Check if email already exists
+                if (User::where('email', $rowData['email'] ?? '')->exists()) {
+                    continue;
+                }
+                
+                // Map gender: Laki-laki -> L, Perempuan -> P
+                $gender = null;
+                if (isset($rowData['jenis_kelamin'])) {
+                    if (stripos($rowData['jenis_kelamin'], 'laki') !== false) {
+                        $gender = 'L';
+                    } elseif (stripos($rowData['jenis_kelamin'], 'perempuan') !== false) {
+                        $gender = 'P';
+                    }
+                }
+                
+                // Map PNS Status
+                $pnsStatus = null;
+                if (isset($rowData['pns_status'])) {
+                    if (stripos($rowData['pns_status'], 'pns') !== false && stripos($rowData['pns_status'], 'non') === false) {
+                        $pnsStatus = 'PNS';
+                    } else {
+                        $pnsStatus = 'Non PNS';
+                    }
+                }
                 
                 User::create([
                     'name' => $rowData['nama'] ?? '',
                     'degree' => $rowData['gelar'] ?? '',
                     'email' => $rowData['email'] ?? '',
+                    'npsn' => $rowData['npsn'] ?? null,
+                    'nip' => $rowData['nip'] ?? null,
+                    'nik' => $rowData['nik'] ?? null,
+                    'birth_place' => $rowData['tempat_lahir'] ?? null,
+                    'birth_date' => isset($rowData['tanggal_lahir']) && !empty($rowData['tanggal_lahir']) ? date('Y-m-d', strtotime($rowData['tanggal_lahir'])) : null,
+                    'gender' => $gender,
+                    'pns_status' => $pnsStatus,
+                    'rank' => $rowData['pangkat'] ?? null,
+                    'rank_group' => $rowData['golongan'] ?? null,
+                    'last_education' => $rowData['pendidikan_terakhir'] ?? null,
+                    'major' => $rowData['jurusan'] ?? null,
+                    'institution' => $rowData['instansi'] ?? null,
+                    'position' => $rowData['jabatan'] ?? null,
                     'phone' => $rowData['nomor_wa'] ?? '',
+                    'email_belajar' => $rowData['email_belajar'] ?? null,
                     'password' => Hash::make('password123'),
                     'role' => $request->role,
                     'status' => 'active',
                 ]);
+                $imported++;
             }
             
             DB::commit();
-            return redirect()->route('super-admin.users')->with('success', 'Import berhasil');
+            return redirect()->route('super-admin.users')->with('success', "Import berhasil: {$imported} pengguna ditambahkan");
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Import gagal: ' . $e->getMessage());

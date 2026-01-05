@@ -1,13 +1,12 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Kelas Saya')
+@section('title', 'Kelas & Nilai Saya')
 
 @section('sidebar')
 <nav class="nav flex-column">
     <a class="nav-link" href="{{ route('peserta.dashboard') }}">Dashboard</a>
     <a class="nav-link" href="{{ route('peserta.profile') }}">Profil</a>
-    <a class="nav-link active" href="{{ route('peserta.classes') }}">Kelas Saya</a>
-    <a class="nav-link" href="{{ route('peserta.grades') }}">Nilai Saya</a>
+    <a class="nav-link active" href="{{ route('peserta.classes') }}">Kelas & Nilai Saya</a>
     <a class="nav-link" href="{{ route('peserta.documents') }}">Dokumen</a>
 </nav>
 @endsection
@@ -15,7 +14,7 @@
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Kelas Saya</h1>
+        <h1>Kelas & Nilai Saya</h1>
     </div>
 
     @if(session('success'))
@@ -27,6 +26,10 @@
 
     <div class="row">
         @forelse($mappings as $mapping)
+        @php
+            $classGrades = $grades->get($mapping->class_id, collect());
+            $averageScore = $classGrades->count() > 0 ? $classGrades->avg('score') : null;
+        @endphp
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-success text-white">
@@ -43,6 +46,29 @@
                         {{ Str::limit($mapping->class->description, 100) }}
                     </p>
                     @endif
+
+                    <!-- Nilai Section -->
+                    <div class="mb-3">
+                        <strong>Nilai:</strong>
+                        @if($classGrades->count() > 0)
+                        <div class="mt-2">
+                            @foreach($classGrades as $grade)
+                            <span class="badge bg-primary me-1 mb-1">
+                                {{ $grade->assessment_type }}: {{ number_format($grade->score, 1) }}
+                            </span>
+                            @endforeach
+                            <div class="mt-2">
+                                <strong>Rata-rata: 
+                                    <span class="badge bg-info">{{ number_format($averageScore, 2) }}</span>
+                                </strong>
+                            </div>
+                        </div>
+                        @else
+                        <div class="text-muted">
+                            <small>Belum ada nilai</small>
+                        </div>
+                        @endif
+                    </div>
 
                     <p class="card-text">
                         <small class="text-muted">

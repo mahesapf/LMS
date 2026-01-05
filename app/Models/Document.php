@@ -13,12 +13,15 @@ class Document extends Model
     protected $fillable = [
         'user_id',
         'class_id',
+        'document_requirement_id',
         'type',
         'title',
         'file_path',
         'file_name',
+        'file_size',
         'description',
         'uploaded_date',
+        'uploaded_by',
     ];
 
     protected $casts = [
@@ -34,5 +37,15 @@ class Document extends Model
     public function class()
     {
         return $this->belongsTo(Classes::class, 'class_id');
+    }
+
+    public function requirement()
+    {
+        return $this->belongsTo(DocumentRequirement::class, 'document_requirement_id');
+    }
+
+    public function uploader()
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 }

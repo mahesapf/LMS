@@ -97,6 +97,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::post('/classes/{class}/participants', [AdminController::class, 'assignParticipant'])->name('classes.participants.assign');
     Route::post('/mappings/{mapping}/move', [AdminController::class, 'moveParticipant'])->name('mappings.move');
     Route::post('/mappings/{mapping}/remove', [AdminController::class, 'removeParticipant'])->name('mappings.remove');
+    
+    // Fasilitator Mapping
+    Route::get('/classes/{class}/fasilitators', [AdminController::class, 'fasilitatorMappings'])->name('classes.fasilitators');
+    Route::post('/classes/{class}/fasilitators', [AdminController::class, 'assignFasilitator'])->name('classes.fasilitators.assign');
+    Route::delete('/fasilitator-mappings/{mapping}', [AdminController::class, 'removeFasilitator'])->name('fasilitators.remove');
+    
+    // Document Requirements
+    Route::get('/classes/{class}/documents', [AdminController::class, 'classDocuments'])->name('classes.documents');
+    Route::post('/classes/{class}/documents', [AdminController::class, 'storeDocumentRequirement'])->name('classes.documents.store');
+    Route::put('/classes/{class}/documents/{requirement}', [AdminController::class, 'updateDocumentRequirement'])->name('classes.documents.update');
+    Route::delete('/classes/{class}/documents/{requirement}', [AdminController::class, 'destroyDocumentRequirement'])->name('classes.documents.destroy');
 });
 
 // Fasilitator Routes
@@ -121,8 +132,14 @@ Route::prefix('fasilitator')->name('fasilitator.')->middleware(['auth', 'role:fa
     Route::post('/documents', [FasilitatorController::class, 'storeDocument'])->name('documents.store');
     Route::delete('/documents/{document}', [FasilitatorController::class, 'deleteDocument'])->name('documents.delete');
     
-    // Participant Mapping
+    // Participant Mappings (Read Only)
+    Route::get('/mappings', [FasilitatorController::class, 'participantMappingsIndex'])->name('mappings.index');
+    
+    // Participant Mapping (Full Access)
     Route::get('/classes/{class}/participants', [FasilitatorController::class, 'participantMappings'])->name('classes.participants');
+    Route::post('/classes/{class}/participants', [FasilitatorController::class, 'assignParticipant'])->name('classes.participants.assign');
+    Route::post('/participant-mappings/{mapping}/move', [FasilitatorController::class, 'moveParticipant'])->name('mappings.move');
+    Route::post('/participant-mappings/{mapping}/remove', [FasilitatorController::class, 'removeParticipant'])->name('mappings.remove');
 });
 
 // Peserta Routes
@@ -137,15 +154,15 @@ Route::prefix('peserta')->name('peserta.')->middleware(['auth', 'role:peserta'])
     Route::get('/classes', [PesertaController::class, 'myClasses'])->name('classes');
     Route::get('/classes/{class}', [PesertaController::class, 'classDetail'])->name('classes.detail');
     
-    // Grades
-    Route::get('/grades', [PesertaController::class, 'myGrades'])->name('grades');
+    // Grades (redirect to classes)
+    Route::get('/grades', function() {
+        return redirect()->route('peserta.classes');
+    })->name('grades');
     
     // Documents
     Route::get('/documents', [PesertaController::class, 'documents'])->name('documents');
-    Route::get('/documents/upload', [PesertaController::class, 'uploadDocument'])->name('documents.upload');
-    Route::post('/documents', [PesertaController::class, 'storeDocument'])->name('documents.store');
-    Route::delete('/documents/{document}', [PesertaController::class, 'deleteDocument'])->name('documents.delete');
-    Route::get('/documents/{document}/download', [PesertaController::class, 'downloadDocument'])->name('documents.download');
+    Route::post('/documents/upload', [PesertaController::class, 'uploadDocument'])->name('documents.upload');
+    Route::delete('/documents/{document}', [PesertaController::class, 'destroyDocument'])->name('documents.destroy');
 });
 
 Auth::routes();

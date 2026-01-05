@@ -50,6 +50,11 @@ class Classes extends Model
         return $this->hasMany(Grade::class, 'class_id');
     }
 
+    public function documentRequirements()
+    {
+        return $this->hasMany(DocumentRequirement::class, 'class_id');
+    }
+
     // Helper methods
     public function fasilitators()
     {

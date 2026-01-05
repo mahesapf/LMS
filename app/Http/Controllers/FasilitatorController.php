@@ -7,6 +7,7 @@ use App\Models\FasilitatorMapping;
 use App\Models\ParticipantMapping;
 use App\Models\Grade;
 use App\Models\Document;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -45,12 +46,40 @@ class FasilitatorController extends Controller
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'degree' => 'nullable|string|max:50',
             'phone' => 'required|string|max:20',
+            'nip' => 'nullable|string|max:50',
+            'nik' => 'nullable|string|max:16',
+            'birth_place' => 'nullable|string|max:100',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|in:L,P',
+            'rank' => 'nullable|string|max:100',
+            'group' => 'nullable|string|max:50',
+            'last_education' => 'nullable|string|max:100',
+            'major' => 'nullable|string|max:100',
             'institution' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:255',
-            'address' => 'nullable|string',
+            'email_belajar' => 'nullable|email',
+            'photo' => 'nullable|image|max:2048',
+            'digital_signature' => 'nullable|image|max:1024',
         ]);
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($user->photo) {
+                Storage::disk('public')->delete($user->photo);
+            }
+            $validated['photo'] = $request->file('photo')->store('fasilitators/photos', 'public');
+        }
+
+        // Handle digital signature upload
+        if ($request->hasFile('digital_signature')) {
+            // Delete old signature if exists
+            if ($user->digital_signature) {
+                Storage::disk('public')->delete($user->digital_signature);
+            }
+            $validated['digital_signature'] = $request->file('digital_signature')->store('fasilitators/signatures', 'public');
+        }
 
         $user->update($validated);
 
@@ -198,6 +227,28 @@ class FasilitatorController extends Controller
     }
 
     // Participant Mapping
+    public function participantMappingsIndex()
+    {
+        $fasilitatorId = auth()->id();
+        
+        // Get classes that this fasilitator is assigned to
+        $classIds = FasilitatorMapping::where('fasilitator_id', $fasilitatorId)
+            ->where('status', 'in')
+            ->pluck('class_id');
+            
+        $classesWithMappings = Classes::with(['activity', 'participantMappings.participant'])
+            ->whereIn('id', $classIds)
+            ->get();
+            
+        $stats = [
+            'in' => ParticipantMapping::whereIn('class_id', $classIds)->where('status', 'in')->count(),
+            'move' => ParticipantMapping::whereIn('class_id', $classIds)->where('status', 'move')->count(),
+            'out' => ParticipantMapping::whereIn('class_id', $classIds)->where('status', 'out')->count(),
+        ];
+        
+        return view('fasilitator.mappings.index', compact('classesWithMappings', 'stats'));
+    }
+
     public function participantMappings(Classes $class)
     {
         // Check if fasilitator is assigned to this class
@@ -211,6 +262,92 @@ class FasilitatorController extends Controller
             ->latest()
             ->get();
             
-        return view('fasilitator.mappings.participants', compact('class', 'mappings'));
+        $availableParticipants = User::where('role', 'peserta')
+            ->where('status', 'active')
+            ->whereNotIn('id', $mappings->where('status', 'in')->pluck('participant_id'))
+            ->get();
+            
+        $availableClasses = Classes::whereHas('fasilitatorMappings', function($query) {
+                $query->where('fasilitator_id', auth()->id())
+                    ->where('status', 'in');
+            })
+            ->where('id', '!=', $class->id)
+            ->get();
+            
+        return view('fasilitator.mappings.participants', compact('class', 'mappings', 'availableParticipants', 'availableClasses'));
+    }
+
+    public function assignParticipant(Request $request, Classes $class)
+    {
+        // Check if fasilitator is assigned to this class
+        FasilitatorMapping::where('fasilitator_id', auth()->id())
+            ->where('class_id', $class->id)
+            ->where('status', 'in')
+            ->firstOrFail();
+            
+        $validated = $request->validate([
+            'participant_id' => 'required|exists:users,id',
+            'enrolled_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        ParticipantMapping::create([
+            'participant_id' => $validated['participant_id'],
+            'class_id' => $class->id,
+            'status' => 'in',
+            'enrolled_date' => $validated['enrolled_date'] ?? now(),
+            'notes' => $validated['notes'] ?? null,
+            'assigned_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Peserta berhasil ditambahkan ke kelas');
+    }
+
+    public function moveParticipant(Request $request, ParticipantMapping $mapping)
+    {
+        // Check if fasilitator is assigned to the current class
+        FasilitatorMapping::where('fasilitator_id', auth()->id())
+            ->where('class_id', $mapping->class_id)
+            ->where('status', 'in')
+            ->firstOrFail();
+            
+        $validated = $request->validate([
+            'new_class_id' => 'required|exists:classes,id|different:' . $mapping->class_id,
+            'notes' => 'nullable|string',
+        ]);
+
+        ParticipantMapping::create([
+            'participant_id' => $mapping->participant_id,
+            'class_id' => $validated['new_class_id'],
+            'status' => 'in',
+            'previous_class_id' => $mapping->class_id,
+            'enrolled_date' => now(),
+            'moved_date' => now(),
+            'notes' => $validated['notes'] ?? null,
+            'assigned_by' => auth()->id(),
+        ]);
+
+        $mapping->update([
+            'status' => 'move',
+            'moved_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Peserta berhasil dipindahkan');
+    }
+
+    public function removeParticipant(ParticipantMapping $mapping)
+    {
+        // Check if fasilitator is assigned to this class
+        FasilitatorMapping::where('fasilitator_id', auth()->id())
+            ->where('class_id', $mapping->class_id)
+            ->where('status', 'in')
+            ->firstOrFail();
+            
+        $mapping->update([
+            'status' => 'out',
+            'removed_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Peserta berhasil dihapus dari kelas');
     }
 }

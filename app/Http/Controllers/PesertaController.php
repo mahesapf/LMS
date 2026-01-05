@@ -39,12 +39,44 @@ class PesertaController extends Controller
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'degree' => 'nullable|string|max:50',
             'phone' => 'required|string|max:20',
+            'npsn' => 'nullable|string|max:50',
+            'nip' => 'nullable|string|max:50',
+            'nik' => 'nullable|string|max:16',
+            'birth_place' => 'nullable|string|max:100',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|in:L,P',
+            'pns_status' => 'nullable|in:PNS,Non PNS',
+            'rank' => 'nullable|string|max:100',
+            'group' => 'nullable|string|max:50',
+            'last_education' => 'nullable|string|max:100',
+            'major' => 'nullable|string|max:100',
             'institution' => 'nullable|string|max:255',
+            'position_type' => 'nullable|in:Guru,Kepala Sekolah,Lainnya',
             'position' => 'nullable|string|max:255',
+            'email_belajar' => 'nullable|email',
             'address' => 'nullable|string',
+            'photo' => 'nullable|image|max:2048',
+            'digital_signature' => 'nullable|image|max:1024',
         ]);
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($user->photo) {
+                Storage::disk('public')->delete($user->photo);
+            }
+            $validated['photo'] = $request->file('photo')->store('participants/photos', 'public');
+        }
+
+        // Handle digital signature upload
+        if ($request->hasFile('digital_signature')) {
+            // Delete old signature if exists
+            if ($user->digital_signature) {
+                Storage::disk('public')->delete($user->digital_signature);
+            }
+            $validated['digital_signature'] = $request->file('digital_signature')->store('participants/signatures', 'public');
+        }
 
         $user->update($validated);
 
@@ -62,7 +94,12 @@ class PesertaController extends Controller
             ->latest()
             ->paginate(20);
             
-        return view('peserta.classes.index', compact('mappings'));
+        // Get grades for all classes
+        $grades = Grade::where('participant_id', $participantId)
+            ->get()
+            ->groupBy('class_id');
+            
+        return view('peserta.classes.index', compact('mappings', 'grades'));
     }
 
     public function classDetail(Classes $class)
@@ -95,21 +132,89 @@ class PesertaController extends Controller
     // Documents
     public function documents()
     {
-        $documents = Document::where('user_id', auth()->id())
-            ->latest()
-            ->paginate(20);
-            
-        return view('peserta.documents.index', compact('documents'));
-    }
-
-    public function uploadDocument()
-    {
-        $myClasses = ParticipantMapping::with('class')
+        $myClasses = ParticipantMapping::with(['class.documentRequirements.documents' => function($query) {
+                $query->where('uploaded_by', auth()->id());
+            }, 'class.activity'])
             ->where('participant_id', auth()->id())
             ->where('status', 'in')
             ->get();
             
-        return view('peserta.documents.upload', compact('myClasses'));
+        return view('peserta.documents.index', compact('myClasses'));
+    }
+
+    public function uploadDocument(Request $request)
+    {
+        $validated = $request->validate([
+            'document_requirement_id' => 'required|exists:document_requirements,id',
+            'class_id' => 'required|exists:classes,id',
+            'file' => 'required|file',
+            'notes' => 'nullable|string',
+        ]);
+
+        // Get requirement
+        $requirement = \App\Models\DocumentRequirement::findOrFail($validated['document_requirement_id']);
+        
+        // Check if participant is enrolled
+        $mapping = ParticipantMapping::where('participant_id', auth()->id())
+            ->where('class_id', $validated['class_id'])
+            ->where('status', 'in')
+            ->firstOrFail();
+
+        // Validate file type
+        $file = $request->file('file');
+        if ($requirement->document_type) {
+            $allowedTypes = explode(',', $requirement->document_type);
+            $fileExtension = $file->getClientOriginalExtension();
+            if (!in_array($fileExtension, $allowedTypes)) {
+                return redirect()->back()->with('error', 'Tipe file tidak sesuai. Hanya diperbolehkan: ' . $requirement->document_type);
+            }
+        }
+
+        // Validate file size (in KB)
+        if ($file->getSize() / 1024 > $requirement->max_file_size) {
+            return redirect()->back()->with('error', 'Ukuran file terlalu besar. Maksimal: ' . number_format($requirement->max_file_size / 1024, 1) . ' MB');
+        }
+
+        // Delete old document if exists
+        $oldDocument = Document::where('document_requirement_id', $requirement->id)
+            ->where('uploaded_by', auth()->id())
+            ->first();
+        if ($oldDocument) {
+            \Storage::delete($oldDocument->file_path);
+            $oldDocument->delete();
+        }
+
+        // Store file
+        $path = $file->store('documents', 'public');
+
+        // Create document record
+        Document::create([
+            'class_id' => $validated['class_id'],
+            'document_requirement_id' => $requirement->id,
+            'user_id' => auth()->id(),
+            'uploaded_by' => auth()->id(),
+            'title' => $requirement->document_name,
+            'file_path' => $path,
+            'file_name' => $file->getClientOriginalName(),
+            'file_size' => $file->getSize(),
+            'description' => $validated['notes'] ?? null,
+            'uploaded_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Dokumen berhasil diupload');
+    }
+
+    public function destroyDocument(Document $document)
+    {
+        // Check ownership
+        if ($document->uploaded_by != auth()->id()) {
+            abort(403);
+        }
+
+        \Storage::delete($document->file_path);
+        $document->delete();
+
+        return redirect()->back()->with('success', 'Dokumen berhasil dihapus');
     }
 
     public function storeDocument(Request $request)

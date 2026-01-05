@@ -1,20 +1,21 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Kelas Saya')
+@section('title', 'Input Nilai')
 
 @section('sidebar')
 <nav class="nav flex-column">
     <a class="nav-link" href="{{ route('fasilitator.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('fasilitator.profile') }}">Profil</a>
-    <a class="nav-link active" href="{{ route('fasilitator.classes') }}">Kelas Saya</a>
-    <a class="nav-link" href="{{ route('fasilitator.documents') }}">Dokumen</a>
+    <a class="nav-link" href="{{ route('fasilitator.profile') }}">Edit Biodata</a>
+    <a class="nav-link active" href="{{ route('fasilitator.classes') }}">Input Nilai</a>
+    <a class="nav-link" href="{{ route('fasilitator.documents') }}">Upload Dokumen</a>
+    <a class="nav-link" href="{{ route('fasilitator.mappings.index') }}">Pemetaan Peserta</a>
 </nav>
 @endsection
 
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Kelas Saya</h1>
+        <h1>Input Nilai</h1>
     </div>
 
     @if(session('success'))

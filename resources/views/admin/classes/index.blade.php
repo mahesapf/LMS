@@ -93,6 +93,12 @@
                                     <a href="{{ route('admin.classes.participants', $class) }}" class="btn btn-outline-info" title="Peserta">
                                         <i class="bi bi-people"></i>
                                     </a>
+                                    <a href="{{ route('admin.classes.fasilitators', $class) }}" class="btn btn-outline-success" title="Fasilitator">
+                                        <i class="bi bi-person-badge"></i>
+                                    </a>
+                                    <a href="{{ route('admin.classes.documents', $class) }}" class="btn btn-outline-warning" title="Kelola Dokumen">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                    </a>
                                     <a href="{{ route('admin.classes.edit', $class) }}" class="btn btn-outline-primary" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>

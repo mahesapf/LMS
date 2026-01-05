@@ -1,15 +1,14 @@
-
 @extends('layouts.dashboard')
 
 @section('title', 'Pemetaan Peserta')
 
 @section('sidebar')
 <nav class="nav flex-column">
-    <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('admin.participants') }}">Manajemen Peserta</a>
-    <a class="nav-link" href="{{ route('admin.activities') }}">Kegiatan</a>
-    <a class="nav-link" href="{{ route('admin.classes') }}">Kelas</a>
-    <a class="nav-link active" href="{{ route('admin.mappings.index') }}">Pemetaan Peserta</a>
+    <a class="nav-link" href="{{ route('fasilitator.dashboard') }}">Dashboard</a>
+    <a class="nav-link" href="{{ route('fasilitator.profile') }}">Edit Biodata</a>
+    <a class="nav-link" href="{{ route('fasilitator.classes') }}">Input Nilai</a>
+    <a class="nav-link" href="{{ route('fasilitator.documents') }}">Upload Dokumen</a>
+    <a class="nav-link active" href="{{ route('fasilitator.mappings.index') }}">Pemetaan Peserta</a>
 </nav>
 @endsection
 
@@ -19,49 +18,9 @@
         <h1>Pemetaan Peserta</h1>
     </div>
 
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    @endif
-
-    <!-- Filter -->
-    <div class="card mb-3">
-        <div class="card-body">
-            <form method="GET" action="{{ route('admin.mappings.index') }}" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Filter Kegiatan</label>
-                    <select name="activity_id" class="form-select" onchange="this.form.submit()">
-                        <option value="">Semua Kegiatan</option>
-                        @foreach($activities as $activity)
-                        <option value="{{ $activity->id }}" {{ request('activity_id') == $activity->id ? 'selected' : '' }}>
-                            {{ $activity->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Filter Kelas</label>
-                    <select name="class_id" class="form-select" onchange="this.form.submit()">
-                        <option value="">Semua Kelas</option>
-                        @foreach($classes as $class)
-                        <option value="{{ $class->id }}" {{ request('class_id') == $class->id ? 'selected' : '' }}>
-                            {{ $class->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <a href="{{ route('admin.mappings.index') }}" class="btn btn-secondary w-100">Reset</a>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Statistics Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card bg-success text-white">
                 <div class="card-body">
                     <h6 class="card-title">Total Peserta In</h6>
@@ -69,7 +28,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card bg-warning text-dark">
                 <div class="card-body">
                     <h6 class="card-title">Total Peserta Move</h6>
@@ -77,19 +36,11 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card bg-danger text-white">
                 <div class="card-body">
                     <h6 class="card-title">Total Peserta Out</h6>
                     <h3 class="mb-0">{{ $stats['out'] }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h6 class="card-title">Total Kelas</h6>
-                    <h3 class="mb-0">{{ $classes->count() }}</h3>
                 </div>
             </div>
         </div>
@@ -149,20 +100,30 @@
                                 <strong>{{ $class->participantMappings->count() }}</strong>
                             </td>
                             <td>
-                                <a href="{{ route('admin.classes.participants', $class) }}" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-people"></i> Kelola Peserta
+                                <a href="{{ route('fasilitator.classes.participants', $class) }}" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i> Lihat Detail
                                 </a>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="text-center">Tidak ada data kelas</td>
+                            <td colspan="9" class="text-center">Anda belum ditugaskan ke kelas manapun</td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
+
+    <div class="alert alert-info mt-3">
+        <i class="bi bi-info-circle"></i> <strong>Info:</strong>
+        <ul class="mb-0 mt-2">
+            <li><strong>In:</strong> Peserta yang aktif di kelas</li>
+            <li><strong>Move:</strong> Peserta yang dipindahkan ke kelas lain</li>
+            <li><strong>Out:</strong> Peserta yang dikeluarkan dari kelas</li>
+            <li>Pemetaan peserta dilakukan oleh Admin</li>
+        </ul>
     </div>
 </div>
 @endsection

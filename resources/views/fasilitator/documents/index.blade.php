@@ -1,20 +1,21 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Dokumen Saya')
+@section('title', 'Upload Dokumen')
 
 @section('sidebar')
 <nav class="nav flex-column">
     <a class="nav-link" href="{{ route('fasilitator.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('fasilitator.profile') }}">Profil</a>
-    <a class="nav-link" href="{{ route('fasilitator.classes') }}">Kelas Saya</a>
-    <a class="nav-link active" href="{{ route('fasilitator.documents') }}">Dokumen</a>
+    <a class="nav-link" href="{{ route('fasilitator.profile') }}">Edit Biodata</a>
+    <a class="nav-link" href="{{ route('fasilitator.classes') }}">Input Nilai</a>
+    <a class="nav-link active" href="{{ route('fasilitator.documents') }}">Upload Dokumen</a>
+    <a class="nav-link" href="{{ route('fasilitator.mappings.index') }}">Pemetaan Peserta</a>
 </nav>
 @endsection
 
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Dokumen Saya</h1>
+        <h1>Upload Dokumen</h1>
         <a href="{{ route('fasilitator.documents.upload') }}" class="btn btn-primary">
             <i class="bi bi-upload"></i> Upload Dokumen
         </a>

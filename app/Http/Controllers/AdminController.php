@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Activity;
 use App\Models\Classes;
 use App\Models\ParticipantMapping;
+use App\Models\FasilitatorMapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -219,7 +220,7 @@ class AdminController extends Controller
     // Participant Mapping
     public function mappingsIndex(Request $request)
     {
-        $query = Classes::with(['activity', 'mappings.participant']);
+        $query = Classes::with(['activity', 'participantMappings.participant']);
         
         if ($request->has('activity_id') && $request->activity_id) {
             $query->where('activity_id', $request->activity_id);
@@ -311,5 +312,105 @@ class AdminController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Peserta berhasil dihapus dari kelas');
+    }
+
+    // Fasilitator Mapping
+    public function fasilitatorMappings(Classes $class)
+    {
+        $mappings = FasilitatorMapping::with(['fasilitator', 'assignedBy'])
+            ->where('class_id', $class->id)
+            ->latest()
+            ->get();
+            
+        $availableFasilitators = User::where('role', 'fasilitator')
+            ->where('status', 'active')
+            ->whereNotIn('id', $mappings->where('status', 'in')->pluck('fasilitator_id'))
+            ->get();
+            
+        return view('admin.classes.fasilitators', compact('class', 'mappings', 'availableFasilitators'));
+    }
+
+    public function assignFasilitator(Request $request, Classes $class)
+    {
+        $validated = $request->validate([
+            'fasilitator_id' => 'required|exists:users,id',
+            'assigned_date' => 'nullable|date',
+        ]);
+
+        FasilitatorMapping::create([
+            'fasilitator_id' => $validated['fasilitator_id'],
+            'class_id' => $class->id,
+            'status' => 'in',
+            'assigned_date' => $validated['assigned_date'] ?? now(),
+            'assigned_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Fasilitator berhasil ditambahkan ke kelas');
+    }
+
+    public function removeFasilitator(FasilitatorMapping $mapping)
+    {
+        $mapping->update([
+            'status' => 'out',
+            'removed_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Fasilitator berhasil dihapus dari kelas');
+    }
+
+    // Document Requirements Management
+    public function classDocuments(Classes $class)
+    {
+        $requirements = $class->documentRequirements()->with('documents.uploader')->get();
+        return view('admin.classes.documents', compact('class', 'requirements'));
+    }
+
+    public function storeDocumentRequirement(Request $request, Classes $class)
+    {
+        $validated = $request->validate([
+            'document_name' => 'required|string|max:255',
+            'document_type' => 'nullable|string',
+            'description' => 'nullable|string',
+            'max_file_size' => 'nullable|integer|min:100',
+            'is_required' => 'nullable|boolean',
+        ]);
+
+        \App\Models\DocumentRequirement::create([
+            'class_id' => $class->id,
+            'document_name' => $validated['document_name'],
+            'document_type' => $validated['document_type'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'max_file_size' => $validated['max_file_size'] ?? 5120,
+            'is_required' => $request->has('is_required'),
+        ]);
+
+        return redirect()->back()->with('success', 'Requirement dokumen berhasil ditambahkan');
+    }
+
+    public function updateDocumentRequirement(Request $request, Classes $class, \App\Models\DocumentRequirement $requirement)
+    {
+        $validated = $request->validate([
+            'document_name' => 'required|string|max:255',
+            'document_type' => 'nullable|string',
+            'description' => 'nullable|string',
+            'max_file_size' => 'nullable|integer|min:100',
+            'is_required' => 'nullable|boolean',
+        ]);
+
+        $requirement->update([
+            'document_name' => $validated['document_name'],
+            'document_type' => $validated['document_type'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'max_file_size' => $validated['max_file_size'] ?? 5120,
+            'is_required' => $request->has('is_required'),
+        ]);
+
+        return redirect()->back()->with('success', 'Requirement dokumen berhasil diperbarui');
+    }
+
+    public function destroyDocumentRequirement(Classes $class, \App\Models\DocumentRequirement $requirement)
+    {
+        $requirement->delete();
+        return redirect()->back()->with('success', 'Requirement dokumen berhasil dihapus');
     }
 }
