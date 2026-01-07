@@ -64,6 +64,54 @@
         </div>
     </div>
 
+    <!-- Activities Section -->
+    @if(isset($activities) && $activities->count() > 0)
+    <div class="row mb-5">
+        <div class="col-lg-12 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Kegiatan Tersedia</h2>
+                @auth
+                    <a href="{{ route('activities.index') }}" class="btn btn-outline-primary">Lihat Semua</a>
+                @endauth
+            </div>
+        </div>
+        @foreach($activities as $activity)
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ $activity->name }}</h5>
+                    <p class="text-muted small mb-2">{{ $activity->program->name }}</p>
+                    <p class="card-text">{{ Str::limit($activity->description, 100) }}</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="bi bi-calendar"></i> <strong>Mulai:</strong> {{ $activity->start_date->format('d M Y') }}</li>
+                        <li><i class="bi bi-calendar-check"></i> <strong>Selesai:</strong> {{ $activity->end_date->format('d M Y') }}</li>
+                        @if($activity->registration_fee > 0)
+                        <li><i class="bi bi-cash"></i> <strong>Biaya:</strong> Rp {{ number_format($activity->registration_fee, 0, ',', '.') }}</li>
+                        @endif
+                        @if($activity->financing_type)
+                        <li><i class="bi bi-wallet2"></i> <strong>Pembiayaan:</strong> {{ $activity->financing_type }}
+                            @if($activity->apbn_type) - {{ $activity->apbn_type }}@endif
+                        </li>
+                        @endif
+                    </ul>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    @auth
+                        <a href="{{ route('activities.show', $activity) }}" class="btn btn-primary btn-sm w-100">
+                            Lihat Detail & Daftar
+                        </a>
+                    @else
+                        <a href="{{ route('login') }}" class="btn btn-primary btn-sm w-100">
+                            Login untuk Mendaftar
+                        </a>
+                    @endauth
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
     <!-- News Section -->
     @if(isset($news) && $news->count() > 0)
     <div class="row">

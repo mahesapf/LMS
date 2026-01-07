@@ -11,7 +11,7 @@ class Registration extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'program_id',
+        'activity_id',
         'user_id',
         'name',
         'phone',
@@ -23,11 +23,11 @@ class Registration extends Model
     ];
 
     /**
-     * Get the program that owns the registration.
+     * Get the activity that owns the registration.
      */
-    public function program()
+    public function activity()
     {
-        return $this->belongsTo(Program::class);
+        return $this->belongsTo(Activity::class);
     }
 
     /**

@@ -2,58 +2,59 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Program;
+use App\Models\Activity;
 use App\Models\Registration;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-class ProgramRegistrationController extends Controller
+class ActivityRegistrationController extends Controller
 {
     /**
-     * Display a listing of available programs.
+     * Display a listing of available activities.
      */
     public function index()
     {
-        $programs = Program::where('status', 'active')
+        $activities = Activity::where('status', 'active')
             ->whereDate('start_date', '>', now())
+            ->with('program')
             ->orderBy('start_date')
             ->get();
 
         $myRegistrations = Registration::where('user_id', Auth::id())
-            ->with(['program', 'payment'])
+            ->with(['activity.program', 'payment'])
             ->get();
 
-        return view('peserta.programs.index', compact('programs', 'myRegistrations'));
+        return view('peserta.activities.index', compact('activities', 'myRegistrations'));
     }
 
     /**
      * Show the form for creating a new registration.
      */
-    public function show(Program $program)
+    public function show(Activity $activity)
     {
         // Check if user already registered
-        $existingRegistration = Registration::where('program_id', $program->id)
+        $existingRegistration = Registration::where('activity_id', $activity->id)
             ->where('user_id', Auth::id())
             ->first();
 
-        return view('peserta.programs.show', compact('program', 'existingRegistration'));
+        return view('peserta.activities.show', compact('activity', 'existingRegistration'));
     }
 
     /**
      * Store a newly created registration.
      */
-    public function register(Request $request, Program $program)
+    public function register(Request $request, Activity $activity)
     {
         // Check if already registered
-        $existingRegistration = Registration::where('program_id', $program->id)
+        $existingRegistration = Registration::where('activity_id', $activity->id)
             ->where('user_id', Auth::id())
             ->first();
 
         if ($existingRegistration) {
-            return redirect()->route('peserta.programs.show', $program)
-                ->with('error', 'Anda sudah terdaftar pada program ini.');
+            return redirect()->route('peserta.activities.show', $activity)
+                ->with('error', 'Anda sudah terdaftar pada kegiatan ini.');
         }
 
         $validated = $request->validate([
@@ -65,7 +66,7 @@ class ProgramRegistrationController extends Controller
         ]);
 
         $registration = Registration::create([
-            'program_id' => $program->id,
+            'activity_id' => $activity->id,
             'user_id' => Auth::id(),
             'name' => $validated['name'],
             'phone' => $validated['phone'],
@@ -108,8 +109,8 @@ class ProgramRegistrationController extends Controller
             abort(403);
         }
 
-        // Check payment deadline (1 week before program starts)
-        $paymentDeadline = $registration->program->start_date->subWeek();
+        // Check payment deadline (1 week before activity starts)
+        $paymentDeadline = $registration->activity->start_date->subWeek();
         if (now()->greaterThan($paymentDeadline)) {
             return back()->with('error', 'Batas waktu pembayaran telah lewat.');
         }
@@ -136,7 +137,7 @@ class ProgramRegistrationController extends Controller
         // Update registration status
         $registration->update(['status' => 'payment_uploaded']);
 
-        return redirect()->route('peserta.programs.index')
-            ->with('success', 'Bukti pembayaran berhasil diupload. Menunggu validasi admin.');
+        return redirect()->route('peserta.activities.index')
+            ->with('success', 'Bukti pembayaran berhasil diupload. Menunggu validasi super admin.');
     }
 }

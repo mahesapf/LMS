@@ -14,12 +14,12 @@ class RegistrationManagementController extends Controller
      */
     public function index()
     {
-        $registrations = Registration::with(['program', 'user', 'class'])
+        $registrations = Registration::with(['activity.program', 'user', 'class'])
             ->where('status', 'validated')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $classes = Classes::with('program')->get();
+        $classes = Classes::with('activity.program')->get();
 
         return view('admin.registrations.index', compact('registrations', 'classes'));
     }

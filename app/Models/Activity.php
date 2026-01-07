@@ -14,6 +14,9 @@ class Activity extends Model
         'program_id',
         'name',
         'description',
+        'financing_type',
+        'apbn_type',
+        'registration_fee',
         'batch',
         'start_date',
         'end_date',
@@ -47,5 +50,10 @@ class Activity extends Model
     public function adminMappings()
     {
         return $this->hasMany(AdminMapping::class);
+    }
+
+    public function registrations()
+    {
+        return $this->hasMany(Registration::class);
     }
 }

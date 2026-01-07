@@ -12,6 +12,15 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/news', [HomeController::class, 'news'])->name('news');
 Route::get('/news/{id}', [HomeController::class, 'newsDetail'])->name('news.detail');
 
+// Activity Registration Routes (for logged-in users, any role)
+Route::middleware('auth')->group(function () {
+    Route::get('/activities', [\App\Http\Controllers\ActivityRegistrationController::class, 'index'])->name('activities.index');
+    Route::get('/activities/{activity}', [\App\Http\Controllers\ActivityRegistrationController::class, 'show'])->name('activities.show');
+    Route::post('/activities/{activity}/register', [\App\Http\Controllers\ActivityRegistrationController::class, 'register'])->name('activities.register');
+    Route::get('/registrations/{registration}/payment', [\App\Http\Controllers\ActivityRegistrationController::class, 'createPayment'])->name('payment.create');
+    Route::post('/registrations/{registration}/payment', [\App\Http\Controllers\ActivityRegistrationController::class, 'storePayment'])->name('payment.store');
+});
+
 // Auth Routes
 Auth::routes();
 
@@ -65,22 +74,22 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::get('/admin-mappings/create', [SuperAdminController::class, 'createAdminMapping'])->name('admin-mappings.create');
     Route::post('/admin-mappings', [SuperAdminController::class, 'storeAdminMapping'])->name('admin-mappings.store');
     Route::post('/admin-mappings/{mapping}/status/{status}', [SuperAdminController::class, 'updateAdminMappingStatus'])->name('admin-mappings.update-status');
-});
-
-// Admin Routes
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
-    // Payment Validation
+    // Payment Validation (Super Admin Only)
     Route::get('/payments', [\App\Http\Controllers\PaymentValidationController::class, 'index'])->name('payments.index');
     Route::get('/payments/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'show'])->name('payments.show');
     Route::patch('/payments/{payment}/validate', [\App\Http\Controllers\PaymentValidationController::class, 'validate'])->name('payments.validate');
     Route::patch('/payments/{payment}/reject', [\App\Http\Controllers\PaymentValidationController::class, 'reject'])->name('payments.reject');
     
-    // Registration Management
+    // Registration Management (Super Admin Only)
     Route::get('/registrations', [\App\Http\Controllers\RegistrationManagementController::class, 'index'])->name('registrations.index');
     Route::patch('/registrations/{registration}/assign', [\App\Http\Controllers\RegistrationManagementController::class, 'assignToClass'])->name('registrations.assignToClass');
     Route::delete('/registrations/{registration}/remove', [\App\Http\Controllers\RegistrationManagementController::class, 'removeFromClass'])->name('registrations.removeFromClass');
+});
+
+// Admin Routes
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
     // Participant Management
     Route::get('/participants', [AdminController::class, 'participants'])->name('participants');
@@ -162,15 +171,6 @@ Route::prefix('fasilitator')->name('fasilitator.')->middleware(['auth', 'role:fa
 // Peserta Routes
 Route::prefix('peserta')->name('peserta.')->middleware(['auth', 'role:peserta'])->group(function () {
     Route::get('/dashboard', [PesertaController::class, 'dashboard'])->name('dashboard');
-    
-    // Program Registration
-    Route::get('/programs', [\App\Http\Controllers\ProgramRegistrationController::class, 'index'])->name('programs.index');
-    Route::get('/programs/{program}', [\App\Http\Controllers\ProgramRegistrationController::class, 'show'])->name('programs.show');
-    Route::post('/programs/{program}/register', [\App\Http\Controllers\ProgramRegistrationController::class, 'register'])->name('programs.register');
-    
-    // Payment
-    Route::get('/registrations/{registration}/payment', [\App\Http\Controllers\ProgramRegistrationController::class, 'createPayment'])->name('payment.create');
-    Route::post('/registrations/{registration}/payment', [\App\Http\Controllers\ProgramRegistrationController::class, 'storePayment'])->name('payment.store');
     
     // Profile
     Route::get('/profile', [PesertaController::class, 'profile'])->name('profile');

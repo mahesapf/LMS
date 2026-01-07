@@ -14,12 +14,12 @@ class PaymentValidationController extends Controller
      */
     public function index()
     {
-        $payments = Payment::with(['registration.program', 'registration.user'])
+        $payments = Payment::with(['registration.activity.program', 'registration.user'])
             ->whereIn('status', ['pending'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $validatedPayments = Payment::with(['registration.program', 'registration.user', 'validator'])
+        $validatedPayments = Payment::with(['registration.activity.program', 'registration.user', 'validator'])
             ->whereIn('status', ['validated', 'rejected'])
             ->orderBy('validated_at', 'desc')
             ->paginate(20);
@@ -32,12 +32,12 @@ class PaymentValidationController extends Controller
      */
     public function show(Payment $payment)
     {
-        $payment->load(['registration.program', 'registration.user']);
+        $payment->load(['registration.activity.program', 'registration.user']);
         return view('admin.payments.show', compact('payment'));
     }
 
     /**
-     * Validate the payment.
+     * Validate the payment (Super Admin only).
      */
     public function validate(Payment $payment)
     {
@@ -51,12 +51,18 @@ class PaymentValidationController extends Controller
             'status' => 'validated'
         ]);
 
-        return redirect()->route('admin.payments.index')
-            ->with('success', 'Pembayaran berhasil divalidasi.');
+        // Update user role to peserta
+        $user = $payment->registration->user;
+        if ($user->role !== 'peserta') {
+            $user->update(['role' => 'peserta']);
+        }
+
+        return redirect()->route('super-admin.payments.index')
+            ->with('success', 'Pembayaran berhasil divalidasi dan user sekarang menjadi peserta.');
     }
 
     /**
-     * Reject the payment.
+     * Reject the payment (Super Admin only).
      */
     public function reject(Request $request, Payment $payment)
     {
@@ -75,7 +81,7 @@ class PaymentValidationController extends Controller
             'status' => 'rejected'
         ]);
 
-        return redirect()->route('admin.payments.index')
+        return redirect()->route('super-admin.payments.index')
             ->with('success', 'Pembayaran ditolak.');
     }
 }

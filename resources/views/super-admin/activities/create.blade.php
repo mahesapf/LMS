@@ -64,6 +64,40 @@
                 </div>
 
                 <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Jenis Pembiayaan</label>
+                        <select name="financing_type" id="financing_type" class="form-select @error('financing_type') is-invalid @enderror">
+                            <option value="">Pilih Jenis</option>
+                            <option value="APBN" {{ old('financing_type') == 'APBN' ? 'selected' : '' }}>APBN</option>
+                            <option value="Non-APBN" {{ old('financing_type') == 'Non-APBN' ? 'selected' : '' }}>Non-APBN</option>
+                        </select>
+                        @error('financing_type')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Tipe APBN</label>
+                        <select name="apbn_type" id="apbn_type" class="form-select @error('apbn_type') is-invalid @enderror">
+                            <option value="">Pilih Tipe</option>
+                            <option value="BOS Reguler" {{ old('apbn_type') == 'BOS Reguler' ? 'selected' : '' }}>BOS Reguler</option>
+                            <option value="BOS Kinerja" {{ old('apbn_type') == 'BOS Kinerja' ? 'selected' : '' }}>BOS Kinerja</option>
+                            <option value="DIPA" {{ old('apbn_type') == 'DIPA' ? 'selected' : '' }}>DIPA</option>
+                        </select>
+                        @error('apbn_type')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Biaya Pendaftaran</label>
+                        <input type="number" name="registration_fee" class="form-control @error('registration_fee') is-invalid @enderror" 
+                               value="{{ old('registration_fee', 0) }}" min="0" step="0.01">
+                        @error('registration_fee')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Tanggal Mulai <span class="text-danger">*</span></label>
                         <input type="date" name="start_date" class="form-control @error('start_date') is-invalid @enderror" value="{{ old('start_date') }}" required>
@@ -137,5 +171,25 @@ function toggleOtherFunding() {
         otherDiv.style.display = 'none';
     }
 }
+
+// Enable/disable APBN type based on financing type
+document.getElementById('financing_type').addEventListener('change', function() {
+    const apbnType = document.getElementById('apbn_type');
+    if (this.value === 'APBN') {
+        apbnType.disabled = false;
+    } else {
+        apbnType.disabled = true;
+        apbnType.value = '';
+    }
+});
+
+// Set initial state
+document.addEventListener('DOMContentLoaded', function() {
+    const financingType = document.getElementById('financing_type');
+    const apbnType = document.getElementById('apbn_type');
+    if (financingType.value !== 'APBN') {
+        apbnType.disabled = true;
+    }
+});
 </script>
 @endsection
