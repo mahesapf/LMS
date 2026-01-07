@@ -13,6 +13,9 @@ class Program extends Model
     protected $fillable = [
         'name',
         'description',
+        'financing_type',
+        'apbn_type',
+        'registration_fee',
         'start_date',
         'end_date',
         'status',
@@ -38,5 +41,10 @@ class Program extends Model
     public function adminMappings()
     {
         return $this->hasMany(AdminMapping::class);
+    }
+
+    public function registrations()
+    {
+        return $this->hasMany(Registration::class);
     }
 }

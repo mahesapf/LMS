@@ -71,6 +71,17 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
+    // Payment Validation
+    Route::get('/payments', [\App\Http\Controllers\PaymentValidationController::class, 'index'])->name('payments.index');
+    Route::get('/payments/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'show'])->name('payments.show');
+    Route::patch('/payments/{payment}/validate', [\App\Http\Controllers\PaymentValidationController::class, 'validate'])->name('payments.validate');
+    Route::patch('/payments/{payment}/reject', [\App\Http\Controllers\PaymentValidationController::class, 'reject'])->name('payments.reject');
+    
+    // Registration Management
+    Route::get('/registrations', [\App\Http\Controllers\RegistrationManagementController::class, 'index'])->name('registrations.index');
+    Route::patch('/registrations/{registration}/assign', [\App\Http\Controllers\RegistrationManagementController::class, 'assignToClass'])->name('registrations.assignToClass');
+    Route::delete('/registrations/{registration}/remove', [\App\Http\Controllers\RegistrationManagementController::class, 'removeFromClass'])->name('registrations.removeFromClass');
+    
     // Participant Management
     Route::get('/participants', [AdminController::class, 'participants'])->name('participants');
     Route::get('/participants/create', [AdminController::class, 'createParticipant'])->name('participants.create');
@@ -151,6 +162,15 @@ Route::prefix('fasilitator')->name('fasilitator.')->middleware(['auth', 'role:fa
 // Peserta Routes
 Route::prefix('peserta')->name('peserta.')->middleware(['auth', 'role:peserta'])->group(function () {
     Route::get('/dashboard', [PesertaController::class, 'dashboard'])->name('dashboard');
+    
+    // Program Registration
+    Route::get('/programs', [\App\Http\Controllers\ProgramRegistrationController::class, 'index'])->name('programs.index');
+    Route::get('/programs/{program}', [\App\Http\Controllers\ProgramRegistrationController::class, 'show'])->name('programs.show');
+    Route::post('/programs/{program}/register', [\App\Http\Controllers\ProgramRegistrationController::class, 'register'])->name('programs.register');
+    
+    // Payment
+    Route::get('/registrations/{registration}/payment', [\App\Http\Controllers\ProgramRegistrationController::class, 'createPayment'])->name('payment.create');
+    Route::post('/registrations/{registration}/payment', [\App\Http\Controllers\ProgramRegistrationController::class, 'storePayment'])->name('payment.store');
     
     // Profile
     Route::get('/profile', [PesertaController::class, 'profile'])->name('profile');
