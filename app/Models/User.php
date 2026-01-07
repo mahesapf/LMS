@@ -44,6 +44,8 @@ class User extends Authenticatable
         'major',
         'photo',
         'digital_signature',
+        'google_id',
+        'avatar',
     ];
 
     /**

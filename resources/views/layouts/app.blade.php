@@ -14,7 +14,8 @@
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
 
     <!-- Scripts -->
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    @vite(['resources/sass/app.scss', 'resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
     
     <style>
         .navbar-brand { font-weight: bold; }
@@ -23,6 +24,7 @@
 </head>
 <body>
     <div id="app">
+        @if (!isset($hideNavbar) || !$hideNavbar)
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
@@ -77,8 +79,9 @@
                 </div>
             </div>
         </nav>
+        @endif
 
-        <main class="py-4">
+        <main class="{{ isset($hideNavbar) && $hideNavbar ? '' : 'py-4' }}">
             @yield('content')
         </main>
     </div>

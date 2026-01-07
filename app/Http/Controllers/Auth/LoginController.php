@@ -25,7 +25,25 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/home';
+    protected $redirectTo = '/dashboard';
+
+    /**
+     * Get the post login redirect path.
+     *
+     * @return string
+     */
+    protected function redirectTo()
+    {
+        $user = auth()->user();
+        
+        return match($user->role) {
+            'super_admin' => route('super-admin.dashboard'),
+            'admin' => route('admin.dashboard'),
+            'fasilitator' => route('fasilitator.dashboard'),
+            'peserta' => route('peserta.dashboard'),
+            default => route('home'),
+        };
+    }
 
     /**
      * Create a new controller instance.

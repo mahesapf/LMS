@@ -24,6 +24,10 @@ Route::middleware('auth')->group(function () {
 // Auth Routes
 Auth::routes();
 
+// Google Auth Routes
+Route::get('auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+
 // Dashboard Route - Redirect based on role
 Route::get('/dashboard', function () {
     $user = auth()->user();
