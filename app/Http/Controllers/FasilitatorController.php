@@ -139,8 +139,7 @@ class FasilitatorController extends Controller
     {
         $validated = $request->validate([
             'participant_id' => 'required|exists:users,id',
-            'assessment_type' => 'required|string|max:255',
-            'score' => 'required|numeric|min:0|max:100',
+            'final_score' => 'required|numeric|min:0|max:100',
             'notes' => 'nullable|string',
             'graded_date' => 'nullable|date',
         ]);
@@ -148,12 +147,28 @@ class FasilitatorController extends Controller
         // Check if grade already exists
         $existingGrade = Grade::where('participant_id', $validated['participant_id'])
             ->where('class_id', $class->id)
-            ->where('assessment_type', $validated['assessment_type'])
             ->first();
+
+        // Calculate grade letter and status
+        $score = $validated['final_score'];
+        $gradeLetter = 'E';
+        if ($score >= 85) $gradeLetter = 'A';
+        elseif ($score >= 80) $gradeLetter = 'A-';
+        elseif ($score >= 75) $gradeLetter = 'B+';
+        elseif ($score >= 70) $gradeLetter = 'B';
+        elseif ($score >= 65) $gradeLetter = 'B-';
+        elseif ($score >= 60) $gradeLetter = 'C+';
+        elseif ($score >= 55) $gradeLetter = 'C';
+        elseif ($score >= 50) $gradeLetter = 'C-';
+        elseif ($score >= 45) $gradeLetter = 'D';
+        
+        $status = $score >= 60 ? 'lulus' : 'tidak_lulus';
 
         if ($existingGrade) {
             $existingGrade->update([
-                'score' => $validated['score'],
+                'final_score' => $validated['final_score'],
+                'grade_letter' => $gradeLetter,
+                'status' => $status,
                 'notes' => $validated['notes'] ?? null,
                 'graded_date' => $validated['graded_date'] ?? now(),
             ]);
@@ -162,8 +177,9 @@ class FasilitatorController extends Controller
                 'participant_id' => $validated['participant_id'],
                 'class_id' => $class->id,
                 'fasilitator_id' => auth()->id(),
-                'assessment_type' => $validated['assessment_type'],
-                'score' => $validated['score'],
+                'final_score' => $validated['final_score'],
+                'grade_letter' => $gradeLetter,
+                'status' => $status,
                 'notes' => $validated['notes'] ?? null,
                 'graded_date' => $validated['graded_date'] ?? now(),
             ]);

@@ -7,6 +7,7 @@ use App\Models\Activity;
 use App\Models\Classes;
 use App\Models\ParticipantMapping;
 use App\Models\FasilitatorMapping;
+use App\Models\Stage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -358,16 +359,70 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Fasilitator berhasil dihapus dari kelas');
     }
 
+    // Stage Management
+    public function classStages(Classes $class)
+    {
+        $stages = $class->stages()->with('documentRequirements')->ordered()->get();
+        return view('admin.classes.stages', compact('class', 'stages'));
+    }
+
+    public function storeStage(Request $request, Classes $class)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'order' => 'required|integer|min:1',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'status' => 'required|in:not_started,ongoing,completed',
+        ]);
+
+        Stage::create([
+            'class_id' => $class->id,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'order' => $validated['order'],
+            'start_date' => $validated['start_date'] ?? null,
+            'end_date' => $validated['end_date'] ?? null,
+            'status' => $validated['status'],
+        ]);
+
+        return redirect()->back()->with('success', 'Tahap berhasil ditambahkan');
+    }
+
+    public function updateStage(Request $request, Classes $class, Stage $stage)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'order' => 'required|integer|min:1',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'status' => 'required|in:not_started,ongoing,completed',
+        ]);
+
+        $stage->update($validated);
+
+        return redirect()->back()->with('success', 'Tahap berhasil diperbarui');
+    }
+
+    public function destroyStage(Classes $class, Stage $stage)
+    {
+        $stage->delete();
+        return redirect()->back()->with('success', 'Tahap berhasil dihapus');
+    }
+
     // Document Requirements Management
     public function classDocuments(Classes $class)
     {
-        $requirements = $class->documentRequirements()->with('documents.uploader')->get();
-        return view('admin.classes.documents', compact('class', 'requirements'));
+        $stages = $class->stages()->with('documentRequirements.documents.uploader')->ordered()->get();
+        return view('admin.classes.documents', compact('class', 'stages'));
     }
 
     public function storeDocumentRequirement(Request $request, Classes $class)
     {
         $validated = $request->validate([
+            'stage_id' => 'required|exists:stages,id',
             'document_name' => 'required|string|max:255',
             'document_type' => 'nullable|string',
             'description' => 'nullable|string',
@@ -377,6 +432,7 @@ class AdminController extends Controller
 
         \App\Models\DocumentRequirement::create([
             'class_id' => $class->id,
+            'stage_id' => $validated['stage_id'],
             'document_name' => $validated['document_name'],
             'document_type' => $validated['document_type'] ?? null,
             'description' => $validated['description'] ?? null,
@@ -390,6 +446,7 @@ class AdminController extends Controller
     public function updateDocumentRequirement(Request $request, Classes $class, \App\Models\DocumentRequirement $requirement)
     {
         $validated = $request->validate([
+            'stage_id' => 'required|exists:stages,id',
             'document_name' => 'required|string|max:255',
             'document_type' => 'nullable|string',
             'description' => 'nullable|string',
@@ -398,6 +455,7 @@ class AdminController extends Controller
         ]);
 
         $requirement->update([
+            'stage_id' => $validated['stage_id'],
             'document_name' => $validated['document_name'],
             'document_type' => $validated['document_type'] ?? null,
             'description' => $validated['description'] ?? null,

@@ -132,9 +132,9 @@ class PesertaController extends Controller
     // Documents
     public function documents()
     {
-        $myClasses = ParticipantMapping::with(['class.documentRequirements.documents' => function($query) {
+        $myClasses = ParticipantMapping::with(['class.stages.documentRequirements.documents' => function($query) {
                 $query->where('uploaded_by', auth()->id());
-            }, 'class.activity'])
+            }, 'class.activity', 'class.stages'])
             ->where('participant_id', auth()->id())
             ->where('status', 'in')
             ->get();

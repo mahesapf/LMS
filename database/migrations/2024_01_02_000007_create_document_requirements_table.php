@@ -21,11 +21,6 @@ return new class extends Migration
             $table->integer('max_file_size')->default(5120); // in KB, default 5MB
             $table->timestamps();
         });
-
-        // Update documents table to link with requirements
-        Schema::table('documents', function (Blueprint $table) {
-            $table->foreignId('document_requirement_id')->nullable()->after('class_id')->constrained('document_requirements')->onDelete('cascade');
-        });
     }
 
     /**
@@ -33,11 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('documents', function (Blueprint $table) {
-            $table->dropForeign(['document_requirement_id']);
-            $table->dropColumn('document_requirement_id');
-        });
-        
         Schema::dropIfExists('document_requirements');
     }
 };

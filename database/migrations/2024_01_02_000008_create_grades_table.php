@@ -16,12 +16,16 @@ return new class extends Migration
             $table->foreignId('participant_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('class_id')->constrained()->onDelete('cascade');
             $table->foreignId('fasilitator_id')->constrained('users')->onDelete('cascade');
-            $table->string('assessment_type'); // Jenis penilaian (Tugas 1, UTS, UAS, dll)
-            $table->decimal('score', 5, 2); // Nilai
-            $table->text('notes')->nullable();
+            $table->decimal('final_score', 5, 2); // Nilai akhir (0-100)
+            $table->string('grade_letter', 2)->nullable(); // A, B+, B, C+, C, D, E
+            $table->enum('status', ['lulus', 'tidak_lulus'])->default('lulus');
+            $table->text('notes')->nullable(); // Catatan dari fasilitator
             $table->date('graded_date')->nullable();
             $table->timestamps();
             $table->softDeletes();
+            
+            // Unique constraint: satu peserta hanya punya satu nilai akhir per kelas
+            $table->unique(['participant_id', 'class_id']);
         });
     }
 

@@ -52,7 +52,7 @@
                         @forelse($participants as $mapping)
                         @php
                             $participant = $mapping->participant;
-                            $grades = $participant->grades ?? collect();
+                            $grade = $participant->grades->first() ?? null;
                         @endphp
                         <tr>
                             <td>{{ $loop->iteration }}</td>
@@ -60,12 +60,16 @@
                             <td>{{ $participant->email }}</td>
                             <td>{{ $participant->institution ?? '-' }}</td>
                             <td>
-                                @if($grades->count() > 0)
-                                    @foreach($grades as $grade)
+                                @if($grade)
                                     <span class="badge bg-primary me-1">
-                                        {{ $grade->assessment_type }}: {{ $grade->score }}
+                                        Nilai: {{ number_format($grade->final_score, 2) }}
                                     </span>
-                                    @endforeach
+                                    <span class="badge bg-info me-1">
+                                        Grade: {{ $grade->grade_letter }}
+                                    </span>
+                                    <span class="badge bg-{{ $grade->status == 'lulus' ? 'success' : 'danger' }}">
+                                        {{ ucfirst($grade->status) }}
+                                    </span>
                                 @else
                                     <span class="text-muted">Belum ada nilai</span>
                                 @endif
@@ -91,30 +95,12 @@
                                         </div>
                                         <div class="modal-body">
                                             <div class="mb-3">
-                                                <label for="assessment_type{{ $participant->id }}" class="form-label">Jenis Penilaian <span class="text-danger">*</span></label>
-                                                <select name="assessment_type" id="assessment_type{{ $participant->id }}" class="form-select @error('assessment_type') is-invalid @enderror" required>
-                                                    <option value="">-- Pilih Jenis --</option>
-                                                    <option value="Tugas">Tugas</option>
-                                                    <option value="Quiz">Quiz</option>
-                                                    <option value="UTS">UTS</option>
-                                                    <option value="UAS">UAS</option>
-                                                    <option value="Praktik">Praktik</option>
-                                                    <option value="Proyek">Proyek</option>
-                                                    <option value="Presentasi">Presentasi</option>
-                                                    <option value="Kehadiran">Kehadiran</option>
-                                                    <option value="Lainnya">Lainnya</option>
-                                                </select>
-                                                @error('assessment_type')
+                                                <label for="final_score{{ $participant->id }}" class="form-label">Nilai Akhir (0-100) <span class="text-danger">*</span></label>
+                                                <input type="number" name="final_score" id="final_score{{ $participant->id }}" class="form-control @error('final_score') is-invalid @enderror" min="0" max="100" step="0.01" value="{{ old('final_score', $grade->final_score ?? '') }}" required>
+                                                @error('final_score')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label for="score{{ $participant->id }}" class="form-label">Nilai (0-100) <span class="text-danger">*</span></label>
-                                                <input type="number" name="score" id="score{{ $participant->id }}" class="form-control @error('score') is-invalid @enderror" min="0" max="100" step="0.01" required>
-                                                @error('score')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
+                                                <div class="form-text">Nilai akan otomatis dikonversi ke grade huruf (A, B+, B, C+, C, D, E)</div>
                                             </div>
 
                                             <div class="mb-3">
@@ -133,14 +119,18 @@
                                                 @enderror
                                             </div>
 
-                                            <!-- Existing Grades -->
-                                            @if($grades->count() > 0)
+                                            <!-- Existing Grade -->
+                                            @if($grade)
                                             <div class="alert alert-info">
                                                 <strong>Nilai yang sudah ada:</strong>
                                                 <ul class="mb-0 mt-2">
-                                                    @foreach($grades as $grade)
-                                                    <li>{{ $grade->assessment_type }}: {{ $grade->score }} ({{ $grade->graded_date ? $grade->graded_date->format('d/m/Y') : '-' }})</li>
-                                                    @endforeach
+                                                    <li>Nilai Akhir: {{ number_format($grade->final_score, 2) }}</li>
+                                                    <li>Grade: {{ $grade->grade_letter }}</li>
+                                                    <li>Status: {{ ucfirst($grade->status) }}</li>
+                                                    <li>Tanggal: {{ $grade->graded_date ? $grade->graded_date->format('d/m/Y') : '-' }}</li>
+                                                    @if($grade->notes)
+                                                    <li>Catatan: {{ $grade->notes }}</li>
+                                                    @endif
                                                 </ul>
                                             </div>
                                             @endif

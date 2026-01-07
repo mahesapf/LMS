@@ -5,10 +5,10 @@
 @section('sidebar')
 <nav class="nav flex-column">
     <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('admin.participants') }}">Manajemen Peserta</a>
+    <a class="nav-link" href="{{ route('admin.participants') }}">Peserta</a>
     <a class="nav-link" href="{{ route('admin.activities') }}">Kegiatan</a>
     <a class="nav-link active" href="{{ route('admin.classes') }}">Kelas</a>
-    <a class="nav-link" href="{{ route('admin.mappings.index') }}">Pemetaan Peserta</a>
+    <a class="nav-link" href="{{ route('admin.mappings.index') }}">Pemetaan</a>
 </nav>
 @endsection
 
@@ -16,10 +16,13 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1>Kelola Dokumen Kelas</h1>
-            <p class="text-muted mb-0">{{ $class->name }} - {{ $class->activity->name ?? '-' }}</p>
+            <h1>Kelola Dokumen Requirement</h1>
+            <p class="text-muted mb-0">Kelas: <strong>{{ $class->name }}</strong></p>
         </div>
         <div>
+            <a href="{{ route('admin.classes.stages', $class) }}" class="btn btn-info me-2">
+                <i class="bi bi-layers"></i> Kelola Tahap
+            </a>
             <a href="{{ route('admin.classes') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Kembali
             </a>
@@ -33,244 +36,146 @@
     </div>
     @endif
 
-    @if(session('error'))
+    @if($errors->any())
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ session('error') }}
+        <ul class="mb-0">
+            @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     @endif
 
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Tambah Requirement Dokumen</h5>
-                </div>
-                <div class="card-body">
-                    <form action="{{ route('admin.classes.documents.store', $class->id) }}" method="POST">
-                        @csrf
-                        <div class="mb-3">
-                            <label for="document_name" class="form-label">Nama Dokumen <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('document_name') is-invalid @enderror" 
-                                   id="document_name" name="document_name" value="{{ old('document_name') }}" 
-                                   placeholder="Contoh: KTP, Ijazah, Sertifikat" required>
-                            @error('document_name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+    @if($stages->count() == 0)
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> Belum ada tahap dibuat. Silakan <a href="{{ route('admin.classes.stages', $class) }}" class="alert-link">buat tahap terlebih dahulu</a> sebelum menambahkan dokumen requirement.
+    </div>
+    @else
+    <!-- Stages Accordion -->
+    <div class="accordion" id="stagesAccordion">
+        @foreach($stages as $stage)
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading{{ $stage->id }}">
+                <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $stage->id }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="collapse{{ $stage->id }}">
+                    <strong>{{ $stage->name }}</strong>
+                    <span class="badge bg-primary ms-2">{{ $stage->documentRequirements->count() }} dokumen</span>
+                    <span class="badge ms-2 
+                        @if($stage->status == 'ongoing') bg-success
+                        @elseif($stage->status == 'completed') bg-secondary
+                        @else bg-warning text-dark
+                        @endif">
+                        {{ ucfirst(str_replace('_', ' ', $stage->status)) }}
+                    </span>
+                </button>
+            </h2>
+            <div id="collapse{{ $stage->id }}" class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}" aria-labelledby="heading{{ $stage->id }}" data-bs-parent="#stagesAccordion">
+                <div class="accordion-body">
+                    @if($stage->description)
+                    <p class="text-muted">{{ $stage->description }}</p>
+                    @endif
 
-                        <div class="mb-3">
-                            <label for="document_type" class="form-label">Tipe File</label>
-                            <select class="form-select @error('document_type') is-invalid @enderror" 
-                                    id="document_type" name="document_type">
-                                <option value="">Semua Tipe</option>
-                                <option value="pdf" {{ old('document_type') == 'pdf' ? 'selected' : '' }}>PDF</option>
-                                <option value="doc,docx" {{ old('document_type') == 'doc,docx' ? 'selected' : '' }}>Word</option>
-                                <option value="jpg,jpeg,png" {{ old('document_type') == 'jpg,jpeg,png' ? 'selected' : '' }}>Gambar</option>
-                                <option value="pdf,doc,docx" {{ old('document_type') == 'pdf,doc,docx' ? 'selected' : '' }}>PDF/Word</option>
-                            </select>
-                            @error('document_type')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Deskripsi</label>
-                            <textarea class="form-control @error('description') is-invalid @enderror" 
-                                      id="description" name="description" rows="3" 
-                                      placeholder="Keterangan tambahan tentang dokumen ini">{{ old('description') }}</textarea>
-                            @error('description')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="max_file_size" class="form-label">Ukuran Maksimal (KB)</label>
-                            <input type="number" class="form-control @error('max_file_size') is-invalid @enderror" 
-                                   id="max_file_size" name="max_file_size" value="{{ old('max_file_size', 5120) }}" min="100">
-                            <small class="text-muted">Default: 5120 KB (5 MB)</small>
-                            @error('max_file_size')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="is_required" name="is_required" value="1" 
-                                   {{ old('is_required', true) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="is_required">
-                                Dokumen Wajib
-                            </label>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-plus-circle"></i> Tambah Requirement
+                    <!-- Add Document Button -->
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addDocModal{{ $stage->id }}">
+                            <i class="bi bi-plus-circle"></i> Tambah Dokumen Requirement
                         </button>
-                    </form>
-                </div>
-            </div>
-        </div>
+                    </div>
 
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Daftar Requirement Dokumen</h5>
-                </div>
-                <div class="card-body">
-                    @if($requirements->count() > 0)
+                    <!-- Document Requirements Table -->
+                    @if($stage->documentRequirements->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>No</th>
+                                    <th width="30">#</th>
                                     <th>Nama Dokumen</th>
                                     <th>Tipe File</th>
-                                    <th>Status</th>
-                                    <th>Uploaded</th>
-                                    <th>Aksi</th>
+                                    <th width="100">Max Size</th>
+                                    <th width="100">Wajib</th>
+                                    <th width="120">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($requirements as $req)
+                                @foreach($stage->documentRequirements as $req)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>
                                         <strong>{{ $req->document_name }}</strong>
                                         @if($req->description)
-                                        <br><small class="text-muted">{{ Str::limit($req->description, 50) }}</small>
+                                        <br><small class="text-muted">{{ $req->description }}</small>
                                         @endif
                                     </td>
-                                    <td>
-                                        @if($req->document_type)
-                                        <span class="badge bg-info">{{ strtoupper($req->document_type) }}</span>
-                                        @else
-                                        <span class="badge bg-secondary">Semua</span>
-                                        @endif
-                                        <br><small class="text-muted">Max: {{ number_format($req->max_file_size / 1024, 1) }} MB</small>
-                                    </td>
+                                    <td>{{ $req->document_type ?: 'Semua' }}</td>
+                                    <td>{{ number_format($req->max_file_size / 1024, 1) }} MB</td>
                                     <td>
                                         @if($req->is_required)
-                                        <span class="badge bg-danger">Wajib</span>
+                                        <span class="badge bg-danger">Ya</span>
                                         @else
-                                        <span class="badge bg-secondary">Opsional</span>
+                                        <span class="badge bg-secondary">Tidak</span>
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-primary">{{ $req->documents->count() }}</span> peserta
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-info" 
-                                                data-bs-toggle="modal" data-bs-target="#viewModal{{ $req->id }}">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-warning" 
-                                                data-bs-toggle="modal" data-bs-target="#editModal{{ $req->id }}">
+                                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editDocModal{{ $req->id }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <form action="{{ route('admin.classes.documents.destroy', [$class->id, $req->id]) }}" 
-                                              method="POST" class="d-inline" 
-                                              onsubmit="return confirm('Hapus requirement ini? Data upload peserta juga akan terhapus.')">
+                                        <form action="{{ route('admin.classes.documents.destroy', [$class, $req]) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus requirement ini?')">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     </td>
                                 </tr>
 
-                                <!-- View Modal -->
-                                <div class="modal fade" id="viewModal{{ $req->id }}" tabindex="-1">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Upload Dokumen: {{ $req->document_name }}</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                @if($req->documents->count() > 0)
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Peserta</th>
-                                                                <th>File</th>
-                                                                <th>Tanggal Upload</th>
-                                                                <th>Aksi</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach($req->documents as $doc)
-                                                            <tr>
-                                                                <td>{{ $doc->uploader->name ?? '-' }}</td>
-                                                                <td>
-                                                                    {{ Str::limit(basename($doc->file_path), 30) }}
-                                                                    <br><small class="text-muted">{{ number_format($doc->file_size / 1024, 1) }} MB</small>
-                                                                </td>
-                                                                <td>{{ $doc->created_at->format('d/m/Y H:i') }}</td>
-                                                                <td>
-                                                                    <a href="{{ Storage::url($doc->file_path) }}" 
-                                                                       class="btn btn-sm btn-primary" target="_blank">
-                                                                        <i class="bi bi-download"></i>
-                                                                    </a>
-                                                                </td>
-                                                            </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                @else
-                                                <p class="text-muted mb-0">Belum ada peserta yang mengupload dokumen ini.</p>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <!-- Edit Modal -->
-                                <div class="modal fade" id="editModal{{ $req->id }}" tabindex="-1">
+                                <div class="modal fade" id="editDocModal{{ $req->id }}" tabindex="-1">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
-                                            <form action="{{ route('admin.classes.documents.update', [$class->id, $req->id]) }}" method="POST">
+                                            <form action="{{ route('admin.classes.documents.update', [$class, $req]) }}" method="POST">
                                                 @csrf
                                                 @method('PUT')
+                                                <input type="hidden" name="stage_id" value="{{ $stage->id }}">
                                                 <div class="modal-header">
-                                                    <h5 class="modal-title">Edit Requirement</h5>
+                                                    <h5 class="modal-title">Edit Dokumen Requirement</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                 </div>
                                                 <div class="modal-body">
                                                     <div class="mb-3">
-                                                        <label class="form-label">Nama Dokumen</label>
-                                                        <input type="text" class="form-control" name="document_name" 
-                                                               value="{{ $req->document_name }}" required>
+                                                        <label for="document_name{{ $req->id }}" class="form-label">Nama Dokumen <span class="text-danger">*</span></label>
+                                                        <input type="text" name="document_name" id="document_name{{ $req->id }}" class="form-control" value="{{ $req->document_name }}" required>
                                                     </div>
+
                                                     <div class="mb-3">
-                                                        <label class="form-label">Tipe File</label>
-                                                        <select class="form-select" name="document_type">
-                                                            <option value="" {{ !$req->document_type ? 'selected' : '' }}>Semua Tipe</option>
+                                                        <label for="document_type{{ $req->id }}" class="form-label">Tipe File</label>
+                                                        <select name="document_type" id="document_type{{ $req->id }}" class="form-select">
+                                                            <option value="">Semua Tipe</option>
                                                             <option value="pdf" {{ $req->document_type == 'pdf' ? 'selected' : '' }}>PDF</option>
                                                             <option value="doc,docx" {{ $req->document_type == 'doc,docx' ? 'selected' : '' }}>Word</option>
                                                             <option value="jpg,jpeg,png" {{ $req->document_type == 'jpg,jpeg,png' ? 'selected' : '' }}>Gambar</option>
                                                             <option value="pdf,doc,docx" {{ $req->document_type == 'pdf,doc,docx' ? 'selected' : '' }}>PDF/Word</option>
                                                         </select>
                                                     </div>
+
                                                     <div class="mb-3">
-                                                        <label class="form-label">Deskripsi</label>
-                                                        <textarea class="form-control" name="description" rows="3">{{ $req->description }}</textarea>
+                                                        <label for="description{{ $req->id }}" class="form-label">Deskripsi</label>
+                                                        <textarea name="description" id="description{{ $req->id }}" rows="3" class="form-control">{{ $req->description }}</textarea>
                                                     </div>
+
                                                     <div class="mb-3">
-                                                        <label class="form-label">Ukuran Maksimal (KB)</label>
-                                                        <input type="number" class="form-control" name="max_file_size" 
-                                                               value="{{ $req->max_file_size }}" min="100">
+                                                        <label for="max_file_size{{ $req->id }}" class="form-label">Ukuran Maksimal (KB)</label>
+                                                        <input type="number" name="max_file_size" id="max_file_size{{ $req->id }}" class="form-control" value="{{ $req->max_file_size }}" min="100">
                                                     </div>
-                                                    <div class="mb-3 form-check">
-                                                        <input type="checkbox" class="form-check-input" name="is_required" 
-                                                               value="1" {{ $req->is_required ? 'checked' : '' }}>
-                                                        <label class="form-check-label">Dokumen Wajib</label>
+
+                                                    <div class="form-check">
+                                                        <input type="checkbox" name="is_required" id="is_required{{ $req->id }}" class="form-check-input" value="1" {{ $req->is_required ? 'checked' : '' }}>
+                                                        <label for="is_required{{ $req->id }}" class="form-check-label">Dokumen Wajib</label>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                                    <button type="submit" class="btn btn-primary">Simpan</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -282,12 +187,67 @@
                     </div>
                     @else
                     <div class="alert alert-info mb-0">
-                        <i class="bi bi-info-circle"></i> Belum ada requirement dokumen untuk kelas ini. Silakan tambahkan requirement di form sebelah kiri.
+                        <i class="bi bi-info-circle"></i> Belum ada dokumen requirement untuk tahap ini.
                     </div>
                     @endif
                 </div>
             </div>
         </div>
+
+        <!-- Add Document Modal -->
+        <div class="modal fade" id="addDocModal{{ $stage->id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{{ route('admin.classes.documents.store', $class) }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="stage_id" value="{{ $stage->id }}">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Tambah Dokumen Requirement - {{ $stage->name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="document_name_new{{ $stage->id }}" class="form-label">Nama Dokumen <span class="text-danger">*</span></label>
+                                <input type="text" name="document_name" id="document_name_new{{ $stage->id }}" class="form-control" placeholder="Contoh: KTP, Ijazah, Laporan Tugas 1" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="document_type_new{{ $stage->id }}" class="form-label">Tipe File</label>
+                                <select name="document_type" id="document_type_new{{ $stage->id }}" class="form-select">
+                                    <option value="">Semua Tipe</option>
+                                    <option value="pdf">PDF</option>
+                                    <option value="doc,docx">Word</option>
+                                    <option value="jpg,jpeg,png">Gambar</option>
+                                    <option value="pdf,doc,docx">PDF/Word</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description_new{{ $stage->id }}" class="form-label">Deskripsi</label>
+                                <textarea name="description" id="description_new{{ $stage->id }}" rows="3" class="form-control" placeholder="Keterangan tambahan tentang dokumen ini"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="max_file_size_new{{ $stage->id }}" class="form-label">Ukuran Maksimal (KB)</label>
+                                <input type="number" name="max_file_size" id="max_file_size_new{{ $stage->id }}" class="form-control" value="5120" min="100">
+                                <small class="text-muted">Default: 5120 KB (5 MB)</small>
+                            </div>
+
+                            <div class="form-check">
+                                <input type="checkbox" name="is_required" id="is_required_new{{ $stage->id }}" class="form-check-input" value="1" checked>
+                                <label for="is_required_new{{ $stage->id }}" class="form-check-label">Dokumen Wajib</label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @endforeach
     </div>
+    @endif
 </div>
 @endsection

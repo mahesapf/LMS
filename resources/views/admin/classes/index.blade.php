@@ -96,6 +96,9 @@
                                     <a href="{{ route('admin.classes.fasilitators', $class) }}" class="btn btn-outline-success" title="Fasilitator">
                                         <i class="bi bi-person-badge"></i>
                                     </a>
+                                    <a href="{{ route('admin.classes.stages', $class) }}" class="btn btn-outline-secondary" title="Kelola Tahap">
+                                        <i class="bi bi-layers"></i>
+                                    </a>
                                     <a href="{{ route('admin.classes.documents', $class) }}" class="btn btn-outline-warning" title="Kelola Dokumen">
                                         <i class="bi bi-file-earmark-text"></i>
                                     </a>

@@ -11,6 +11,7 @@ class DocumentRequirement extends Model
 
     protected $fillable = [
         'class_id',
+        'stage_id',
         'document_name',
         'document_type',
         'description',
@@ -28,6 +29,14 @@ class DocumentRequirement extends Model
     public function class()
     {
         return $this->belongsTo(Classes::class, 'class_id');
+    }
+
+    /**
+     * Get the stage that owns this requirement
+     */
+    public function stage()
+    {
+        return $this->belongsTo(Stage::class, 'stage_id');
     }
 
     /**

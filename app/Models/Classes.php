@@ -55,6 +55,11 @@ class Classes extends Model
         return $this->hasMany(DocumentRequirement::class, 'class_id');
     }
 
+    public function stages()
+    {
+        return $this->hasMany(Stage::class, 'class_id')->orderBy('order');
+    }
+
     // Helper methods
     public function fasilitators()
     {

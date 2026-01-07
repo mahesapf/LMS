@@ -34,8 +34,9 @@
                             <th>No</th>
                             <th>Kelas</th>
                             <th>Kegiatan</th>
-                            <th>Jenis Penilaian</th>
-                            <th>Nilai</th>
+                            <th>Nilai Akhir</th>
+                            <th>Grade</th>
+                            <th>Status</th>
                             <th>Fasilitator</th>
                             <th>Tanggal</th>
                             <th>Catatan</th>
@@ -47,16 +48,21 @@
                             <td>{{ $loop->iteration + ($grades->currentPage() - 1) * $grades->perPage() }}</td>
                             <td>{{ $grade->class->name ?? '-' }}</td>
                             <td>{{ $grade->class->activity->name ?? '-' }}</td>
-                            <td>{{ $grade->assessment_type }}</td>
                             <td>
                                 <span class="badge 
-                                    @if($grade->score >= 80) bg-success
-                                    @elseif($grade->score >= 70) bg-primary
-                                    @elseif($grade->score >= 60) bg-warning
+                                    @if($grade->final_score >= 80) bg-success
+                                    @elseif($grade->final_score >= 70) bg-primary
+                                    @elseif($grade->final_score >= 60) bg-warning
                                     @else bg-danger
                                     @endif
                                     fs-6">
-                                    {{ $grade->score }}
+                                    {{ number_format($grade->final_score, 2) }}
+                                </span>
+                            </td>
+                            <td><span class="badge bg-info">{{ $grade->grade_letter }}</span></td>
+                            <td>
+                                <span class="badge bg-{{ $grade->status == 'lulus' ? 'success' : 'danger' }}">
+                                    {{ ucfirst($grade->status) }}
                                 </span>
                             </td>
                             <td>{{ $grade->fasilitator->name ?? '-' }}</td>
@@ -71,7 +77,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center">Belum ada nilai</td>
+                            <td colspan="9" class="text-center">Belum ada nilai</td>
                         </tr>
                         @endforelse
                     </tbody>

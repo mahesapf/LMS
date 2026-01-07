@@ -80,8 +80,9 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>Jenis Penilaian</th>
-                                    <th>Nilai</th>
+                                    <th>Nilai Akhir</th>
+                                    <th>Grade</th>
+                                    <th>Status</th>
                                     <th>Tanggal</th>
                                     <th>Catatan</th>
                                 </tr>
@@ -90,9 +91,16 @@
                                 @foreach($myGrades as $grade)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td><strong>{{ $grade->assessment_type }}</strong></td>
                                     <td>
-                                        <span class="badge bg-primary fs-6">{{ number_format($grade->score, 1) }}</span>
+                                        <span class="badge bg-primary fs-6">{{ number_format($grade->final_score, 2) }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info fs-6">{{ $grade->grade_letter }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ $grade->status == 'lulus' ? 'success' : 'danger' }} fs-6">
+                                            {{ ucfirst($grade->status) }}
+                                        </span>
                                     </td>
                                     <td>{{ $grade->graded_date ? $grade->graded_date->format('d/m/Y') : '-' }}</td>
                                     <td>{{ $grade->notes ?? '-' }}</td>
@@ -101,11 +109,11 @@
                             </tbody>
                             <tfoot>
                                 <tr class="table-info">
-                                    <td colspan="2" class="text-end"><strong>Rata-rata:</strong></td>
-                                    <td colspan="3">
+                                    <td colspan="1" class="text-end"><strong>Rata-rata:</strong></td>
+                                    <td colspan="5">
                                         <strong>
                                             <span class="badge bg-success fs-6">
-                                                {{ number_format($myGrades->avg('score'), 2) }}
+                                                {{ number_format($myGrades->avg('final_score'), 2) }}
                                             </span>
                                         </strong>
                                     </td>
@@ -173,7 +181,7 @@
                         @if($myGrades->count() > 0)
                         <dt class="col-sm-6">Nilai Rata-rata:</dt>
                         <dd class="col-sm-6">
-                            <span class="badge bg-success">{{ number_format($myGrades->avg('score'), 2) }}</span>
+                            <span class="badge bg-success">{{ number_format($myGrades->avg('final_score'), 2) }}</span>
                         </dd>
                         @endif
                     </dl>

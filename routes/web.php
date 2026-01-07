@@ -103,6 +103,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::post('/classes/{class}/fasilitators', [AdminController::class, 'assignFasilitator'])->name('classes.fasilitators.assign');
     Route::delete('/fasilitator-mappings/{mapping}', [AdminController::class, 'removeFasilitator'])->name('fasilitators.remove');
     
+    // Stage Management
+    Route::get('/classes/{class}/stages', [AdminController::class, 'classStages'])->name('classes.stages');
+    Route::post('/classes/{class}/stages', [AdminController::class, 'storeStage'])->name('classes.stages.store');
+    Route::put('/classes/{class}/stages/{stage}', [AdminController::class, 'updateStage'])->name('classes.stages.update');
+    Route::delete('/classes/{class}/stages/{stage}', [AdminController::class, 'destroyStage'])->name('classes.stages.destroy');
+    
     // Document Requirements
     Route::get('/classes/{class}/documents', [AdminController::class, 'classDocuments'])->name('classes.documents');
     Route::post('/classes/{class}/documents', [AdminController::class, 'storeDocumentRequirement'])->name('classes.documents.store');
