@@ -18,8 +18,7 @@ class HomeController extends Controller
             ->get();
         
         // Get active activities for homepage
-        $activities = Activity::where('status', 'active')
-            ->whereDate('start_date', '>', now())
+        $activities = Activity::whereIn('status', ['planned', 'ongoing'])
             ->with('program')
             ->orderBy('start_date')
             ->take(6)

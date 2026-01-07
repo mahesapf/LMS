@@ -16,8 +16,7 @@ class ActivityRegistrationController extends Controller
      */
     public function index()
     {
-        $activities = Activity::where('status', 'active')
-            ->whereDate('start_date', '>', now())
+        $activities = Activity::whereIn('status', ['planned', 'ongoing'])
             ->with('program')
             ->orderBy('start_date')
             ->get();
@@ -26,7 +25,7 @@ class ActivityRegistrationController extends Controller
             ->with(['activity.program', 'payment'])
             ->get();
 
-        return view('peserta.activities.index', compact('activities', 'myRegistrations'));
+        return view('activities.index', compact('activities', 'myRegistrations'));
     }
 
     /**
@@ -39,7 +38,7 @@ class ActivityRegistrationController extends Controller
             ->where('user_id', Auth::id())
             ->first();
 
-        return view('peserta.activities.show', compact('activity', 'existingRegistration'));
+        return view('activities.show', compact('activity', 'existingRegistration'));
     }
 
     /**
@@ -76,7 +75,7 @@ class ActivityRegistrationController extends Controller
             'status' => 'payment_pending',
         ]);
 
-        return redirect()->route('peserta.payment.create', $registration)
+        return redirect()->route('payment.create', $registration)
             ->with('success', 'Pendaftaran berhasil! Silakan lanjutkan ke pembayaran.');
     }
 
@@ -92,11 +91,11 @@ class ActivityRegistrationController extends Controller
 
         // Check if already paid
         if ($registration->payment) {
-            return redirect()->route('peserta.programs.index')
-                ->with('info', 'Anda sudah melakukan pembayaran untuk program ini.');
+            return redirect()->route('activities.index')
+                ->with('info', 'Anda sudah melakukan pembayaran untuk kegiatan ini.');
         }
 
-        return view('peserta.payment.create', compact('registration'));
+        return view('payment.create', compact('registration'));
     }
 
     /**
@@ -137,7 +136,7 @@ class ActivityRegistrationController extends Controller
         // Update registration status
         $registration->update(['status' => 'payment_uploaded']);
 
-        return redirect()->route('peserta.activities.index')
+        return redirect()->route('activities.index')
             ->with('success', 'Bukti pembayaran berhasil diupload. Menunggu validasi super admin.');
     }
 }

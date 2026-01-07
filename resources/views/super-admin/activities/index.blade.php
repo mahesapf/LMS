@@ -4,11 +4,21 @@
 
 @section('sidebar')
 <nav class="nav flex-column">
-    <a class="nav-link" href="{{ route('super-admin.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
-    <a class="nav-link" href="{{ route('super-admin.programs') }}">Program</a>
-    <a class="nav-link active" href="{{ route('super-admin.activities') }}">Kegiatan</a>
-    <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
+    @if(auth()->user()->role === 'super_admin')
+        <a class="nav-link" href="{{ route('super-admin.dashboard') }}">Dashboard</a>
+        <a class="nav-link" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
+        <a class="nav-link" href="{{ route('super-admin.programs') }}">Program</a>
+        <a class="nav-link active" href="{{ route('super-admin.activities') }}">Kegiatan</a>
+        <a class="nav-link" href="{{ route('super-admin.classes.index') }}">Kelas</a>
+        <a class="nav-link" href="{{ route('super-admin.payments.index') }}">Validasi Pembayaran</a>
+        <a class="nav-link" href="{{ route('super-admin.registrations.index') }}">Kelola Pendaftaran</a>
+        <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
+    @else
+        <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
+        <a class="nav-link active" href="{{ route('admin.activities') }}">Kegiatan</a>
+        <a class="nav-link" href="{{ route('admin.classes.index') }}">Kelas</a>
+        <a class="nav-link" href="{{ route('admin.registrations.index') }}">Manajemen Peserta</a>
+    @endif
 </nav>
 @endsection
 
@@ -16,7 +26,7 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Daftar Kegiatan</h1>
-        <a href="{{ route('super-admin.activities.create') }}" class="btn btn-primary">Tambah Kegiatan</a>
+        <a href="{{ route($routePrefix . '.activities.create') }}" class="btn btn-primary">Tambah Kegiatan</a>
     </div>
 
     <div class="card">
@@ -64,8 +74,8 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <a href="{{ route('super-admin.activities.edit', $activity) }}" class="btn btn-warning">Edit</a>
-                                    <form method="POST" action="{{ route('super-admin.activities.delete', $activity) }}" class="d-inline">
+                                    <a href="{{ route($routePrefix . '.activities.edit', $activity) }}" class="btn btn-warning">Edit</a>
+                                    <form method="POST" action="{{ route($routePrefix . '.activities.delete', $activity) }}" class="d-inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger" onclick="return confirm('Hapus kegiatan ini?')">Hapus</button>

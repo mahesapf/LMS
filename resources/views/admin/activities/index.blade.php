@@ -5,10 +5,9 @@
 @section('sidebar')
 <nav class="nav flex-column">
     <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('admin.participants') }}">Manajemen Peserta</a>
     <a class="nav-link active" href="{{ route('admin.activities') }}">Kegiatan</a>
-    <a class="nav-link" href="{{ route('admin.classes') }}">Kelas</a>
-    <a class="nav-link" href="{{ route('admin.mappings.index') }}">Pemetaan Peserta</a>
+    <a class="nav-link" href="{{ route('admin.classes.index') }}">Kelas</a>
+    <a class="nav-link" href="{{ route('admin.registrations.index') }}">Manajemen Peserta</a>
 </nav>
 @endsection
 

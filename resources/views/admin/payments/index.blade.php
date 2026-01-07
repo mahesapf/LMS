@@ -4,11 +4,14 @@
 
 @section('sidebar')
 <nav class="nav flex-column">
-    <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('admin.programs.index') }}">Program</a>
-    <a class="nav-link" href="{{ route('admin.classes.index') }}">Kelas</a>
-    <a class="nav-link active" href="{{ route('admin.payments.index') }}">Validasi Pembayaran</a>
-    <a class="nav-link" href="{{ route('admin.registrations.index') }}">Kelola Peserta</a>
+    <a class="nav-link" href="{{ route('super-admin.dashboard') }}">Dashboard</a>
+    <a class="nav-link" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
+    <a class="nav-link" href="{{ route('super-admin.programs') }}">Program</a>
+    <a class="nav-link" href="{{ route('super-admin.activities') }}">Kegiatan</a>
+    <a class="nav-link" href="{{ route('super-admin.classes.index') }}">Kelas</a>
+    <a class="nav-link active" href="{{ route('super-admin.payments.index') }}">Validasi Pembayaran</a>
+    <a class="nav-link" href="{{ route('super-admin.registrations.index') }}">Kelola Pendaftaran</a>
+    <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
 </nav>
 @endsection
 
@@ -51,7 +54,12 @@
                                     {{ $payment->registration->name }}<br>
                                     <small class="text-muted">{{ $payment->registration->email }}</small>
                                 </td>
-                                <td>{{ $payment->registration->program->name }}</td>
+                                <td>
+                                    {{ $payment->registration->activity->name }}<br>
+                                    @if($payment->registration->activity->program)
+                                        <small class="text-muted">{{ $payment->registration->activity->program->name }}</small>
+                                    @endif
+                                </td>
                                 <td>{{ $payment->bank_name }}</td>
                                 <td>Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
                                 <td>{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
@@ -75,7 +83,25 @@
                                         <div class="modal-body">
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <h6>Informasi Peserta</h6>
+                                                    <h6>Informasi Kegiatan</h6>
+                                                    <table class="table table-sm">
+                                                        <tr>
+                                                            <td>Kegiatan</td>
+                                                            <td>: {{ $payment->registration->activity->name }}</td>
+                                                        </tr>
+                                                        @if($payment->registration->activity->program)
+                                                        <tr>
+                                                            <td>Program</td>
+                                                            <td>: {{ $payment->registration->activity->program->name }}</td>
+                                                        </tr>
+                                                        @endif
+                                                        <tr>
+                                                            <td>Biaya</td>
+                                                            <td>: Rp {{ number_format($payment->registration->activity->registration_fee, 0, ',', '.') }}</td>
+                                                        </tr>
+                                                    </table>
+
+                                                    <h6 class="mt-3">Informasi Peserta</h6>
                                                     <table class="table table-sm">
                                                         <tr>
                                                             <td>Nama</td>
@@ -117,14 +143,20 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <h6>Bukti Pembayaran</h6>
-                                                    <img src="{{ Storage::url($payment->proof_file) }}" 
-                                                         class="img-fluid rounded" 
-                                                         alt="Bukti Pembayaran">
+                                                    <a href="{{ Storage::url($payment->proof_file) }}" target="_blank">
+                                                        <img src="{{ Storage::url($payment->proof_file) }}" 
+                                                             class="img-fluid rounded border" 
+                                                             alt="Bukti Pembayaran"
+                                                             style="max-height: 400px; cursor: pointer;">
+                                                    </a>
+                                                    <p class="text-muted small mt-2">
+                                                        <i class="bi bi-info-circle"></i> Klik gambar untuk melihat ukuran penuh
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
-                                            <form action="{{ route('admin.payments.validate', $payment) }}" 
+                                            <form action="{{ route('super-admin.payments.approve', $payment) }}" 
                                                   method="POST" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
@@ -149,7 +181,7 @@
                             <div class="modal fade" id="rejectModal{{ $payment->id }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
-                                        <form action="{{ route('admin.payments.reject', $payment) }}" method="POST">
+                                        <form action="{{ route('super-admin.payments.reject', $payment) }}" method="POST">
                                             @csrf
                                             @method('PATCH')
                                             <div class="modal-header">
@@ -208,7 +240,12 @@
                         <tr>
                             <td>{{ $payment->validated_at->format('d M Y H:i') }}</td>
                             <td>{{ $payment->registration->name }}</td>
-                            <td>{{ $payment->registration->program->name }}</td>
+                            <td>
+                                {{ $payment->registration->activity->name }}
+                                @if($payment->registration->activity->program)
+                                    <br><small class="text-muted">{{ $payment->registration->activity->program->name }}</small>
+                                @endif
+                            </td>
                             <td>Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
                             <td>
                                 @if($payment->status == 'validated')

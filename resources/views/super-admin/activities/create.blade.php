@@ -8,6 +8,9 @@
     <a class="nav-link" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
     <a class="nav-link" href="{{ route('super-admin.programs') }}">Program</a>
     <a class="nav-link active" href="{{ route('super-admin.activities') }}">Kegiatan</a>
+    <a class="nav-link" href="{{ route('super-admin.classes.index') }}">Kelas</a>
+    <a class="nav-link" href="{{ route('super-admin.payments.index') }}">Validasi Pembayaran</a>
+    <a class="nav-link" href="{{ route('super-admin.registrations.index') }}">Kelola Pendaftaran</a>
     <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
 </nav>
 @endsection
@@ -114,30 +117,6 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Sumber Pembiayaan</label>
-                        <select name="funding_source" id="funding_source" class="form-select @error('funding_source') is-invalid @enderror" onchange="toggleOtherFunding()">
-                            <option value="">Pilih Sumber Pembiayaan</option>
-                            <option value="DIPA" {{ old('funding_source') == 'DIPA' ? 'selected' : '' }}>DIPA</option>
-                            <option value="PNBP" {{ old('funding_source') == 'PNBP' ? 'selected' : '' }}>PNBP</option>
-                            <option value="APBD" {{ old('funding_source') == 'APBD' ? 'selected' : '' }}>APBD</option>
-                            <option value="BOS" {{ old('funding_source') == 'BOS' ? 'selected' : '' }}>BOS</option>
-                            <option value="Other" {{ old('funding_source') == 'Other' ? 'selected' : '' }}>Lainnya</option>
-                        </select>
-                        @error('funding_source')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-6" id="other_funding_div" style="display: {{ old('funding_source') == 'Other' ? 'block' : 'none' }};">
-                        <label class="form-label">Sumber Pembiayaan Lainnya</label>
-                        <input type="text" name="funding_source_other" class="form-control @error('funding_source_other') is-invalid @enderror" value="{{ old('funding_source_other') }}">
-                        @error('funding_source_other')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
                 <div class="mb-3">
                     <label class="form-label">Status <span class="text-danger">*</span></label>
                     <select name="status" class="form-select @error('status') is-invalid @enderror" required>
@@ -161,17 +140,6 @@
 </div>
 
 <script>
-function toggleOtherFunding() {
-    const fundingSource = document.getElementById('funding_source').value;
-    const otherDiv = document.getElementById('other_funding_div');
-    
-    if (fundingSource === 'Other') {
-        otherDiv.style.display = 'block';
-    } else {
-        otherDiv.style.display = 'none';
-    }
-}
-
 // Enable/disable APBN type based on financing type
 document.getElementById('financing_type').addEventListener('change', function() {
     const apbnType = document.getElementById('apbn_type');

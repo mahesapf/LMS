@@ -37,9 +37,9 @@ class PaymentValidationController extends Controller
     }
 
     /**
-     * Validate the payment (Super Admin only).
+     * Approve the payment (Super Admin only).
      */
-    public function validate(Payment $payment)
+    public function approve(Payment $payment)
     {
         $payment->update([
             'status' => 'validated',

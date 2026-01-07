@@ -20,8 +20,10 @@ class RegistrationManagementController extends Controller
             ->get();
 
         $classes = Classes::with('activity.program')->get();
+        
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
 
-        return view('admin.registrations.index', compact('registrations', 'classes'));
+        return view('admin.registrations.index', compact('registrations', 'classes', 'routePrefix'));
     }
 
     /**
@@ -39,18 +41,20 @@ class RegistrationManagementController extends Controller
         ]);
 
         // Create participant mapping if not exists
-        $existingMapping = ParticipantMapping::where('user_id', $registration->user_id)
+        $existingMapping = ParticipantMapping::where('participant_id', $registration->user_id)
             ->where('class_id', $validated['class_id'])
             ->first();
 
         if (!$existingMapping) {
             ParticipantMapping::create([
-                'user_id' => $registration->user_id,
+                'participant_id' => $registration->user_id,
                 'class_id' => $validated['class_id'],
+                'enrolled_date' => now(),
+                'assigned_by' => auth()->id(),
             ]);
         }
 
-        return redirect()->route('admin.registrations.index')
+        return redirect()->route('super-admin.registrations.index')
             ->with('success', 'Peserta berhasil ditambahkan ke kelas.');
     }
 
@@ -61,7 +65,7 @@ class RegistrationManagementController extends Controller
     {
         if ($registration->class_id) {
             // Remove participant mapping
-            ParticipantMapping::where('user_id', $registration->user_id)
+            ParticipantMapping::where('participant_id', $registration->user_id)
                 ->where('class_id', $registration->class_id)
                 ->delete();
 
@@ -70,7 +74,7 @@ class RegistrationManagementController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.registrations.index')
+        return redirect()->route('super-admin.registrations.index')
             ->with('success', 'Peserta berhasil dihapus dari kelas.');
     }
 }

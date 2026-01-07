@@ -61,14 +61,6 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::put('/programs/{program}', [SuperAdminController::class, 'updateProgram'])->name('programs.update');
     Route::delete('/programs/{program}', [SuperAdminController::class, 'deleteProgram'])->name('programs.delete');
     
-    // Activity Management
-    Route::get('/activities', [SuperAdminController::class, 'activities'])->name('activities');
-    Route::get('/activities/create', [SuperAdminController::class, 'createActivity'])->name('activities.create');
-    Route::post('/activities', [SuperAdminController::class, 'storeActivity'])->name('activities.store');
-    Route::get('/activities/{activity}/edit', [SuperAdminController::class, 'editActivity'])->name('activities.edit');
-    Route::put('/activities/{activity}', [SuperAdminController::class, 'updateActivity'])->name('activities.update');
-    Route::delete('/activities/{activity}', [SuperAdminController::class, 'deleteActivity'])->name('activities.delete');
-    
     // Admin Mapping
     Route::get('/admin-mappings', [SuperAdminController::class, 'adminMappings'])->name('admin-mappings');
     Route::get('/admin-mappings/create', [SuperAdminController::class, 'createAdminMapping'])->name('admin-mappings.create');
@@ -78,62 +70,70 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     // Payment Validation (Super Admin Only)
     Route::get('/payments', [\App\Http\Controllers\PaymentValidationController::class, 'index'])->name('payments.index');
     Route::get('/payments/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'show'])->name('payments.show');
-    Route::patch('/payments/{payment}/validate', [\App\Http\Controllers\PaymentValidationController::class, 'validate'])->name('payments.validate');
+    Route::patch('/payments/{payment}/approve', [\App\Http\Controllers\PaymentValidationController::class, 'approve'])->name('payments.approve');
     Route::patch('/payments/{payment}/reject', [\App\Http\Controllers\PaymentValidationController::class, 'reject'])->name('payments.reject');
+});
+
+// Routes for Super Admin AND Admin (Kegiatan, Kelas, Manajemen Peserta)
+Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:super_admin,admin'])->group(function () {
+    // Activity Management
+    Route::get('/activities', [SuperAdminController::class, 'activities'])->name('activities');
+    Route::get('/activities/create', [SuperAdminController::class, 'createActivity'])->name('activities.create');
+    Route::post('/activities', [SuperAdminController::class, 'storeActivity'])->name('activities.store');
+    Route::get('/activities/{activity}/edit', [SuperAdminController::class, 'editActivity'])->name('activities.edit');
+    Route::put('/activities/{activity}', [SuperAdminController::class, 'updateActivity'])->name('activities.update');
+    Route::delete('/activities/{activity}', [SuperAdminController::class, 'deleteActivity'])->name('activities.delete');
     
-    // Registration Management (Super Admin Only)
+    // Registration Management
     Route::get('/registrations', [\App\Http\Controllers\RegistrationManagementController::class, 'index'])->name('registrations.index');
     Route::patch('/registrations/{registration}/assign', [\App\Http\Controllers\RegistrationManagementController::class, 'assignToClass'])->name('registrations.assignToClass');
     Route::delete('/registrations/{registration}/remove', [\App\Http\Controllers\RegistrationManagementController::class, 'removeFromClass'])->name('registrations.removeFromClass');
+    
+    // Class Management
+    Route::get('/classes', [SuperAdminController::class, 'classes'])->name('classes.index');
+    Route::get('/classes/create', [SuperAdminController::class, 'createClass'])->name('classes.create');
+    Route::post('/classes', [SuperAdminController::class, 'storeClass'])->name('classes.store');
+    Route::get('/classes/{class}', [SuperAdminController::class, 'showClass'])->name('classes.show');
+    Route::get('/classes/{class}/edit', [SuperAdminController::class, 'editClass'])->name('classes.edit');
+    Route::put('/classes/{class}', [SuperAdminController::class, 'updateClass'])->name('classes.update');
+    Route::delete('/classes/{class}', [SuperAdminController::class, 'deleteClass'])->name('classes.delete');
+    Route::post('/classes/{class}/participants', [SuperAdminController::class, 'assignParticipantToClass'])->name('classes.assignParticipant');
+    Route::delete('/classes/{class}/participants/{participant}', [SuperAdminController::class, 'removeParticipant'])->name('classes.removeParticipant');
+    Route::get('/classes/{class}/fasilitators', function($class) { return redirect()->route('super-admin.classes.show', $class); });
+    Route::post('/classes/{class}/fasilitators', [SuperAdminController::class, 'assignFasilitatorToClass'])->name('classes.assignFasilitator');
+    Route::delete('/classes/{class}/fasilitators/{fasilitator}', [SuperAdminController::class, 'removeFasilitatorFromClass'])->name('classes.removeFasilitator');
 });
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
-    // Participant Management
-    Route::get('/participants', [AdminController::class, 'participants'])->name('participants');
-    Route::get('/participants/create', [AdminController::class, 'createParticipant'])->name('participants.create');
-    Route::post('/participants', [AdminController::class, 'storeParticipant'])->name('participants.store');
-    Route::get('/participants/{participant}/edit', [AdminController::class, 'editParticipant'])->name('participants.edit');
-    Route::put('/participants/{participant}', [AdminController::class, 'updateParticipant'])->name('participants.update');
-    Route::delete('/participants/{participant}', [AdminController::class, 'deleteParticipant'])->name('participants.delete');
-    Route::post('/participants/{participant}/suspend', [AdminController::class, 'suspendParticipant'])->name('participants.suspend');
+    // Activity Management (sama seperti super admin)
+    Route::get('/activities', [SuperAdminController::class, 'activities'])->name('activities');
+    Route::get('/activities/create', [SuperAdminController::class, 'createActivity'])->name('activities.create');
+    Route::post('/activities', [SuperAdminController::class, 'storeActivity'])->name('activities.store');
+    Route::get('/activities/{activity}/edit', [SuperAdminController::class, 'editActivity'])->name('activities.edit');
+    Route::put('/activities/{activity}', [SuperAdminController::class, 'updateActivity'])->name('activities.update');
+    Route::delete('/activities/{activity}', [SuperAdminController::class, 'deleteActivity'])->name('activities.delete');
     
-    // Activity Management
-    Route::get('/activities', [AdminController::class, 'activities'])->name('activities');
+    // Class Management (sama seperti super admin)
+    Route::get('/classes', [SuperAdminController::class, 'classes'])->name('classes.index');
+    Route::get('/classes/create', [SuperAdminController::class, 'createClass'])->name('classes.create');
+    Route::post('/classes', [SuperAdminController::class, 'storeClass'])->name('classes.store');
+    Route::get('/classes/{class}', [SuperAdminController::class, 'showClass'])->name('classes.show');
+    Route::get('/classes/{class}/edit', [SuperAdminController::class, 'editClass'])->name('classes.edit');
+    Route::put('/classes/{class}', [SuperAdminController::class, 'updateClass'])->name('classes.update');
+    Route::delete('/classes/{class}', [SuperAdminController::class, 'deleteClass'])->name('classes.delete');
+    Route::post('/classes/{class}/participants', [SuperAdminController::class, 'assignParticipantToClass'])->name('classes.assignParticipant');
+    Route::delete('/classes/{class}/participants/{participant}', [SuperAdminController::class, 'removeParticipant'])->name('classes.removeParticipant');
+    Route::get('/classes/{class}/fasilitators', function($class) { return redirect()->route('admin.classes.show', $class); });
+    Route::post('/classes/{class}/fasilitators', [SuperAdminController::class, 'assignFasilitatorToClass'])->name('classes.assignFasilitator');
+    Route::delete('/classes/{class}/fasilitators/{fasilitator}', [SuperAdminController::class, 'removeFasilitatorFromClass'])->name('classes.removeFasilitator');
     
-    // Class Management
-    Route::get('/classes', [AdminController::class, 'classes'])->name('classes');
-    Route::get('/classes/create', [AdminController::class, 'createClass'])->name('classes.create');
-    Route::post('/classes', [AdminController::class, 'storeClass'])->name('classes.store');
-    Route::get('/classes/{class}/edit', [AdminController::class, 'editClass'])->name('classes.edit');
-    Route::put('/classes/{class}', [AdminController::class, 'updateClass'])->name('classes.update');
-    Route::delete('/classes/{class}', [AdminController::class, 'deleteClass'])->name('classes.delete');
-    
-    // Participant Mapping
-    Route::get('/mappings', [AdminController::class, 'mappingsIndex'])->name('mappings.index');
-    Route::get('/classes/{class}/participants', [AdminController::class, 'participantMappings'])->name('classes.participants');
-    Route::post('/classes/{class}/participants', [AdminController::class, 'assignParticipant'])->name('classes.participants.assign');
-    Route::post('/mappings/{mapping}/move', [AdminController::class, 'moveParticipant'])->name('mappings.move');
-    Route::post('/mappings/{mapping}/remove', [AdminController::class, 'removeParticipant'])->name('mappings.remove');
-    
-    // Fasilitator Mapping
-    Route::get('/classes/{class}/fasilitators', [AdminController::class, 'fasilitatorMappings'])->name('classes.fasilitators');
-    Route::post('/classes/{class}/fasilitators', [AdminController::class, 'assignFasilitator'])->name('classes.fasilitators.assign');
-    Route::delete('/fasilitator-mappings/{mapping}', [AdminController::class, 'removeFasilitator'])->name('fasilitators.remove');
-    
-    // Stage Management
-    Route::get('/classes/{class}/stages', [AdminController::class, 'classStages'])->name('classes.stages');
-    Route::post('/classes/{class}/stages', [AdminController::class, 'storeStage'])->name('classes.stages.store');
-    Route::put('/classes/{class}/stages/{stage}', [AdminController::class, 'updateStage'])->name('classes.stages.update');
-    Route::delete('/classes/{class}/stages/{stage}', [AdminController::class, 'destroyStage'])->name('classes.stages.destroy');
-    
-    // Document Requirements
-    Route::get('/classes/{class}/documents', [AdminController::class, 'classDocuments'])->name('classes.documents');
-    Route::post('/classes/{class}/documents', [AdminController::class, 'storeDocumentRequirement'])->name('classes.documents.store');
-    Route::put('/classes/{class}/documents/{requirement}', [AdminController::class, 'updateDocumentRequirement'])->name('classes.documents.update');
-    Route::delete('/classes/{class}/documents/{requirement}', [AdminController::class, 'destroyDocumentRequirement'])->name('classes.documents.destroy');
+    // Registration Management (sama seperti super admin)
+    Route::get('/registrations', [\App\Http\Controllers\RegistrationManagementController::class, 'index'])->name('registrations.index');
+    Route::patch('/registrations/{registration}/assign', [\App\Http\Controllers\RegistrationManagementController::class, 'assignToClass'])->name('registrations.assignToClass');
+    Route::delete('/registrations/{registration}/remove', [\App\Http\Controllers\RegistrationManagementController::class, 'removeFromClass'])->name('registrations.removeFromClass');
 });
 
 // Fasilitator Routes

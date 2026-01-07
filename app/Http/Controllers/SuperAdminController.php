@@ -256,13 +256,15 @@ class SuperAdminController extends Controller
     public function activities()
     {
         $activities = Activity::with(['program', 'creator'])->latest()->paginate(20);
-        return view('super-admin.activities.index', compact('activities'));
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return view('super-admin.activities.index', compact('activities', 'routePrefix'));
     }
 
     public function createActivity()
     {
         $programs = Program::where('status', 'active')->get();
-        return view('super-admin.activities.create', compact('programs'));
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return view('super-admin.activities.create', compact('programs', 'routePrefix'));
     }
 
     public function storeActivity(Request $request)
@@ -283,13 +285,15 @@ class SuperAdminController extends Controller
 
         Activity::create($validated);
 
-        return redirect()->route('super-admin.activities')->with('success', 'Kegiatan berhasil dibuat');
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.activities')->with('success', 'Kegiatan berhasil dibuat');
     }
 
     public function editActivity(Activity $activity)
     {
         $programs = Program::where('status', 'active')->get();
-        return view('super-admin.activities.edit', compact('activity', 'programs'));
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return view('super-admin.activities.edit', compact('activity', 'programs', 'routePrefix'));
     }
 
     public function updateActivity(Request $request, Activity $activity)
@@ -308,13 +312,15 @@ class SuperAdminController extends Controller
 
         $activity->update($validated);
 
-        return redirect()->route('super-admin.activities')->with('success', 'Kegiatan berhasil diupdate');
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.activities')->with('success', 'Kegiatan berhasil diupdate');
     }
 
     public function deleteActivity(Activity $activity)
     {
         $activity->delete();
-        return redirect()->route('super-admin.activities')->with('success', 'Kegiatan berhasil dihapus');
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.activities')->with('success', 'Kegiatan berhasil dihapus');
     }
 
     // Admin Mapping
@@ -362,5 +368,209 @@ class SuperAdminController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Status mapping berhasil diupdate');
+    }
+
+    // Class Management
+    public function classes(Request $request)
+    {
+        $query = \App\Models\Classes::with(['activity', 'creator']);
+        
+        if ($request->has('activity_id')) {
+            $query->where('activity_id', $request->activity_id);
+        }
+        
+        $classes = $query->latest()->paginate(20);
+        $activities = Activity::all();
+        
+        // Detect route prefix based on user role
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        
+        return view('super-admin.classes.index', compact('classes', 'activities', 'routePrefix'));
+    }
+
+    public function createClass()
+    {
+        $activities = Activity::whereIn('status', ['planned', 'ongoing'])->get();
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return view('super-admin.classes.create', compact('activities', 'routePrefix'));
+    }
+
+    public function storeClass(Request $request)
+    {
+        $validated = $request->validate([
+            'activity_id' => 'required|exists:activities,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'max_participants' => 'nullable|integer|min:1',
+            'status' => 'required|in:open,closed,completed',
+        ]);
+
+        $validated['created_by'] = auth()->id();
+
+        \App\Models\Classes::create($validated);
+
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.classes.index')->with('success', 'Kelas berhasil dibuat');
+    }
+
+    public function editClass(\App\Models\Classes $class)
+    {
+        $activities = Activity::whereIn('status', ['planned', 'ongoing'])->get();
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return view('super-admin.classes.edit', compact('class', 'activities', 'routePrefix'));
+    }
+
+    public function updateClass(Request $request, \App\Models\Classes $class)
+    {
+        $validated = $request->validate([
+            'activity_id' => 'required|exists:activities,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'max_participants' => 'nullable|integer|min:1',
+            'status' => 'required|in:open,closed,completed',
+        ]);
+
+        $class->update($validated);
+
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.classes.index')->with('success', 'Kelas berhasil diupdate');
+    }
+
+    public function deleteClass(\App\Models\Classes $class)
+    {
+        $class->delete();
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.classes.index')->with('success', 'Kelas berhasil dihapus');
+    }
+
+    public function showClass(\App\Models\Classes $class)
+    {
+        $class->load(['activity', 'participantMappings.participant', 'fasilitatorMappings.fasilitator']);
+        
+        // Get validated participants for this activity who are not yet in any class
+        $availableParticipants = \App\Models\User::where('role', 'peserta')
+            ->where('status', 'active')
+            ->whereHas('registrations', function($query) use ($class) {
+                $query->where('activity_id', $class->activity_id)
+                    ->where('status', 'validated')
+                    ->whereNull('class_id');
+            })
+            ->get();
+        
+        // Get available fasilitators (who are not yet in this class)
+        $availableFasilitators = \App\Models\User::where('role', 'fasilitator')
+            ->where('status', 'active')
+            ->whereDoesntHave('fasilitatorMappings', function($query) use ($class) {
+                $query->where('class_id', $class->id)
+                    ->where('status', 'in');
+            })
+            ->get();
+        
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        
+        return view('super-admin.classes.show', compact('class', 'availableParticipants', 'availableFasilitators', 'routePrefix'));
+    }
+
+    public function removeParticipant(\App\Models\Classes $class, \App\Models\ParticipantMapping $participant)
+    {
+        // Update registration to remove class_id
+        \App\Models\Registration::where('user_id', $participant->participant_id)
+            ->where('class_id', $class->id)
+            ->update(['class_id' => null]);
+        
+        // Delete participant mapping
+        $participant->delete();
+        
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.classes.show', $class)
+            ->with('success', 'Peserta berhasil dikeluarkan dari kelas');
+    }
+
+    public function assignParticipantToClass(Request $request, \App\Models\Classes $class)
+    {
+        $validated = $request->validate([
+            'participant_id' => 'required|exists:users,id',
+        ]);
+
+        // Check if participant is already in a class for this activity
+        $existingMapping = \App\Models\ParticipantMapping::where('participant_id', $validated['participant_id'])
+            ->whereHas('class', function($query) use ($class) {
+                $query->where('activity_id', $class->activity_id);
+            })
+            ->first();
+
+        if ($existingMapping) {
+            return redirect()->back()->with('error', 'Peserta sudah terdaftar di kelas lain untuk kegiatan ini');
+        }
+
+        // Update registration with class_id
+        \App\Models\Registration::where('user_id', $validated['participant_id'])
+            ->where('activity_id', $class->activity_id)
+            ->where('status', 'validated')
+            ->update(['class_id' => $class->id]);
+
+        // Create participant mapping
+        \App\Models\ParticipantMapping::create([
+            'class_id' => $class->id,
+            'participant_id' => $validated['participant_id'],
+            'enrolled_date' => now(),
+            'assigned_by' => auth()->id(),
+            'status' => 'active',
+        ]);
+
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.classes.show', $class)
+            ->with('success', 'Peserta berhasil ditambahkan ke kelas');
+    }
+
+    public function assignFasilitatorToClass(Request $request, \App\Models\Classes $class)
+    {
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        
+        try {
+            $validated = $request->validate([
+                'fasilitator_id' => 'required|exists:users,id',
+            ]);
+
+            // Check if fasilitator is already in this class
+            $existingMapping = \App\Models\FasilitatorMapping::where('fasilitator_id', $validated['fasilitator_id'])
+                ->where('class_id', $class->id)
+                ->where('status', 'in')
+                ->first();
+
+            if ($existingMapping) {
+                return redirect()->route($routePrefix . '.classes.show', $class)
+                    ->with('error', 'Fasilitator sudah terdaftar di kelas ini');
+            }
+
+            // Create fasilitator mapping
+            \App\Models\FasilitatorMapping::create([
+                'class_id' => $class->id,
+                'fasilitator_id' => $validated['fasilitator_id'],
+                'assigned_date' => now(),
+                'assigned_by' => auth()->id(),
+                'status' => 'in',
+            ]);
+
+            return redirect()->route($routePrefix . '.classes.show', $class)
+                ->with('success', 'Fasilitator berhasil ditambahkan ke kelas');
+                
+        } catch (\Exception $e) {
+            return redirect()->route($routePrefix . '.classes.show', $class)
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    public function removeFasilitatorFromClass(\App\Models\Classes $class, \App\Models\FasilitatorMapping $fasilitator)
+    {
+        // Update status to out and set removed date
+        $fasilitator->update([
+            'status' => 'out',
+            'removed_date' => now(),
+        ]);
+        
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.classes.show', $class)
+            ->with('success', 'Fasilitator berhasil dikeluarkan dari kelas');
     }
 }
