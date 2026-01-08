@@ -88,7 +88,7 @@
                                     <form action="{{ route('fasilitator.grades.store', $class) }}" method="POST">
                                         @csrf
                                         <input type="hidden" name="participant_id" value="{{ $participant->id }}">
-                                        
+
                                         <div class="modal-header">
                                             <h5 class="modal-title">Input Nilai - {{ $participant->name }}</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

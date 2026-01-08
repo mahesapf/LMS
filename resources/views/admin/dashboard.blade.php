@@ -14,7 +14,7 @@
 @section('content')
 <div class="container-fluid">
     <h1 class="mb-4">Dashboard Admin</h1>
-    
+
     <div class="row">
         <div class="col-md-3 mb-4">
             <div class="card bg-primary text-white">

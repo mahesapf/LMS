@@ -41,7 +41,7 @@
                 <div class="card-body">
                     <form method="POST" action="{{ route('fasilitator.classes.participants.assign', $class) }}">
                         @csrf
-                        
+
                         <div class="mb-3">
                             <label for="participant_id" class="form-label">Pilih Peserta <span class="text-danger">*</span></label>
                             <select name="participant_id" id="participant_id" class="form-select @error('participant_id') is-invalid @enderror" required>

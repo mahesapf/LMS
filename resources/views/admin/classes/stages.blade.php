@@ -59,7 +59,7 @@
             <div class="card h-100">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">{{ $stage->name }}</h5>
-                    <span class="badge 
+                    <span class="badge
                         @if($stage->status == 'ongoing') bg-success
                         @elseif($stage->status == 'completed') bg-secondary
                         @else bg-warning

@@ -3,53 +3,38 @@
 @section('title', 'Manajemen Kelas')
 
 @section('sidebar')
-<nav class="nav flex-column">
-    @if(auth()->user()->role === 'super_admin')
-        <a class="nav-link" href="{{ route('super-admin.dashboard') }}">Dashboard</a>
-        <a class="nav-link" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
-        <a class="nav-link" href="{{ route('super-admin.programs') }}">Program</a>
-        <a class="nav-link" href="{{ route('super-admin.activities') }}">Kegiatan</a>
-        <a class="nav-link active" href="{{ route('super-admin.classes.index') }}">Kelas</a>
-        <a class="nav-link" href="{{ route('super-admin.payments.index') }}">Validasi Pembayaran</a>
-        <a class="nav-link" href="{{ route('super-admin.registrations.index') }}">Kelola Pendaftaran</a>
-        <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
-    @else
-        <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-        <a class="nav-link" href="{{ route('admin.activities') }}">Kegiatan</a>
-        <a class="nav-link active" href="{{ route('admin.classes.index') }}">Kelas</a>
-        <a class="nav-link" href="{{ route('admin.registrations.index') }}">Manajemen Peserta</a>
-    @endif
-</nav>
+    @include('super-admin.partials.sidebar')
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Manajemen Kelas</h1>
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
         <div>
-            <a href="{{ route($routePrefix . '.registrations.index') }}" class="btn btn-success me-2">
-                <i class="bi bi-person-plus"></i> Assign Peserta
+            <h1 class="text-2xl font-semibold text-slate-900">Manajemen Kelas</h1>
+            <p class="mt-1 text-sm text-slate-500">Kelola kelas pada kegiatan, peserta, dan status pendaftaran.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{{ route($routePrefix . '.registrations.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a7 7 0 100 14A7 7 0 0010 3zm1 10a1 1 0 11-2 0V9a1 1 0 112 0v4zm-1-8a1 1 0 110 2 1 1 0 010-2z" clip-rule="evenodd" />
+                </svg>
+                Assign Peserta
             </a>
-            <a href="{{ route($routePrefix . '.classes.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Tambah Kelas
+            <a href="{{ route($routePrefix . '.classes.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Tambah Kelas
             </a>
         </div>
     </div>
 
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    @endif
-
-    <!-- Filter -->
-    <div class="card mb-3">
-        <div class="card-body">
-            <form method="GET" action="{{ route($routePrefix . '.classes.index') }}" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Filter Kegiatan</label>
-                    <select name="activity_id" class="form-select">
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <form method="GET" action="{{ route($routePrefix . '.classes.index') }}" class="mb-4">
+            <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-600">Filter Kegiatan</label>
+                    <select name="activity_id" class="select select-bordered w-full" onchange="this.form.submit()">
                         <option value="">Semua Kegiatan</option>
                         @foreach($activities as $activity)
                         <option value="{{ $activity->id }}" {{ request('activity_id') == $activity->id ? 'selected' : '' }}>
@@ -58,84 +43,74 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">Filter</button>
-                    <a href="{{ route($routePrefix . '.classes.index') }}" class="btn btn-secondary">Reset</a>
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="inline-flex items-center rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">Filter</button>
+                    <a href="{{ route($routePrefix . '.classes.index') }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Reset</a>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Nama Kelas</th>
-                            <th>Kegiatan</th>
-                            <th>Max Peserta</th>
-                            <th>Status</th>
-                            <th>Pembuat</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($classes as $class)
-                        <tr>
-                            <td>{{ $loop->iteration + ($classes->currentPage() - 1) * $classes->perPage() }}</td>
-                            <td>
-                                <strong>{{ $class->name }}</strong>
-                                @if($class->description)
-                                <br><small class="text-muted">{{ Str::limit($class->description, 50) }}</small>
-                                @endif
-                            </td>
-                            <td>{{ $class->activity->name ?? '-' }}</td>
-                            <td>{{ $class->max_participants ?? 'Unlimited' }}</td>
-                            <td>
-                                @if($class->status == 'open')
-                                <span class="badge bg-success">Buka</span>
-                                @elseif($class->status == 'closed')
-                                <span class="badge bg-warning">Tutup</span>
-                                @else
-                                <span class="badge bg-secondary">Selesai</span>
-                                @endif
-                            </td>
-                            <td>{{ $class->creator->name ?? '-' }}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ route($routePrefix . '.classes.show', $class) }}" class="btn btn-outline-info" title="Detail & Peserta">
-                                        <i class="bi bi-eye"></i> Detail
-                                    </a>
-                                    <a href="{{ route($routePrefix . '.classes.edit', $class) }}" class="btn btn-outline-primary" title="Edit">
-                                        <i class="bi bi-pencil"></i> Edit
-                                    </a>
-                                    <form action="{{ route($routePrefix . '.classes.delete', $class) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus" onclick="return confirm('Yakin ingin menghapus kelas ini?')">
-                                            <i class="bi bi-trash"></i> Hapus
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="7" class="text-center">Tidak ada data kelas</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
             </div>
+        </form>
 
-            @if($classes->hasPages())
-            <div class="d-flex justify-content-center mt-3">
-                {{ $classes->links() }}
-            </div>
-            @endif
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">No</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Nama Kelas</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Kegiatan</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Max Peserta</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Status</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Pembuat</th>
+                        <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                    @forelse($classes as $class)
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-2 text-sm text-slate-700">{{ $loop->iteration + ($classes->currentPage() - 1) * $classes->perPage() }}</td>
+                        <td class="px-4 py-2 text-sm">
+                            <div class="text-slate-900 font-semibold">{{ $class->name }}</div>
+                            @if($class->description)
+                            <div class="text-xs text-slate-500">{{ Str::limit($class->description, 70) }}</div>
+                            @endif
+                        </td>
+                        <td class="px-4 py-2 text-sm text-slate-700">{{ $class->activity->name ?? '-' }}</td>
+                        <td class="px-4 py-2 text-sm text-slate-700">{{ $class->max_participants ?? 'Unlimited' }}</td>
+                        <td class="px-4 py-2 text-sm">
+                            @if($class->status == 'open')
+                                <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Buka</span>
+                            @elseif($class->status == 'closed')
+                                <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Tutup</span>
+                            @else
+                                <span class="inline-flex rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">Selesai</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-2 text-sm text-slate-700">{{ $class->creator->name ?? '-' }}</td>
+                        <td class="px-4 py-2 text-sm">
+                            <div class="flex justify-end gap-2">
+                                <a href="{{ route($routePrefix . '.classes.show', $class) }}" class="inline-flex items-center rounded-md border border-sky-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-sky-700 shadow-sm hover:bg-sky-50">Detail</a>
+                                <a href="{{ route($routePrefix . '.classes.edit', $class) }}" class="inline-flex items-center rounded-md bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-600">Edit</a>
+                                <form action="{{ route($routePrefix . '.classes.delete', $class) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus kelas ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-rose-700">Hapus</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">Tidak ada data kelas</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
+        @if($classes->hasPages())
+        <div class="mt-4">
+            {{ $classes->links() }}
+        </div>
+        @endif
     </div>
 </div>
 @endsection

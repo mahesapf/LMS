@@ -3,131 +3,215 @@
 @section('title', 'Super Admin Dashboard')
 
 @section('sidebar')
-<li>
-    <a href="{{ route('super-admin.dashboard') }}" class="active bg-white/20 hover:bg-white/30 rounded-lg text-white font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-        </svg>
-        Dashboard
-    </a>
-</li>
-<li>
-    <a href="{{ route('super-admin.users') }}" class="hover:bg-white/10 rounded-lg text-blue-100 hover:text-white transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-        </svg>
-        Manajemen Pengguna
-    </a>
-</li>
-<li>
-    <a href="{{ route('super-admin.programs') }}" class="hover:bg-white/10 rounded-lg text-blue-100 hover:text-white transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-        </svg>
-        Program
-    </a>
-</li>
-<li>
-    <a href="{{ route('super-admin.activities') }}" class="hover:bg-white/10 rounded-lg text-blue-100 hover:text-white transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-        </svg>
-        Kegiatan
-    </a>
-</li>
-<li>
-    <a href="{{ route('super-admin.classes.index') }}" class="hover:bg-white/10 rounded-lg text-blue-100 hover:text-white transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-        </svg>
-        Kelas
-    </a>
-</li>
-<li>
-    <a href="{{ route('super-admin.payments.index') }}" class="hover:bg-white/10 rounded-lg text-blue-100 hover:text-white transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-            <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" />
-        </svg>
-        Validasi Pembayaran
-    </a>
-</li>
-<li>
-    <a href="{{ route('super-admin.registrations.index') }}" class="hover:bg-white/10 rounded-lg text-blue-100 hover:text-white transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
-        </svg>
-        Kelola Pendaftaran
-    </a>
-</li>
-<li>
-    <a href="{{ route('super-admin.admin-mappings') }}" class="hover:bg-white/10 rounded-lg text-blue-100 hover:text-white transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-        </svg>
-        Pemetaan Admin
-    </a>
-</li>
+    @include('super-admin.partials.sidebar')
 @endsection
 
 @section('content')
-<div class="mb-6">
-    <h1 class="text-3xl font-bold">Dashboard Super Admin</h1>
-    <p class="text-base-content/70 mt-2">Selamat datang di panel administrasi sistem</p>
-</div>
-
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="stat bg-base-100 shadow rounded-box">
-        <div class="stat-title">Total Admin</div>
-        <div class="stat-value text-primary">{{ $stats['total_admins'] }}</div>
-        <div class="stat-desc">Administrator sistem</div>
-    </div>
-
-    <div class="stat bg-base-100 shadow rounded-box">
-        <div class="stat-title">Total Fasilitator</div>
-        <div class="stat-value text-success">{{ $stats['total_fasilitators'] }}</div>
-        <div class="stat-desc">Pengajar & pembimbing</div>
-    </div>
-
-    <div class="stat bg-base-100 shadow rounded-box">
-        <div class="stat-title">Total Peserta</div>
-        <div class="stat-value text-info">{{ $stats['total_participants'] }}</div>
-        <div class="stat-desc">Peserta aktif</div>
-    </div>
-
-    <div class="stat bg-base-100 shadow rounded-box">
-        <div class="stat-title">Total Program</div>
-        <div class="stat-value text-warning">{{ $stats['total_programs'] }}</div>
-        <div class="stat-desc">Program tersedia</div>
-    </div>
-</div>
-
-<!-- Cards Grid -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-            <h2 class="card-title">Kegiatan</h2>
-            <div class="stat bg-base-200 rounded-box">
-                <div class="stat-title">Total Kegiatan</div>
-                <div class="stat-value text-primary">{{ $stats['total_activities'] }}</div>
-                <div class="stat-desc">Semua kegiatan dalam sistem</div>
+<div class="space-y-6">
+    <div class="rounded-2xl bg-gradient-to-br from-sky-600 to-blue-700 px-6 py-8 text-white shadow-sm">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p class="text-sm uppercase tracking-[0.12em] text-white/80">Super Admin</p>
+                <h1 class="mt-2 text-3xl font-semibold">Dashboard utama</h1>
+                <p class="mt-2 text-white/80">Pantau peran, program, dan kegiatan secara ringkas.</p>
             </div>
-            <div class="card-actions justify-end mt-4">
-                <a href="{{ route('super-admin.activities') }}" class="btn btn-primary btn-sm">Lihat Semua</a>
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('super-admin.users') }}" class="inline-flex items-center gap-2 rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah pengguna
+                </a>
+                <a href="{{ route('super-admin.activities') }}" class="inline-flex items-center gap-2 rounded-lg bg-white text-sky-700 px-4 py-2 text-sm font-semibold shadow-sm transition hover:shadow">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m-8 4h10a2 2 0 002-2V6a2 2 0 00-2-2H8l-4 4v10a2 2 0 002 2h1" />
+                    </svg>
+                    Kelola kegiatan
+                </a>
             </div>
         </div>
     </div>
 
-    <div class="card bg-primary text-primary-content shadow-xl">
-        <div class="card-body">
-            <h2 class="card-title">Aksi Cepat</h2>
-            <p class="opacity-90">Kelola sistem dengan mudah</p>
-            <div class="card-actions justify-start flex-wrap gap-2 mt-4">
-                <a href="{{ route('super-admin.users') }}" class="btn btn-sm btn-accent">Tambah Pengguna</a>
-                <a href="{{ route('super-admin.programs') }}" class="btn btn-sm btn-accent">Buat Program</a>
-                <a href="{{ route('super-admin.activities') }}" class="btn btn-sm btn-accent">Tambah Kegiatan</a>
-                <a href="{{ route('super-admin.payments.index') }}" class="btn btn-sm btn-accent">Validasi Pembayaran</a>
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="text-sm text-slate-500">Admin aktif</p>
+                    <p class="text-2xl font-semibold text-slate-900">{{ $stats['total_admins'] }}</p>
+                </div>
+            </div>
+            <p class="mt-3 text-sm text-slate-500">Pengelola utama sistem</p>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="text-sm text-slate-500">Fasilitator</p>
+                    <p class="text-2xl font-semibold text-slate-900">{{ $stats['total_fasilitators'] }}</p>
+                </div>
+            </div>
+            <p class="mt-3 text-sm text-slate-500">Pengajar & pendamping aktif</p>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-9-3a1 1 0 112 0v2a1 1 0 11-2 0V7zm0 4a1 1 0 112 0 1 1 0 01-2 0z" clip-rule="evenodd" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="text-sm text-slate-500">Peserta</p>
+                    <p class="text-2xl font-semibold text-slate-900">{{ $stats['total_participants'] }}</p>
+                </div>
+            </div>
+            <p class="mt-3 text-sm text-slate-500">Peserta aktif terdaftar</p>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                    </svg>
+                </span>
+                <div>
+                    <p class="text-sm text-slate-500">Program</p>
+                    <p class="text-2xl font-semibold text-slate-900">{{ $stats['total_programs'] }}</p>
+                </div>
+            </div>
+            <p class="mt-3 text-sm text-slate-500">Program aktif & tersedia</p>
+        </div>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-3">
+        <div class="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Status kegiatan</p>
+                    <h2 class="mt-1 text-2xl font-semibold text-slate-900">{{ $stats['total_activities'] }} kegiatan aktif</h2>
+                    <p class="mt-2 text-sm text-slate-500">Ikuti detail jadwal, pendanaan, dan progres kegiatan.</p>
+                </div>
+                <a href="{{ route('super-admin.activities') }}" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700">
+                    Lihat kegiatan
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+            <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p class="text-sm text-slate-500">Validasi pembayaran</p>
+                    <div class="mt-2 flex items-center gap-2 text-slate-900">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-700 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v3H2V5zm0 5h16v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5zm3 2a1 1 0 100 2h1a1 1 0 100-2H5z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <span class="text-lg font-semibold">Prioritas</span>
+                    </div>
+                    <p class="mt-2 text-sm text-slate-500">Pastikan semua pembayaran telah diverifikasi tepat waktu.</p>
+                    <div class="mt-3">
+                        <a href="{{ route('super-admin.payments.index') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">Kelola pembayaran →</a>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p class="text-sm text-slate-500">Kelola pengguna</p>
+                    <div class="mt-2 flex items-center gap-2 text-slate-900">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-700 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path fill-rule="evenodd" d="M4 13a4 4 0 014-4h4a4 4 0 014 4v2H4v-2z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <span class="text-lg font-semibold">Peran & status</span>
+                    </div>
+                    <p class="mt-2 text-sm text-slate-500">Aktifkan/suspend akun dan atur peran pengguna.</p>
+                    <div class="mt-3">
+                        <a href="{{ route('super-admin.users') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">Buka manajemen →</a>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p class="text-sm text-slate-500">Program & kelas</p>
+                    <div class="mt-2 flex items-center gap-2 text-slate-900">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-700 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0z" />
+                            </svg>
+                        </span>
+                        <span class="text-lg font-semibold">Struktur belajar</span>
+                    </div>
+                    <p class="mt-2 text-sm text-slate-500">Sinkronkan program, kegiatan, dan kelas aktif.</p>
+                    <div class="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
+                        <a href="{{ route('super-admin.programs') }}" class="text-sky-700 hover:text-sky-800">Program →</a>
+                        <span class="text-slate-300">|</span>
+                        <a href="{{ route('super-admin.classes.index') }}" class="text-sky-700 hover:text-sky-800">Kelas →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Snapshot ringkas</p>
+                    <h3 class="mt-1 text-xl font-semibold text-slate-900">Data terbaru</h3>
+                </div>
+                <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">Live</span>
+            </div>
+            <div class="mt-5 space-y-2.5">
+                <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-slate-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M5 4a2 2 0 00-2 2v6h6V4H5zM9 18h4a2 2 0 002-2V6h-2v6H9v6z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm text-slate-500">Kegiatan aktif</p>
+                            <p class="font-semibold text-slate-900">{{ $stats['total_activities'] }} total</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('super-admin.activities') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">→</a>
+                </div>
+                <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-slate-700 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 2a1 1 0 01.832.445l7 10A1 1 0 0117 14H3a1 1 0 01-.832-1.555l7-10A1 1 0 0110 2zm0 5a1 1 0 00-.832.445l-3 4A1 1 0 007 13h6a1 1 0 00.832-1.555l-3-4A1 1 0 0010 7z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm text-slate-500">Program berjalan</p>
+                            <p class="font-semibold text-slate-900">{{ $stats['total_programs'] }} program</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('super-admin.programs') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">→</a>
+                </div>
+                <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-slate-700 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M4 3a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5l-2-3H4z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm text-slate-500">Pemetaan admin</p>
+                            <p class="font-semibold text-slate-900">Pastikan distribusi merata</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('super-admin.admin-mappings') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">→</a>
+                </div>
             </div>
         </div>
     </div>

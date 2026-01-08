@@ -3,16 +3,7 @@
 @section('title', 'Import Pengguna')
 
 @section('sidebar')
-<nav class="nav flex-column">
-    <a class="nav-link" href="{{ route('super-admin.dashboard') }}">Dashboard</a>
-    <a class="nav-link active" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
-    <a class="nav-link" href="{{ route('super-admin.programs') }}">Program</a>
-    <a class="nav-link" href="{{ route('super-admin.activities') }}">Kegiatan</a>
-    <a class="nav-link" href="{{ route('super-admin.classes.index') }}">Kelas</a>
-    <a class="nav-link" href="{{ route('super-admin.payments.index') }}">Validasi Pembayaran</a>
-    <a class="nav-link" href="{{ route('super-admin.registrations.index') }}">Kelola Pendaftaran</a>
-    <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
-</nav>
+@include('super-admin.partials.sidebar')
 @endsection
 
 @section('content')
@@ -81,7 +72,7 @@
                 </div>
                 <div class="card-body">
                     <p>File CSV harus memiliki format berikut (sesuai biodata lengkap):</p>
-                    
+
                     <div class="alert alert-info">
                         <strong>Header (baris pertama):</strong><br>
                         <small style="font-size: 0.85em;">
@@ -146,7 +137,7 @@ function downloadTemplate() {
     const csv = 'email,nama,gelar,npsn,nip,nik,tempat_lahir,tanggal_lahir,jenis_kelamin,pns_status,pangkat,golongan,pendidikan_terakhir,jurusan,instansi,jabatan,nomor_wa,email_belajar\n' +
                 'john.doe@example.com,John Doe,S.Pd.,12345678,198001011234567890,3201011234567890,Jakarta,1980-01-01,Laki-laki,PNS,Penata,III/c,S1,Pendidikan Matematika,SMA Negeri 1,Guru,081234567890,john.doe@belajar.id\n' +
                 'jane.smith@example.com,Jane Smith,M.Pd.,12345679,198502021234567891,3201021234567891,Bandung,1985-02-02,Perempuan,PNS,Penata Muda Tingkat I,III/b,S2,Pendidikan Bahasa Indonesia,SMP Negeri 2,Kepala Sekolah,081234567891,jane.smith@belajar.id';
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

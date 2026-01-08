@@ -3,16 +3,7 @@
 @section('title', 'Tambah Pengguna')
 
 @section('sidebar')
-<nav class="nav flex-column">
-    <a class="nav-link" href="{{ route('super-admin.dashboard') }}">Dashboard</a>
-    <a class="nav-link active" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
-    <a class="nav-link" href="{{ route('super-admin.programs') }}">Program</a>
-    <a class="nav-link" href="{{ route('super-admin.activities') }}">Kegiatan</a>
-    <a class="nav-link" href="{{ route('super-admin.classes.index') }}">Kelas</a>
-    <a class="nav-link" href="{{ route('super-admin.payments.index') }}">Validasi Pembayaran</a>
-    <a class="nav-link" href="{{ route('super-admin.registrations.index') }}">Kelola Pendaftaran</a>
-    <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
-</nav>
+@include('super-admin.partials.sidebar')
 @endsection
 
 @section('content')

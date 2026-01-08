@@ -3,92 +3,81 @@
 @section('title', 'Kelola Pendaftaran Peserta')
 
 @section('sidebar')
-<nav class="nav flex-column">
-    @if(auth()->user()->role === 'super_admin')
-        <a class="nav-link" href="{{ route('super-admin.dashboard') }}">Dashboard</a>
-        <a class="nav-link" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
-        <a class="nav-link" href="{{ route('super-admin.programs') }}">Program</a>
-        <a class="nav-link" href="{{ route('super-admin.activities') }}">Kegiatan</a>
-        <a class="nav-link" href="{{ route('super-admin.classes.index') }}">Kelas</a>
-        <a class="nav-link" href="{{ route('super-admin.payments.index') }}">Validasi Pembayaran</a>
-        <a class="nav-link active" href="{{ route('super-admin.registrations.index') }}">Kelola Pendaftaran</a>
-        <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
-    @else
+@if(auth()->user()->role === 'super_admin')
+    @include('super-admin.partials.sidebar')
+@else
+    <nav class="nav flex-column">
         <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
         <a class="nav-link" href="{{ route('admin.activities') }}">Kegiatan</a>
         <a class="nav-link" href="{{ route('admin.classes.index') }}">Kelas</a>
         <a class="nav-link active" href="{{ route('admin.registrations.index') }}">Manajemen Peserta</a>
-    @endif
-</nav>
+    </nav>
+@endif
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    <h1 class="mb-4">Kelola Pendaftaran Peserta</h1>
-
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> Untuk menambahkan peserta ke kelas, silakan buka menu <strong>Kelas</strong>, pilih kelas yang diinginkan, lalu klik <strong>Detail</strong>.
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Kelola Pendaftaran Peserta</h1>
+        <p class="mt-1 text-sm text-slate-500">Lihat peserta tervalidasi dan status penempatan ke kelas.</p>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Peserta Tervalidasi</h5>
+    <div class="rounded-xl border border-sky-200 bg-sky-50 p-4">
+        <p class="text-sm text-slate-700">
+            Untuk menambahkan peserta ke kelas, buka menu <span class="font-semibold">Kelas</span>, pilih kelas yang diinginkan, lalu klik <span class="font-semibold">Detail</span>.
+        </p>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="border-b border-slate-200 bg-slate-50 px-4 py-3 rounded-t-xl -mx-4 -mt-4 mb-4">
+            <h2 class="text-sm font-semibold text-slate-800">Peserta Tervalidasi</h2>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tanggal Daftar</th>
-                            <th>Nama & Kontak</th>
-                            <th>Jabatan</th>
-                            <th>Sekolah</th>
-                            <th>Kegiatan</th>
-                            <th>Kelas</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Tanggal Daftar</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Nama & Kontak</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Jabatan</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Sekolah</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Kegiatan</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Kelas</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
                         @forelse($registrations as $registration)
-                        <tr>
-                            <td>{{ $registration->created_at->format('d M Y') }}</td>
-                            <td>
-                                {{ $registration->name }}<br>
-                                <small class="text-muted">{{ $registration->email }}</small><br>
-                                <small class="text-muted">{{ $registration->phone }}</small>
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-2 text-sm text-slate-700">{{ $registration->created_at->format('d M Y') }}</td>
+                            <td class="px-4 py-2 text-sm">
+                                <div class="text-slate-900 font-semibold">{{ $registration->name }}</div>
+                                <div class="text-xs text-slate-500">{{ $registration->email }}</div>
+                                <div class="text-xs text-slate-500">{{ $registration->phone }}</div>
                             </td>
-                            <td>{{ $registration->position ?? '-' }}</td>
-                            <td>{{ $registration->school ?? '-' }}</td>
-                            <td>
+                            <td class="px-4 py-2 text-sm text-slate-700">{{ $registration->position ?? '-' }}</td>
+                            <td class="px-4 py-2 text-sm text-slate-700">{{ $registration->school ?? '-' }}</td>
+                            <td class="px-4 py-2 text-sm text-slate-700">
                                 {{ $registration->activity->name ?? '-' }}
-                                @if($registration->activity->program)
-                                    <br><small class="text-muted">{{ $registration->activity->program->name }}</small>
+                                @if($registration->activity && $registration->activity->program)
+                                    <div class="text-xs text-slate-500">{{ $registration->activity->program->name }}</div>
                                 @endif
                             </td>
-                            <td>
+                            <td class="px-4 py-2 text-sm">
                                 @if($registration->class)
-                                    <a href="{{ route($routePrefix . '.classes.show', $registration->class) }}" class="badge bg-success text-decoration-none">
+                                    <a href="{{ route($routePrefix . '.classes.show', $registration->class) }}" class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                                         {{ $registration->class->name }}
                                     </a>
                                 @else
-                                    <span class="badge bg-warning">Belum Ditentukan</span>
+                                    <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Belum Ditentukan</span>
                                 @endif
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted">Belum ada peserta yang tervalidasi.</td>
+                            <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">Belum ada peserta yang tervalidasi.</td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
-            </div>
         </div>
     </div>
 </div>

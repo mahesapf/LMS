@@ -41,7 +41,7 @@
                 @csrf
                 <div class="col-md-4">
                     <label for="participant_id" class="form-label">Pilih Peserta <span class="text-danger">*</span></label>
-                    <select class="form-select @error('participant_id') is-invalid @enderror" 
+                    <select class="form-select @error('participant_id') is-invalid @enderror"
                             id="participant_id" name="participant_id" required>
                         <option value="">Pilih Peserta</option>
                         @foreach($availableParticipants as $participant)
@@ -56,7 +56,7 @@
                 </div>
                 <div class="col-md-3">
                     <label for="enrolled_date" class="form-label">Tanggal Masuk</label>
-                    <input type="date" class="form-control @error('enrolled_date') is-invalid @enderror" 
+                    <input type="date" class="form-control @error('enrolled_date') is-invalid @enderror"
                            id="enrolled_date" name="enrolled_date" value="{{ old('enrolled_date', date('Y-m-d')) }}">
                     @error('enrolled_date')
                     <div class="invalid-feedback">{{ $message }}</div>
@@ -64,7 +64,7 @@
                 </div>
                 <div class="col-md-3">
                     <label for="notes" class="form-label">Catatan</label>
-                    <input type="text" class="form-control @error('notes') is-invalid @enderror" 
+                    <input type="text" class="form-control @error('notes') is-invalid @enderror"
                            id="notes" name="notes" value="{{ old('notes') }}">
                     @error('notes')
                     <div class="invalid-feedback">{{ $message }}</div>
@@ -128,15 +128,15 @@
                             <td>
                                 @if($mapping->status == 'in')
                                 <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-outline-warning" 
-                                            data-bs-toggle="modal" 
+                                    <button type="button" class="btn btn-outline-warning"
+                                            data-bs-toggle="modal"
                                             data-bs-target="#moveModal{{ $mapping->id }}"
                                             title="Pindah">
                                         <i class="bi bi-arrow-right-circle"></i>
                                     </button>
                                     <form action="{{ route('admin.mappings.remove', $mapping) }}" method="POST" class="d-inline">
                                         @csrf
-                                        <button type="submit" class="btn btn-outline-danger" 
+                                        <button type="submit" class="btn btn-outline-danger"
                                                 title="Keluar"
                                                 onclick="return confirm('Yakin ingin mengeluarkan peserta ini dari kelas?')">
                                             <i class="bi bi-x-circle"></i>

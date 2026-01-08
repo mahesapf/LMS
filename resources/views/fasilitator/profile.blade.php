@@ -44,8 +44,8 @@
 
                         <div class="mb-3">
                             <label for="name" class="form-label">Nama Lengkap (dengan gelar) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                   id="name" name="name" value="{{ old('name', $user->name) }}" 
+                            <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                   id="name" name="name" value="{{ old('name', $user->name) }}"
                                    placeholder="Contoh: Dr. Ahmad Budiman, S.Pd., M.Pd." required>
                             @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -54,8 +54,8 @@
 
                         <div class="mb-3">
                             <label for="nip" class="form-label">Nomor Induk Pegawai (NIP)</label>
-                            <input type="text" class="form-control @error('nip') is-invalid @enderror" 
-                                   id="nip" name="nip" value="{{ old('nip', $user->nip) }}" 
+                            <input type="text" class="form-control @error('nip') is-invalid @enderror"
+                                   id="nip" name="nip" value="{{ old('nip', $user->nip) }}"
                                    placeholder="NIP">
                             @error('nip')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -64,8 +64,8 @@
 
                         <div class="mb-3">
                             <label for="nik" class="form-label">Nomor Induk Kependudukan (NIK)</label>
-                            <input type="text" class="form-control @error('nik') is-invalid @enderror" 
-                                   id="nik" name="nik" value="{{ old('nik', $user->nik) }}" 
+                            <input type="text" class="form-control @error('nik') is-invalid @enderror"
+                                   id="nik" name="nik" value="{{ old('nik', $user->nik) }}"
                                    placeholder="NIK 16 digit" maxlength="16">
                             @error('nik')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -75,8 +75,8 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="birth_place" class="form-label">Tempat Lahir</label>
-                                <input type="text" class="form-control @error('birth_place') is-invalid @enderror" 
-                                       id="birth_place" name="birth_place" value="{{ old('birth_place', $user->birth_place) }}" 
+                                <input type="text" class="form-control @error('birth_place') is-invalid @enderror"
+                                       id="birth_place" name="birth_place" value="{{ old('birth_place', $user->birth_place) }}"
                                        placeholder="Kota/Kabupaten">
                                 @error('birth_place')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -84,7 +84,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="birth_date" class="form-label">Tanggal Lahir</label>
-                                <input type="date" class="form-control @error('birth_date') is-invalid @enderror" 
+                                <input type="date" class="form-control @error('birth_date') is-invalid @enderror"
                                        id="birth_date" name="birth_date" value="{{ old('birth_date', $user->birth_date) }}">
                                 @error('birth_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -107,8 +107,8 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="rank" class="form-label">Pangkat</label>
-                                <input type="text" class="form-control @error('rank') is-invalid @enderror" 
-                                       id="rank" name="rank" value="{{ old('rank', $user->rank) }}" 
+                                <input type="text" class="form-control @error('rank') is-invalid @enderror"
+                                       id="rank" name="rank" value="{{ old('rank', $user->rank) }}"
                                        placeholder="Contoh: Penata Muda, Pembina">
                                 @error('rank')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -116,8 +116,8 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="group" class="form-label">Golongan</label>
-                                <input type="text" class="form-control @error('group') is-invalid @enderror" 
-                                       id="group" name="group" value="{{ old('group', $user->group) }}" 
+                                <input type="text" class="form-control @error('group') is-invalid @enderror"
+                                       id="group" name="group" value="{{ old('group', $user->group) }}"
                                        placeholder="Contoh: III/a, IV/b">
                                 @error('group')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -127,8 +127,8 @@
 
                         <div class="mb-3">
                             <label for="last_education" class="form-label">Pendidikan Terakhir</label>
-                            <input type="text" class="form-control @error('last_education') is-invalid @enderror" 
-                                   id="last_education" name="last_education" value="{{ old('last_education', $user->last_education) }}" 
+                            <input type="text" class="form-control @error('last_education') is-invalid @enderror"
+                                   id="last_education" name="last_education" value="{{ old('last_education', $user->last_education) }}"
                                    placeholder="Contoh: S1, S2, S3">
                             @error('last_education')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -137,8 +137,8 @@
 
                         <div class="mb-3">
                             <label for="major" class="form-label">Jurusan</label>
-                            <input type="text" class="form-control @error('major') is-invalid @enderror" 
-                                   id="major" name="major" value="{{ old('major', $user->major) }}" 
+                            <input type="text" class="form-control @error('major') is-invalid @enderror"
+                                   id="major" name="major" value="{{ old('major', $user->major) }}"
                                    placeholder="Contoh: Pendidikan Matematika, Teknik Informatika">
                             @error('major')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -147,8 +147,8 @@
 
                         <div class="mb-3">
                             <label for="institution" class="form-label">Instansi/Sekolah/Lembaga</label>
-                            <input type="text" class="form-control @error('institution') is-invalid @enderror" 
-                                   id="institution" name="institution" value="{{ old('institution', $user->institution) }}" 
+                            <input type="text" class="form-control @error('institution') is-invalid @enderror"
+                                   id="institution" name="institution" value="{{ old('institution', $user->institution) }}"
                                    placeholder="Nama Instansi/Sekolah/Lembaga">
                             @error('institution')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -157,8 +157,8 @@
 
                         <div class="mb-3">
                             <label for="position" class="form-label">Jabatan</label>
-                            <input type="text" class="form-control @error('position') is-invalid @enderror" 
-                                   id="position" name="position" value="{{ old('position', $user->position) }}" 
+                            <input type="text" class="form-control @error('position') is-invalid @enderror"
+                                   id="position" name="position" value="{{ old('position', $user->position) }}"
                                    placeholder="Contoh: Dosen, Guru, Widyaiswara">
                             @error('position')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -167,8 +167,8 @@
 
                         <div class="mb-3">
                             <label for="phone" class="form-label">Nomor HP (WA) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('phone') is-invalid @enderror" 
-                                   id="phone" name="phone" value="{{ old('phone', $user->phone) }}" 
+                            <input type="text" class="form-control @error('phone') is-invalid @enderror"
+                                   id="phone" name="phone" value="{{ old('phone', $user->phone) }}"
                                    placeholder="08xxxxxxxxxx" required>
                             @error('phone')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -177,8 +177,8 @@
 
                         <div class="mb-3">
                             <label for="email_belajar" class="form-label">Email belajar.id</label>
-                            <input type="email" class="form-control @error('email_belajar') is-invalid @enderror" 
-                                   id="email_belajar" name="email_belajar" value="{{ old('email_belajar', $user->email_belajar) }}" 
+                            <input type="email" class="form-control @error('email_belajar') is-invalid @enderror"
+                                   id="email_belajar" name="email_belajar" value="{{ old('email_belajar', $user->email_belajar) }}"
                                    placeholder="nama@belajar.id">
                             @error('email_belajar')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -192,7 +192,7 @@
                                 <img src="{{ asset('storage/' . $user->photo) }}" alt="Foto" class="img-thumbnail" style="max-width: 150px;">
                             </div>
                             @endif
-                            <input type="file" class="form-control @error('photo') is-invalid @enderror" 
+                            <input type="file" class="form-control @error('photo') is-invalid @enderror"
                                    id="photo" name="photo" accept="image/*">
                             <small class="text-muted">Format: JPG, PNG. Max: 2MB</small>
                             @error('photo')
@@ -207,7 +207,7 @@
                                 <img src="{{ asset('storage/' . $user->digital_signature) }}" alt="Tanda Tangan" class="img-thumbnail" style="max-width: 150px;">
                             </div>
                             @endif
-                            <input type="file" class="form-control @error('digital_signature') is-invalid @enderror" 
+                            <input type="file" class="form-control @error('digital_signature') is-invalid @enderror"
                                    id="digital_signature" name="digital_signature" accept="image/*">
                             <small class="text-muted">Format: JPG, PNG. Max: 1MB</small>
                             @error('digital_signature')
@@ -234,7 +234,7 @@
                     <dl class="row mb-0">
                         <dt class="col-sm-4">Role:</dt>
                         <dd class="col-sm-8"><span class="badge bg-info">Fasilitator</span></dd>
-                        
+
                         <dt class="col-sm-4">Status:</dt>
                         <dd class="col-sm-8">
                             @if($user->status == 'active')
@@ -243,7 +243,7 @@
                             <span class="badge bg-secondary">Tidak Aktif</span>
                             @endif
                         </dd>
-                        
+
                         <dt class="col-sm-4">Bergabung:</dt>
                         <dd class="col-sm-8">{{ $user->created_at->format('d M Y') }}</dd>
                     </dl>

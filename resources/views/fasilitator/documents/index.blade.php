@@ -65,24 +65,24 @@
                             <td>{{ $document->uploaded_date ? \Carbon\Carbon::parse($document->uploaded_date)->format('d M Y H:i') : '-' }}</td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <a href="{{ asset('storage/' . $document->file_path) }}" 
-                                       class="btn btn-outline-primary" 
-                                       target="_blank" 
+                                    <a href="{{ asset('storage/' . $document->file_path) }}"
+                                       class="btn btn-outline-primary"
+                                       target="_blank"
                                        title="Lihat">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ asset('storage/' . $document->file_path) }}" 
-                                       class="btn btn-outline-success" 
-                                       download 
+                                    <a href="{{ asset('storage/' . $document->file_path) }}"
+                                       class="btn btn-outline-success"
+                                       download
                                        title="Download">
                                         <i class="bi bi-download"></i>
                                     </a>
                                     <form action="{{ route('fasilitator.documents.delete', $document) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" 
-                                                class="btn btn-outline-danger" 
-                                                title="Hapus" 
+                                        <button type="submit"
+                                                class="btn btn-outline-danger"
+                                                title="Hapus"
                                                 onclick="return confirm('Yakin ingin menghapus dokumen ini?')">
                                             <i class="bi bi-trash"></i>
                                         </button>

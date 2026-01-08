@@ -37,7 +37,7 @@
                         <strong>Kegiatan:</strong><br>
                         {{ $mapping->class->activity->name ?? '-' }}
                     </p>
-                    
+
                     @if($mapping->class->description)
                     <p class="card-text text-muted">
                         {{ Str::limit($mapping->class->description, 100) }}
@@ -62,7 +62,7 @@
                 </div>
                 <div class="card-footer text-muted">
                     <small>
-                        Status: 
+                        Status:
                         @if($mapping->class->status == 'open')
                         <span class="badge bg-success">Buka</span>
                         @elseif($mapping->class->status == 'closed')

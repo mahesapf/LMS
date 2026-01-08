@@ -3,16 +3,7 @@
 @section('title', 'Edit Program')
 
 @section('sidebar')
-<nav class="nav flex-column">
-    <a class="nav-link" href="{{ route('super-admin.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
-    <a class="nav-link active" href="{{ route('super-admin.programs') }}">Program</a>
-    <a class="nav-link" href="{{ route('super-admin.activities') }}">Kegiatan</a>
-    <a class="nav-link" href="{{ route('super-admin.classes.index') }}">Kelas</a>
-    <a class="nav-link" href="{{ route('super-admin.payments.index') }}">Validasi Pembayaran</a>
-    <a class="nav-link" href="{{ route('super-admin.registrations.index') }}">Kelola Pendaftaran</a>
-    <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
-</nav>
+@include('super-admin.partials.sidebar')
 @endsection
 
 @section('content')
@@ -30,7 +21,7 @@
 
                 <div class="mb-3">
                     <label class="form-label">Nama Program <span class="text-danger">*</span></label>
-                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" 
+                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
                            value="{{ old('name', $program->name) }}" required>
                     @error('name')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -48,7 +39,7 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Tanggal Mulai</label>
-                        <input type="date" name="start_date" class="form-control @error('start_date') is-invalid @enderror" 
+                        <input type="date" name="start_date" class="form-control @error('start_date') is-invalid @enderror"
                                value="{{ old('start_date', $program->start_date?->format('Y-m-d')) }}">
                         @error('start_date')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -56,7 +47,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Tanggal Selesai</label>
-                        <input type="date" name="end_date" class="form-control @error('end_date') is-invalid @enderror" 
+                        <input type="date" name="end_date" class="form-control @error('end_date') is-invalid @enderror"
                                value="{{ old('end_date', $program->end_date?->format('Y-m-d')) }}">
                         @error('end_date')
                             <div class="invalid-feedback">{{ $message }}</div>

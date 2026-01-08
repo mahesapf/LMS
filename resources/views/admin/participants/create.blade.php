@@ -23,7 +23,7 @@
 
     <form method="POST" action="{{ route('admin.participants.store') }}" enctype="multipart/form-data">
         @csrf
-        
+
         <div class="row">
             <div class="col-lg-8">
                 <!-- Biodata Dasar -->
@@ -35,7 +35,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="name" class="form-label">Nama Lengkap (dengan gelar) <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
                                        id="name" name="name" value="{{ old('name') }}" required>
                                 @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -44,7 +44,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                                <input type="email" class="form-control @error('email') is-invalid @enderror"
                                        id="email" name="email" value="{{ old('email') }}" required>
                                 @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -53,7 +53,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="email_belajar" class="form-label">Email belajar.id</label>
-                                <input type="email" class="form-control @error('email_belajar') is-invalid @enderror" 
+                                <input type="email" class="form-control @error('email_belajar') is-invalid @enderror"
                                        id="email_belajar" name="email_belajar" value="{{ old('email_belajar') }}">
                                 @error('email_belajar')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -62,7 +62,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="phone" class="form-label">Nomor HP (WA) <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('phone') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('phone') is-invalid @enderror"
                                        id="phone" name="phone" value="{{ old('phone') }}" required>
                                 @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -71,7 +71,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="nik" class="form-label">Nomor Induk Kependudukan (NIK)</label>
-                                <input type="text" class="form-control @error('nik') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('nik') is-invalid @enderror"
                                        id="nik" name="nik" value="{{ old('nik') }}" maxlength="16">
                                 @error('nik')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -80,7 +80,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="nip" class="form-label">Nomor Induk Pegawai (NIP)</label>
-                                <input type="text" class="form-control @error('nip') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('nip') is-invalid @enderror"
                                        id="nip" name="nip" value="{{ old('nip') }}">
                                 @error('nip')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -89,7 +89,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="npsn" class="form-label">NPSN</label>
-                                <input type="text" class="form-control @error('npsn') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('npsn') is-invalid @enderror"
                                        id="npsn" name="npsn" value="{{ old('npsn') }}">
                                 @error('npsn')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -98,7 +98,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="gender" class="form-label">Jenis Kelamin</label>
-                                <select class="form-select @error('gender') is-invalid @enderror" 
+                                <select class="form-select @error('gender') is-invalid @enderror"
                                         id="gender" name="gender">
                                     <option value="">Pilih Jenis Kelamin</option>
                                     <option value="L" {{ old('gender') == 'L' ? 'selected' : '' }}>Laki-laki</option>
@@ -111,7 +111,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="birth_place" class="form-label">Tempat Lahir</label>
-                                <input type="text" class="form-control @error('birth_place') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('birth_place') is-invalid @enderror"
                                        id="birth_place" name="birth_place" value="{{ old('birth_place') }}">
                                 @error('birth_place')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -120,7 +120,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="birth_date" class="form-label">Tanggal Lahir</label>
-                                <input type="date" class="form-control @error('birth_date') is-invalid @enderror" 
+                                <input type="date" class="form-control @error('birth_date') is-invalid @enderror"
                                        id="birth_date" name="birth_date" value="{{ old('birth_date') }}">
                                 @error('birth_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -129,7 +129,7 @@
 
                             <div class="col-md-12 mb-3">
                                 <label for="address" class="form-label">Alamat</label>
-                                <textarea class="form-control @error('address') is-invalid @enderror" 
+                                <textarea class="form-control @error('address') is-invalid @enderror"
                                           id="address" name="address" rows="2">{{ old('address') }}</textarea>
                                 @error('address')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -148,7 +148,7 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="pns_status" class="form-label">Status PNS</label>
-                                <select class="form-select @error('pns_status') is-invalid @enderror" 
+                                <select class="form-select @error('pns_status') is-invalid @enderror"
                                         id="pns_status" name="pns_status" onchange="togglePNSFields()">
                                     <option value="">Pilih Status</option>
                                     <option value="PNS" {{ old('pns_status') == 'PNS' ? 'selected' : '' }}>PNS</option>
@@ -161,7 +161,7 @@
 
                             <div class="col-md-4 mb-3" id="rank_field" style="display: none;">
                                 <label for="rank" class="form-label">Pangkat</label>
-                                <input type="text" class="form-control @error('rank') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('rank') is-invalid @enderror"
                                        id="rank" name="rank" value="{{ old('rank') }}">
                                 @error('rank')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -170,7 +170,7 @@
 
                             <div class="col-md-4 mb-3" id="group_field" style="display: none;">
                                 <label for="group" class="form-label">Golongan</label>
-                                <input type="text" class="form-control @error('group') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('group') is-invalid @enderror"
                                        id="group" name="group" value="{{ old('group') }}">
                                 @error('group')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -189,8 +189,8 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="last_education" class="form-label">Pendidikan Terakhir</label>
-                                <input type="text" class="form-control @error('last_education') is-invalid @enderror" 
-                                       id="last_education" name="last_education" value="{{ old('last_education') }}" 
+                                <input type="text" class="form-control @error('last_education') is-invalid @enderror"
+                                       id="last_education" name="last_education" value="{{ old('last_education') }}"
                                        placeholder="S1, S2, S3, dll">
                                 @error('last_education')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -199,7 +199,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="major" class="form-label">Jurusan</label>
-                                <input type="text" class="form-control @error('major') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('major') is-invalid @enderror"
                                        id="major" name="major" value="{{ old('major') }}">
                                 @error('major')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -208,7 +208,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="institution" class="form-label">Instansi/Sekolah/Lembaga</label>
-                                <input type="text" class="form-control @error('institution') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('institution') is-invalid @enderror"
                                        id="institution" name="institution" value="{{ old('institution') }}">
                                 @error('institution')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -217,7 +217,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="position_type" class="form-label">Jabatan</label>
-                                <select class="form-select @error('position_type') is-invalid @enderror" 
+                                <select class="form-select @error('position_type') is-invalid @enderror"
                                         id="position_type" name="position_type" onchange="togglePositionFields()">
                                     <option value="">Pilih Jabatan</option>
                                     <option value="Guru" {{ old('position_type') == 'Guru' ? 'selected' : '' }}>Guru</option>
@@ -231,7 +231,7 @@
 
                             <div class="col-md-6 mb-3" id="position_field">
                                 <label for="position" class="form-label">Detail Jabatan</label>
-                                <input type="text" class="form-control @error('position') is-invalid @enderror" 
+                                <input type="text" class="form-control @error('position') is-invalid @enderror"
                                        id="position" name="position" value="{{ old('position') }}">
                                 @error('position')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -251,7 +251,7 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="photo" class="form-label">Foto</label>
-                            <input type="file" class="form-control @error('photo') is-invalid @enderror" 
+                            <input type="file" class="form-control @error('photo') is-invalid @enderror"
                                    id="photo" name="photo" accept="image/*">
                             @error('photo')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -261,7 +261,7 @@
 
                         <div class="mb-3">
                             <label for="digital_signature" class="form-label">Tanda Tangan Digital</label>
-                            <input type="file" class="form-control @error('digital_signature') is-invalid @enderror" 
+                            <input type="file" class="form-control @error('digital_signature') is-invalid @enderror"
                                    id="digital_signature" name="digital_signature" accept="image/*">
                             @error('digital_signature')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -279,7 +279,7 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                            <input type="password" class="form-control @error('password') is-invalid @enderror"
                                    id="password" name="password" required>
                             @error('password')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -309,7 +309,7 @@ function togglePNSFields() {
     const pnsStatus = document.getElementById('pns_status').value;
     const rankField = document.getElementById('rank_field');
     const groupField = document.getElementById('group_field');
-    
+
     if (pnsStatus === 'PNS') {
         rankField.style.display = 'block';
         groupField.style.display = 'block';
@@ -322,7 +322,7 @@ function togglePNSFields() {
 function togglePositionFields() {
     const positionType = document.getElementById('position_type').value;
     const positionField = document.getElementById('position_field');
-    
+
     if (positionType === 'Guru' || positionType === 'Kepala Sekolah') {
         positionField.style.display = 'block';
     } else {

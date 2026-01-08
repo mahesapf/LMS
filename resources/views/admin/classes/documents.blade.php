@@ -60,7 +60,7 @@
                 <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $stage->id }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="collapse{{ $stage->id }}">
                     <strong>{{ $stage->name }}</strong>
                     <span class="badge bg-primary ms-2">{{ $stage->documentRequirements->count() }} dokumen</span>
-                    <span class="badge ms-2 
+                    <span class="badge ms-2
                         @if($stage->status == 'ongoing') bg-success
                         @elseif($stage->status == 'completed') bg-secondary
                         @else bg-warning text-dark

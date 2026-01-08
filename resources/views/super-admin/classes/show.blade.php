@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
 @section('content')
 <div class="container">
@@ -146,7 +146,7 @@
                                             <form action="{{ route($routePrefix . '.classes.removeParticipant', [$class, $mapping]) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm" title="Keluarkan dari Kelas" 
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Keluarkan dari Kelas"
                                                     onclick="return confirm('Yakin ingin mengeluarkan {{ $mapping->participant->name ?? 'peserta ini' }} dari kelas?')">
                                                     <i class="bi bi-person-dash"></i>
                                                 </button>
@@ -205,7 +205,7 @@
                                             <form action="{{ route($routePrefix . '.classes.removeFasilitator', [$class, $mapping]) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm" title="Keluarkan dari Kelas" 
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Keluarkan dari Kelas"
                                                     onclick="return confirm('Yakin ingin mengeluarkan {{ $mapping->fasilitator->name ?? 'fasilitator ini' }} dari kelas?')">
                                                     <i class="bi bi-person-dash"></i>
                                                 </button>
@@ -236,8 +236,8 @@
                 <div class="modal-body">
                     @if($availableParticipants->isEmpty())
                         <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle"></i> 
-                            Tidak ada peserta yang tersedia untuk ditambahkan. 
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Tidak ada peserta yang tersedia untuk ditambahkan.
                             Semua peserta sudah terdaftar di kelas atau belum ada peserta yang tervalidasi untuk kegiatan ini.
                         </div>
                     @else
@@ -254,7 +254,7 @@
                         </div>
                         <div class="alert alert-info">
                             <small>
-                                <i class="bi bi-info-circle"></i> 
+                                <i class="bi bi-info-circle"></i>
                                 Hanya peserta yang sudah divalidasi pembayarannya dan belum masuk kelas yang ditampilkan.
                             </small>
                         </div>
@@ -293,11 +293,11 @@
                             </ul>
                         </div>
                     @endif
-                    
+
                     @if($availableFasilitators->isEmpty())
                         <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle"></i> 
-                            Tidak ada fasilitator yang tersedia untuk ditambahkan. 
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Tidak ada fasilitator yang tersedia untuk ditambahkan.
                             Semua fasilitator sudah terdaftar di kelas atau belum ada fasilitator aktif.
                         </div>
                     @else
@@ -314,7 +314,7 @@
                         </div>
                         <div class="alert alert-info">
                             <small>
-                                <i class="bi bi-info-circle"></i> 
+                                <i class="bi bi-info-circle"></i>
                                 Hanya fasilitator yang aktif dan belum ditugaskan di kelas ini yang ditampilkan.
                             </small>
                         </div>

@@ -3,72 +3,63 @@
 @section('title', 'Validasi Pembayaran')
 
 @section('sidebar')
-<nav class="nav flex-column">
-    <a class="nav-link" href="{{ route('super-admin.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('super-admin.users') }}">Manajemen Pengguna</a>
-    <a class="nav-link" href="{{ route('super-admin.programs') }}">Program</a>
-    <a class="nav-link" href="{{ route('super-admin.activities') }}">Kegiatan</a>
-    <a class="nav-link" href="{{ route('super-admin.classes.index') }}">Kelas</a>
-    <a class="nav-link active" href="{{ route('super-admin.payments.index') }}">Validasi Pembayaran</a>
-    <a class="nav-link" href="{{ route('super-admin.registrations.index') }}">Kelola Pendaftaran</a>
-    <a class="nav-link" href="{{ route('super-admin.admin-mappings') }}">Pemetaan Admin</a>
-</nav>
+@include('super-admin.partials.sidebar')
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    <h1 class="mb-4">Validasi Pembayaran</h1>
-
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-slate-900">Validasi Pembayaran</h1>
+            <p class="mt-1 text-sm text-slate-500">Periksa bukti pembayaran, validasi atau tolak dengan alasan.</p>
         </div>
-    @endif
+    </div>
 
     <!-- Pending Payments -->
-    <div class="card mb-4">
-        <div class="card-header bg-warning">
-            <h5 class="mb-0">Pembayaran Menunggu Validasi ({{ $payments->count() }})</h5>
+    <div class="rounded-xl border border-amber-200 bg-white shadow-sm">
+        <div class="border-b border-amber-200 bg-amber-50 px-4 py-3">
+            <h2 class="text-sm font-semibold text-amber-800">Pembayaran Menunggu Validasi ({{ $payments->count() }})</h2>
         </div>
-        <div class="card-body">
+        <div class="p-4">
             @if($payments->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
                             <tr>
-                                <th>Tanggal Upload</th>
-                                <th>Nama Peserta</th>
-                                <th>Program</th>
-                                <th>Bank</th>
-                                <th>Jumlah</th>
-                                <th>Tgl Bayar</th>
-                                <th>Aksi</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Tanggal Upload</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Nama Peserta</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Program</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Bank</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Jumlah</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Tgl Bayar</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-slate-100 bg-white">
                             @foreach($payments as $payment)
-                            <tr>
-                                <td>{{ $payment->created_at->format('d M Y H:i') }}</td>
-                                <td>
-                                    {{ $payment->registration->name }}<br>
-                                    <small class="text-muted">{{ $payment->registration->email }}</small>
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-2 text-sm text-slate-700">{{ $payment->created_at->format('d M Y H:i') }}</td>
+                                <td class="px-4 py-2 text-sm">
+                                    <div class="text-slate-900 font-semibold">{{ $payment->registration->name }}</div>
+                                    <div class="text-xs text-slate-500">{{ $payment->registration->email }}</div>
                                 </td>
-                                <td>
-                                    {{ $payment->registration->activity->name }}<br>
+                                <td class="px-4 py-2 text-sm text-slate-700">
+                                    {{ $payment->registration->activity->name }}
                                     @if($payment->registration->activity->program)
-                                        <small class="text-muted">{{ $payment->registration->activity->program->name }}</small>
+                                        <div class="text-xs text-slate-500">{{ $payment->registration->activity->program->name }}</div>
                                     @endif
                                 </td>
-                                <td>{{ $payment->bank_name }}</td>
-                                <td>Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
-                                <td>{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-info" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#viewPaymentModal{{ $payment->id }}">
-                                        <i class="bi bi-eye"></i> Lihat
-                                    </button>
+                                <td class="px-4 py-2 text-sm text-slate-700">{{ $payment->bank_name }}</td>
+                                <td class="px-4 py-2 text-sm text-slate-700">Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
+                                <td class="px-4 py-2 text-sm text-slate-700">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
+                                <td class="px-4 py-2 text-sm">
+                                    <div class="flex justify-end">
+                                        <button type="button" class="inline-flex items-center rounded-md border border-sky-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-sky-700 shadow-sm hover:bg-sky-50"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#viewPaymentModal{{ $payment->id }}">
+                                            Lihat
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
 
@@ -144,8 +135,8 @@
                                                 <div class="col-md-6">
                                                     <h6>Bukti Pembayaran</h6>
                                                     <a href="{{ Storage::url($payment->proof_file) }}" target="_blank">
-                                                        <img src="{{ Storage::url($payment->proof_file) }}" 
-                                                             class="img-fluid rounded border" 
+                                                        <img src="{{ Storage::url($payment->proof_file) }}"
+                                                             class="img-fluid rounded border"
                                                              alt="Bukti Pembayaran"
                                                              style="max-height: 400px; cursor: pointer;">
                                                     </a>
@@ -156,7 +147,7 @@
                                             </div>
                                         </div>
                                         <div class="modal-footer">
-                                            <form action="{{ route('super-admin.payments.approve', $payment) }}" 
+                                            <form action="{{ route('super-admin.payments.approve', $payment) }}"
                                                   method="POST" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
@@ -164,13 +155,13 @@
                                                     <i class="bi bi-check-circle"></i> Validasi
                                                 </button>
                                             </form>
-                                            
-                                            <button type="button" class="btn btn-danger" 
-                                                    data-bs-toggle="modal" 
+
+                                            <button type="button" class="btn btn-danger"
+                                                    data-bs-toggle="modal"
                                                     data-bs-target="#rejectModal{{ $payment->id }}">
                                                 <i class="bi bi-x-circle"></i> Tolak
                                             </button>
-                                            
+
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                                         </div>
                                     </div>
@@ -193,9 +184,9 @@
                                                     <label for="rejection_reason{{ $payment->id }}" class="form-label">
                                                         Alasan Penolakan <span class="text-danger">*</span>
                                                     </label>
-                                                    <textarea class="form-control" 
-                                                              id="rejection_reason{{ $payment->id }}" 
-                                                              name="rejection_reason" 
+                                                    <textarea class="form-control"
+                                                              id="rejection_reason{{ $payment->id }}"
+                                                              name="rejection_reason"
                                                               rows="3" required></textarea>
                                                 </div>
                                             </div>
@@ -212,62 +203,60 @@
                     </table>
                 </div>
             @else
-                <p class="text-muted mb-0">Tidak ada pembayaran yang menunggu validasi.</p>
+                <p class="text-sm text-slate-500">Tidak ada pembayaran yang menunggu validasi.</p>
             @endif
         </div>
     </div>
 
     <!-- History -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Riwayat Validasi</h5>
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <h2 class="text-sm font-semibold text-slate-800">Riwayat Validasi</h2>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
+        <div class="p-4">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
                         <tr>
-                            <th>Tanggal Validasi</th>
-                            <th>Nama Peserta</th>
-                            <th>Program</th>
-                            <th>Jumlah</th>
-                            <th>Status</th>
-                            <th>Validator</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Tanggal Validasi</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Nama Peserta</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Program</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Jumlah</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Status</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Validator</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-slate-100 bg-white">
                         @forelse($validatedPayments as $payment)
-                        <tr>
-                            <td>{{ $payment->validated_at->format('d M Y H:i') }}</td>
-                            <td>{{ $payment->registration->name }}</td>
-                            <td>
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-2 text-sm text-slate-700">{{ $payment->validated_at->format('d M Y H:i') }}</td>
+                            <td class="px-4 py-2 text-sm text-slate-900">{{ $payment->registration->name }}</td>
+                            <td class="px-4 py-2 text-sm text-slate-700">
                                 {{ $payment->registration->activity->name }}
                                 @if($payment->registration->activity->program)
-                                    <br><small class="text-muted">{{ $payment->registration->activity->program->name }}</small>
+                                    <div class="text-xs text-slate-500">{{ $payment->registration->activity->program->name }}</div>
                                 @endif
                             </td>
-                            <td>Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
-                            <td>
+                            <td class="px-4 py-2 text-sm text-slate-700">Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
+                            <td class="px-4 py-2 text-sm">
                                 @if($payment->status == 'validated')
-                                    <span class="badge bg-success">Tervalidasi</span>
+                                    <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Tervalidasi</span>
                                 @else
-                                    <span class="badge bg-danger">Ditolak</span>
+                                    <span class="inline-flex rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700">Ditolak</span>
                                 @endif
                             </td>
-                            <td>{{ $payment->validator->name ?? '-' }}</td>
+                            <td class="px-4 py-2 text-sm text-slate-700">{{ $payment->validator->name ?? '-' }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted">Belum ada riwayat validasi.</td>
+                            <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">Belum ada riwayat validasi.</td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            
-            <div class="mt-3">
-                {{ $validatedPayments->links() }}
-            </div>
+
+            <div class="mt-4">{{ $validatedPayments->links() }}</div>
         </div>
     </div>
 </div>
