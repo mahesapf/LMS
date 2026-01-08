@@ -6,6 +6,14 @@
 <div class="container py-4">
     <h1 class="mb-4">Kegiatan Tersedia</h1>
 
+    @if(!Auth::check())
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="bi bi-info-circle"></i>
+            <strong>Informasi:</strong> Anda dapat mendaftar kegiatan tanpa harus login. Cukup isi formulir pendaftaran sekolah dan lakukan pembayaran.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
@@ -39,7 +47,8 @@
                     <thead>
                         <tr>
                             <th>Kegiatan</th>
-                            <th>Program</th>
+                            <th>Sekolah</th>
+                            <th>Peserta</th>
                             <th>Tanggal</th>
                             <th>Status</th>
                             <th>Aksi</th>
@@ -49,10 +58,15 @@
                         @foreach($myRegistrations as $registration)
                         <tr>
                             <td>{{ $registration->activity->name }}</td>
-                            <td>{{ $registration->activity->program->name ?? '-' }}</td>
+                            <td>{{ $registration->nama_sekolah }}</td>
+                            <td>
+                                {{ $registration->jumlah_peserta > 0 ? $registration->jumlah_peserta : ($registration->jumlah_kepala_sekolah + $registration->jumlah_guru) }} orang
+                            </td>
                             <td>{{ $registration->activity->start_date->format('d M Y') }}</td>
                             <td>
-                                @if($registration->status == 'payment_pending')
+                                @if($registration->status == 'pending')
+                                    <span class="badge bg-secondary">Pending</span>
+                                @elseif($registration->status == 'payment_pending')
                                     <span class="badge bg-warning">Menunggu Pembayaran</span>
                                 @elseif($registration->status == 'payment_uploaded')
                                     <span class="badge bg-info">Menunggu Validasi</span>
@@ -120,7 +134,7 @@
                         @if($activity->registration_fee > 0)
                         <li class="mb-1">
                             <i class="bi bi-cash"></i> 
-                            <strong>Biaya:</strong> Rp {{ number_format($activity->registration_fee, 0, ',', '.') }}
+                            <strong>Biaya:</strong> Rp {{ number_format($activity->registration_fee, 0, ',', '.') }} <small class="text-muted">per peserta</small>
                         </li>
                         @endif
                         @if($activity->financing_type)

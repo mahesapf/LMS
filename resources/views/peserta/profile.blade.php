@@ -6,6 +6,7 @@
 <nav class="nav flex-column">
     <a class="nav-link" href="{{ route('peserta.dashboard') }}">Dashboard</a>
     <a class="nav-link active" href="{{ route('peserta.profile') }}">Profil</a>
+    <a class="nav-link" href="{{ route('peserta.biodata') }}">Biodata</a>
     <a class="nav-link" href="{{ route('peserta.classes') }}">Kelas & Nilai Saya</a>
     <a class="nav-link" href="{{ route('peserta.documents') }}">Dokumen</a>
 </nav>

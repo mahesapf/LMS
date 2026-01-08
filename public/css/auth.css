@@ -1,5 +1,6 @@
 /* Modern Auth Pages Styling */
-html, body {
+/* Hanya aplikasikan style khusus untuk halaman auth */
+body.auth-page {
     margin: 0;
     padding: 0;
     height: 100%;

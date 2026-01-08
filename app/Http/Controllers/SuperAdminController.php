@@ -9,6 +9,7 @@ use App\Models\AdminMapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class SuperAdminController extends Controller
 {
@@ -50,15 +51,44 @@ class SuperAdminController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'degree' => 'nullable|string|max:50',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'required|string|max:20',
             'password' => 'required|min:6',
             'role' => 'required|in:admin,fasilitator,peserta',
-            'institution' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'address' => 'nullable|string',
+            'nik' => 'nullable|size:16|regex:/^[0-9]{16}$/',
+            'gelar' => 'nullable|string|max:50',
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
+            'no_hp' => 'nullable|string|max:20',
+            'email_belajar_id' => 'nullable|email',
+            'jabatan' => 'nullable|string|max:255',
+            'nip_nipy' => 'nullable|string|max:50',
+            'pangkat' => 'nullable|string|max:100',
+            'golongan' => 'nullable|string|max:20',
+            'npsn' => 'nullable|string|max:20',
+            'instansi' => 'nullable|string|max:255',
+            'kcd' => 'nullable|string|max:255',
+            'alamat_sekolah' => 'nullable|string',
+            'provinsi_peserta' => 'nullable|string|max:100',
+            'kabupaten_kota' => 'nullable|string|max:100',
+            'alamat_lengkap' => 'nullable|string',
+            'pendidikan_terakhir' => 'nullable|in:SMA/SMK,D3,S1,S2,S3',
+            'jurusan' => 'nullable|string|max:255',
+            'foto_3x4' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'surat_tugas' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
+            'tanda_tangan' => 'nullable|image|mimes:png|max:1024',
         ]);
+
+        // Handle file uploads
+        if ($request->hasFile('foto_3x4')) {
+            $validated['foto_3x4'] = $request->file('foto_3x4')->store('peserta/foto', 'public');
+        }
+
+        if ($request->hasFile('surat_tugas')) {
+            $validated['surat_tugas'] = $request->file('surat_tugas')->store('peserta/surat-tugas', 'public');
+        }
+
+        if ($request->hasFile('tanda_tangan')) {
+            $validated['tanda_tangan'] = $request->file('tanda_tangan')->store('peserta/tanda-tangan', 'public');
+        }
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['status'] = 'active';
@@ -77,15 +107,56 @@ class SuperAdminController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'degree' => 'nullable|string|max:50',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'phone' => 'required|string|max:20',
             'role' => 'required|in:admin,fasilitator,peserta',
             'status' => 'required|in:active,suspended,inactive',
-            'institution' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'address' => 'nullable|string',
+            'nik' => 'nullable|size:16|regex:/^[0-9]{16}$/',
+            'gelar' => 'nullable|string|max:50',
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
+            'no_hp' => 'nullable|string|max:20',
+            'email_belajar_id' => 'nullable|email',
+            'jabatan' => 'nullable|string|max:255',
+            'nip_nipy' => 'nullable|string|max:50',
+            'pangkat' => 'nullable|string|max:100',
+            'golongan' => 'nullable|string|max:20',
+            'npsn' => 'nullable|string|max:20',
+            'instansi' => 'nullable|string|max:255',
+            'kcd' => 'nullable|string|max:255',
+            'alamat_sekolah' => 'nullable|string',
+            'provinsi_peserta' => 'nullable|string|max:100',
+            'kabupaten_kota' => 'nullable|string|max:100',
+            'alamat_lengkap' => 'nullable|string',
+            'pendidikan_terakhir' => 'nullable|in:SMA/SMK,D3,S1,S2,S3',
+            'jurusan' => 'nullable|string|max:255',
+            'foto_3x4' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'surat_tugas' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
+            'tanda_tangan' => 'nullable|image|mimes:png|max:1024',
         ]);
+
+        // Handle file uploads
+        if ($request->hasFile('foto_3x4')) {
+            // Delete old file if exists
+            if ($user->foto_3x4) {
+                Storage::disk('public')->delete($user->foto_3x4);
+            }
+            $validated['foto_3x4'] = $request->file('foto_3x4')->store('peserta/foto', 'public');
+        }
+
+        if ($request->hasFile('surat_tugas')) {
+            // Delete old file if exists
+            if ($user->surat_tugas) {
+                Storage::disk('public')->delete($user->surat_tugas);
+            }
+            $validated['surat_tugas'] = $request->file('surat_tugas')->store('peserta/surat-tugas', 'public');
+        }
+
+        if ($request->hasFile('tanda_tangan')) {
+            // Delete old file if exists
+            if ($user->tanda_tangan) {
+                Storage::disk('public')->delete($user->tanda_tangan);
+            }
+            $validated['tanda_tangan'] = $request->file('tanda_tangan')->store('peserta/tanda-tangan', 'public');
+        }
 
         if ($request->filled('password')) {
             $validated['password'] = Hash::make($request->password);
@@ -129,60 +200,67 @@ class SuperAdminController extends Controller
         $file = $request->file('file');
         $data = array_map('str_getcsv', file($file));
         $header = array_shift($data);
+        
+        // Normalize header names (lowercase, remove spaces)
+        $header = array_map(function($h) {
+            $h = trim($h);
+            $h = str_replace(['"', "'"], '', $h); // Remove quotes
+            $h = strtolower($h);
+            $h = str_replace(' ', '_', $h); // Replace space with underscore
+            
+            // Handle common variations
+            if (in_array($h, ['nama', 'nama_lengkap', 'name'])) return 'nama_lengkap';
+            if (in_array($h, ['nik', 'nip'])) return 'nik';
+            if (in_array($h, ['email', 'e-mail'])) return 'email';
+            
+            return $h;
+        }, $header);
 
         DB::beginTransaction();
         try {
             $imported = 0;
+            $skipped = 0;
+            
             foreach ($data as $row) {
                 if (empty(array_filter($row))) continue; // Skip empty rows
                 
                 $rowData = array_combine($header, $row);
                 
-                // Check if email already exists
-                if (User::where('email', $rowData['email'] ?? '')->exists()) {
+                // Clean data
+                $nama = trim($rowData['nama_lengkap'] ?? '');
+                $email = trim($rowData['email'] ?? '');
+                $nik = trim($rowData['nik'] ?? '');
+                
+                // Skip if nama is empty, dash, or email is empty
+                if (empty($nama) || $nama === '-' || empty($email)) {
+                    $skipped++;
                     continue;
                 }
                 
-                // Map gender: Laki-laki -> L, Perempuan -> P
-                $gender = null;
-                if (isset($rowData['jenis_kelamin'])) {
-                    if (stripos($rowData['jenis_kelamin'], 'laki') !== false) {
-                        $gender = 'L';
-                    } elseif (stripos($rowData['jenis_kelamin'], 'perempuan') !== false) {
-                        $gender = 'P';
-                    }
+                // Check if email already exists
+                if (User::where('email', $email)->exists()) {
+                    $skipped++;
+                    continue;
                 }
                 
-                // Map PNS Status
-                $pnsStatus = null;
-                if (isset($rowData['pns_status'])) {
-                    if (stripos($rowData['pns_status'], 'pns') !== false && stripos($rowData['pns_status'], 'non') === false) {
-                        $pnsStatus = 'PNS';
-                    } else {
-                        $pnsStatus = 'Non PNS';
-                    }
+                // Skip if NIK is just dash or invalid format
+                if ($nik === '-' || $nik === '0') {
+                    $nik = null;
                 }
+                
+                // Validate NIK if provided (should be 16 digits)
+                if ($nik && strlen($nik) != 16) {
+                    $nik = null; // Set to null if not 16 digits
+                }
+                
+                // Use NIK as password, or default to 'password123' if NIK is empty
+                $password = $nik ? $nik : 'password123';
                 
                 User::create([
-                    'name' => $rowData['nama'] ?? '',
-                    'degree' => $rowData['gelar'] ?? '',
-                    'email' => $rowData['email'] ?? '',
-                    'npsn' => $rowData['npsn'] ?? null,
-                    'nip' => $rowData['nip'] ?? null,
-                    'nik' => $rowData['nik'] ?? null,
-                    'birth_place' => $rowData['tempat_lahir'] ?? null,
-                    'birth_date' => isset($rowData['tanggal_lahir']) && !empty($rowData['tanggal_lahir']) ? date('Y-m-d', strtotime($rowData['tanggal_lahir'])) : null,
-                    'gender' => $gender,
-                    'pns_status' => $pnsStatus,
-                    'rank' => $rowData['pangkat'] ?? null,
-                    'rank_group' => $rowData['golongan'] ?? null,
-                    'last_education' => $rowData['pendidikan_terakhir'] ?? null,
-                    'major' => $rowData['jurusan'] ?? null,
-                    'institution' => $rowData['instansi'] ?? null,
-                    'position' => $rowData['jabatan'] ?? null,
-                    'phone' => $rowData['nomor_wa'] ?? '',
-                    'email_belajar' => $rowData['email_belajar'] ?? null,
-                    'password' => Hash::make('password123'),
+                    'name' => $nama,
+                    'email' => $email,
+                    'nik' => $nik,
+                    'password' => Hash::make($password),
                     'role' => $request->role,
                     'status' => 'active',
                 ]);
@@ -190,7 +268,13 @@ class SuperAdminController extends Controller
             }
             
             DB::commit();
-            return redirect()->route('super-admin.users')->with('success', "Import berhasil: {$imported} pengguna ditambahkan");
+            
+            $message = "Import berhasil: {$imported} pengguna ditambahkan";
+            if ($skipped > 0) {
+                $message .= ", {$skipped} data dilewati (email sudah terdaftar atau data tidak lengkap)";
+            }
+            
+            return redirect()->route('super-admin.users')->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Import gagal: ' . $e->getMessage());

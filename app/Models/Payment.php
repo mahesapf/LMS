@@ -16,6 +16,7 @@ class Payment extends Model
         'amount',
         'payment_date',
         'proof_file',
+        'contact_number',
         'status',
         'validated_by',
         'validated_at',

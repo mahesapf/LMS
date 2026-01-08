@@ -12,21 +12,24 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/news', [HomeController::class, 'news'])->name('news');
 Route::get('/news/{id}', [HomeController::class, 'newsDetail'])->name('news.detail');
 
-// Activity Registration Routes (for logged-in users, any role)
-Route::middleware('auth')->group(function () {
-    Route::get('/activities', [\App\Http\Controllers\ActivityRegistrationController::class, 'index'])->name('activities.index');
-    Route::get('/activities/{activity}', [\App\Http\Controllers\ActivityRegistrationController::class, 'show'])->name('activities.show');
-    Route::post('/activities/{activity}/register', [\App\Http\Controllers\ActivityRegistrationController::class, 'register'])->name('activities.register');
-    Route::get('/registrations/{registration}/payment', [\App\Http\Controllers\ActivityRegistrationController::class, 'createPayment'])->name('payment.create');
-    Route::post('/registrations/{registration}/payment', [\App\Http\Controllers\ActivityRegistrationController::class, 'storePayment'])->name('payment.store');
-});
+// Activity Registration Routes (public access)
+Route::get('/activities', [\App\Http\Controllers\ActivityRegistrationController::class, 'index'])->name('activities.index');
+Route::get('/activities/{activity}', [\App\Http\Controllers\ActivityRegistrationController::class, 'show'])->name('activities.show');
+Route::get('/activities/{activity}/register', [\App\Http\Controllers\ActivityRegistrationController::class, 'showRegisterForm'])->name('activities.register.form');
+Route::post('/activities/{activity}/register', [\App\Http\Controllers\ActivityRegistrationController::class, 'register'])->name('activities.register');
 
-// Auth Routes
-Auth::routes();
+// Payment Routes (public - can be accessed without login for public registrations)
+Route::get('/registrations/{registration}/payment', [\App\Http\Controllers\ActivityRegistrationController::class, 'createPayment'])->name('payment.create');
+Route::post('/registrations/{registration}/payment', [\App\Http\Controllers\ActivityRegistrationController::class, 'storePayment'])->name('payment.store');
 
-// Google Auth Routes
-Route::get('auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
-Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+// Auth Routes (Login only - registration disabled, admin will create accounts)
+Route::get('login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
+Route::post('login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
+Route::post('logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+Route::get('password/reset', [App\Http\Controllers\Auth\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('password/email', [App\Http\Controllers\Auth\ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('password/reset/{token}', [App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('password/reset', [App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])->name('password.update');
 
 // Dashboard Route - Redirect based on role
 Route::get('/dashboard', function () {
@@ -73,6 +76,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     
     // Payment Validation (Super Admin Only)
     Route::get('/payments', [\App\Http\Controllers\PaymentValidationController::class, 'index'])->name('payments.index');
+    Route::get('/payments/export/participants', [\App\Http\Controllers\PaymentValidationController::class, 'exportParticipants'])->name('payments.export-participants');
     Route::get('/payments/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'show'])->name('payments.show');
     Route::patch('/payments/{payment}/approve', [\App\Http\Controllers\PaymentValidationController::class, 'approve'])->name('payments.approve');
     Route::patch('/payments/{payment}/reject', [\App\Http\Controllers\PaymentValidationController::class, 'reject'])->name('payments.reject');
@@ -179,6 +183,10 @@ Route::prefix('peserta')->name('peserta.')->middleware(['auth', 'role:peserta'])
     // Profile
     Route::get('/profile', [PesertaController::class, 'profile'])->name('profile');
     Route::put('/profile', [PesertaController::class, 'updateProfile'])->name('profile.update');
+    
+    // Biodata
+    Route::get('/biodata', [PesertaController::class, 'biodata'])->name('biodata');
+    Route::put('/biodata', [PesertaController::class, 'updateBiodata'])->name('biodata.update');
     
     // Classes
     Route::get('/classes', [PesertaController::class, 'myClasses'])->name('classes');

@@ -275,4 +275,70 @@ class PesertaController extends Controller
 
         return Storage::disk('public')->download($document->file_path, $document->file_name);
     }
+
+    // Biodata Management
+    public function biodata()
+    {
+        $user = auth()->user();
+        return view('peserta.biodata', compact('user'));
+    }
+
+    public function updateBiodata(Request $request)
+    {
+        $user = auth()->user();
+        
+        $validated = $request->validate([
+            'nik' => 'nullable|string|size:16',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email_belajar_id' => 'nullable|email',
+            'gelar' => 'nullable|string|max:50',
+            'jabatan' => 'nullable|string|max:100',
+            'no_hp' => 'nullable|string|max:20',
+            'nip_nipy' => 'nullable|string|max:50',
+            'npsn' => 'nullable|string|max:50',
+            'instansi' => 'nullable|string|max:255',
+            'alamat_sekolah' => 'nullable|string',
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
+            'kabupaten_kota' => 'nullable|string|max:255',
+            'provinsi_peserta' => 'nullable|string|max:255',
+            'alamat_lengkap' => 'nullable|string',
+            'kcd' => 'nullable|string|max:255',
+            'pangkat' => 'nullable|string|max:100',
+            'golongan' => 'nullable|string|max:50',
+            'pendidikan_terakhir' => 'nullable|string|max:100',
+            'jurusan' => 'nullable|string|max:100',
+            'foto_3x4' => 'nullable|image|max:2048',
+            'surat_tugas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'tanda_tangan' => 'nullable|image|max:1024',
+        ]);
+
+        // Handle foto 3x4 upload
+        if ($request->hasFile('foto_3x4')) {
+            if ($user->foto_3x4) {
+                Storage::disk('public')->delete($user->foto_3x4);
+            }
+            $validated['foto_3x4'] = $request->file('foto_3x4')->store('peserta/foto', 'public');
+        }
+
+        // Handle surat tugas upload
+        if ($request->hasFile('surat_tugas')) {
+            if ($user->surat_tugas) {
+                Storage::disk('public')->delete($user->surat_tugas);
+            }
+            $validated['surat_tugas'] = $request->file('surat_tugas')->store('peserta/surat-tugas', 'public');
+        }
+
+        // Handle tanda tangan upload
+        if ($request->hasFile('tanda_tangan')) {
+            if ($user->tanda_tangan) {
+                Storage::disk('public')->delete($user->tanda_tangan);
+            }
+            $validated['tanda_tangan'] = $request->file('tanda_tangan')->store('peserta/tanda-tangan', 'public');
+        }
+
+        $user->update($validated);
+
+        return redirect()->back()->with('success', 'Biodata berhasil diperbarui');
+    }
 }

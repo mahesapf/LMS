@@ -17,12 +17,17 @@
     @vite(['resources/sass/app.scss', 'resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
     
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <style>
+        [x-cloak] { display: none !important; }
         .navbar-brand { font-weight: bold; }
         .card { box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); margin-bottom: 1rem; }
     </style>
+    @stack('styles')
 </head>
-<body>
+<body @if(isset($hideNavbar) && $hideNavbar) class="auth-page" @endif>
     <div id="app">
         @if (!isset($hideNavbar) || !$hideNavbar)
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
@@ -39,6 +44,9 @@
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('home') }}">Beranda</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('activities.index') }}">Kegiatan</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('news') }}">Berita</a>

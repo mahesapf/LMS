@@ -4,8 +4,6 @@
 
 @section('sidebar')
 @include('super-admin.partials.sidebar')
-    @endif
-</nav>
 @endsection
 
 @section('content')

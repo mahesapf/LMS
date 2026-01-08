@@ -131,7 +131,7 @@
                         </tr>
                         <tr>
                             <td>Sekolah</td>
-                            <td>: {{ $registration->school_name }}</td>
+                            <td>: {{ $registration->nama_sekolah }}</td>
                         </tr>
                     </table>
                 </div>

@@ -12,10 +12,14 @@ class RegistrationManagementController extends Controller
     /**
      * Display validated registrations.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $registrations = Registration::with(['activity.program', 'user', 'class'])
-            ->where('status', 'validated')
+        $status = $request->get('status', 'validated'); // Default to validated
+        
+        $registrations = Registration::with(['activity.program', 'user', 'class', 'teacherParticipants', 'payment'])
+            ->when($status !== 'all', function($query) use ($status) {
+                return $query->where('status', $status);
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -23,7 +27,7 @@ class RegistrationManagementController extends Controller
         
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
 
-        return view('admin.registrations.index', compact('registrations', 'classes', 'routePrefix'));
+        return view('admin.registrations.index', compact('registrations', 'classes', 'routePrefix', 'status'));
     }
 
     /**

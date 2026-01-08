@@ -17,7 +17,18 @@ class Registration extends Model
         'phone',
         'email',
         'position',
-        'school_name',
+        'nama_sekolah',
+        'alamat_sekolah',
+        'provinsi',
+        'kab_kota',
+        'kcd',
+        'nama_kepala_sekolah',
+        'nik_kepala_sekolah',
+        'nomor_telp',
+        'jumlah_peserta',
+        'jumlah_kepala_sekolah',
+        'jumlah_guru',
+        'surat_tugas_kepala_sekolah',
         'status',
         'class_id',
     ];
@@ -52,5 +63,30 @@ class Registration extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class);
+    }
+
+    /**
+     * Get the teacher participants for the registration.
+     */
+    public function teacherParticipants()
+    {
+        return $this->hasMany(TeacherParticipant::class);
+    }
+
+    /**
+     * Calculate total payment amount based on total participants.
+     */
+    public function calculateTotalPayment()
+    {
+        if (!$this->activity || $this->activity->registration_fee <= 0) {
+            return 0;
+        }
+        
+        // Total peserta = jumlah_peserta (atau jumlah_kepala_sekolah + jumlah_guru jika jumlah_peserta = 0)
+        $totalPeserta = $this->jumlah_peserta > 0 
+            ? $this->jumlah_peserta 
+            : ($this->jumlah_kepala_sekolah + $this->jumlah_guru);
+        
+        return $this->activity->registration_fee * $totalPeserta;
     }
 }

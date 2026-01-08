@@ -96,15 +96,9 @@
                     </ul>
                 </div>
                 <div class="card-footer bg-white border-top-0">
-                    @auth
-                        <a href="{{ route('activities.show', $activity) }}" class="btn btn-primary btn-sm w-100">
-                            Lihat Detail & Daftar
-                        </a>
-                    @else
-                        <a href="{{ route('login') }}" class="btn btn-primary btn-sm w-100">
-                            Login untuk Mendaftar
-                        </a>
-                    @endauth
+                    <a href="{{ route('activities.show', $activity) }}" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-eye"></i> Lihat Detail & Daftar
+                    </a>
                 </div>
             </div>
         </div>
