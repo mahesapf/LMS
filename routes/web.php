@@ -226,20 +226,20 @@ Route::prefix('peserta')->name('peserta.')->middleware(['auth', 'role:peserta'])
     // Grades (redirect to classes)
     Route::get('/grades', function() {
         return redirect()->route('peserta.classes');
-// Sekolah Routes
-Route::prefix('sekolah')->name('sekolah.')->middleware(['auth', 'role:sekolah'])->group(function () {
-    Route::get('/dashboard', [SekolahController::class, 'dashboard'])->name('dashboard');
-    Route::get('/profile', [SekolahController::class, 'profile'])->name('profile');
-    Route::put('/profile', [SekolahController::class, 'updateProfile'])->name('profile.update');
-    Route::get('/registrations', [SekolahController::class, 'registrations'])->name('registrations');
-});
-
     })->name('grades');
 
     // Documents
     Route::get('/documents', [PesertaController::class, 'documents'])->name('documents');
     Route::post('/documents/upload', [PesertaController::class, 'uploadDocument'])->name('documents.upload');
     Route::delete('/documents/{document}', [PesertaController::class, 'destroyDocument'])->name('documents.destroy');
+});
+
+// Sekolah Routes
+Route::prefix('sekolah')->name('sekolah.')->middleware(['auth', 'role:sekolah'])->group(function () {
+    Route::get('/dashboard', [SekolahController::class, 'dashboard'])->name('dashboard');
+    Route::get('/profile', [SekolahController::class, 'profile'])->name('profile');
+    Route::put('/profile', [SekolahController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/registrations', [SekolahController::class, 'registrations'])->name('registrations');
 });
 
 Auth::routes();

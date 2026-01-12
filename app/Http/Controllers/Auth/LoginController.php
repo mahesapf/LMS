@@ -119,11 +119,10 @@ class LoginController extends Controller
      */
     protected function syncUserWithParticipants($user)
     {
-        // Sync teacher_participants by email or NIK
-        $teachers = TeacherParticipant::where(function($query) use ($user) {
-            $query->where('email', $user->email)
-                  ->orWhere('nik', $user->nik);
-        })->whereNull('user_id')->get();
+        // Sync teacher_participants by email only
+        $teachers = TeacherParticipant::where('email', $user->email)
+            ->whereNull('user_id')
+            ->get();
 
         foreach ($teachers as $teacher) {
             $teacher->update(['user_id' => $user->id]);
