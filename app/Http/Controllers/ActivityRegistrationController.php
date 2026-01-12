@@ -52,6 +52,22 @@ class ActivityRegistrationController extends Controller
      */
     public function showRegisterForm(Activity $activity)
     {
+        // Require login for registration
+        if (!Auth::check()) {
+            return redirect()->route('login')
+                ->with('error', 'Anda harus login terlebih dahulu untuk mendaftar kegiatan.');
+        }
+
+        // Check if already registered
+        $existingRegistration = Registration::where('activity_id', $activity->id)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if ($existingRegistration) {
+            return redirect()->route('activities.show', $activity)
+                ->with('info', 'Anda sudah terdaftar pada kegiatan ini.');
+        }
+
         return view('activities.register', compact('activity'));
     }
 
@@ -60,6 +76,12 @@ class ActivityRegistrationController extends Controller
      */
     public function register(Request $request, Activity $activity)
     {
+        // Require login for registration
+        if (!Auth::check()) {
+            return redirect()->route('login')
+                ->with('error', 'Anda harus login terlebih dahulu untuk mendaftar kegiatan.');
+        }
+
         $validated = $request->validate([
             'nama_sekolah' => 'required|string|max:255',
             'alamat_sekolah' => 'required|string',
@@ -76,7 +98,7 @@ class ActivityRegistrationController extends Controller
 
         $registration = Registration::create([
             'activity_id' => $activity->id,
-            'user_id' => Auth::check() ? Auth::id() : null,
+            'user_id' => Auth::id(),
             'name' => $validated['nama_kepala_sekolah'], // Use kepala sekolah name as main name
             'phone' => $request->nomor_telp ?? '', // Optional phone
             'email' => $request->email ?? '', // Optional email
@@ -123,14 +145,15 @@ class ActivityRegistrationController extends Controller
      */
     public function createPayment(Registration $registration)
     {
-        // Check ownership only if user is logged in
-        if (Auth::check() && $registration->user_id !== Auth::id()) {
-            abort(403);
+        // Require login for payment
+        if (!Auth::check()) {
+            return redirect()->route('login')
+                ->with('error', 'Anda harus login terlebih dahulu untuk melakukan pembayaran.');
         }
 
-        // For public registration (no user_id), allow access
-        if (!Auth::check() && $registration->user_id !== null) {
-            abort(403, 'Anda harus login untuk mengakses halaman ini.');
+        // Check ownership
+        if ($registration->user_id !== Auth::id()) {
+            abort(403, 'Anda tidak memiliki akses ke registrasi ini.');
         }
 
         // Check if already paid

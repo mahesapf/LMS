@@ -380,9 +380,19 @@
                 </svg>
                 Admin yang Ditugaskan
             </h2>
-            <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                {{ $activeAdmins->count() }} Admin
-            </span>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                    {{ $activeAdmins->count() }} Admin
+                </span>
+                @if(auth()->user()->role === 'super_admin')
+                <button onclick="document.getElementById('assignAdminModal').showModal()" class="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                    </svg>
+                    Tambah Admin
+                </button>
+                @endif
+            </div>
         </div>
         <div class="px-6 py-4">
             @if($activeAdmins->isEmpty())
@@ -404,6 +414,9 @@
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Instansi</th>
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Ditugaskan</th>
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Status</th>
+                                @if(auth()->user()->role === 'super_admin')
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600">Aksi</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
@@ -422,6 +435,19 @@
                                 <td class="px-4 py-2">
                                     <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Aktif</span>
                                 </td>
+                                @if(auth()->user()->role === 'super_admin')
+                                <td class="px-4 py-2 text-right">
+                                    <form action="{{ route('super-admin.classes.removeAdmin', [$class, $mapping]) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex items-center rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700" onclick="return confirm('Yakin ingin menghapus {{ $mapping->admin->name ?? 'admin ini' }} dari kegiatan?')">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </td>
+                                @endif
                             </tr>
                             @endforeach
                         </tbody>
@@ -441,27 +467,55 @@
     </div>
 
     <form id="filterForm" class="space-y-3 mb-4">
-        <div>
-            <label for="filter-kecamatan" class="block text-sm font-medium text-slate-700">Filter Kecamatan</label>
-            <div class="mt-1 flex gap-2">
-                <select name="kecamatan" id="filter-kecamatan" class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    <option value="">Semua Kecamatan</option>
-                    @foreach($kecamatanOptions as $kecamatan)
-                        <option value="{{ $kecamatan }}" {{ $selectedKecamatan == $kecamatan ? 'selected' : '' }}>
-                            {{ $kecamatan }}
+        <div class="grid gap-3 sm:grid-cols-3">
+            <div>
+                <label for="filter-provinsi" class="block text-sm font-medium text-slate-700">Provinsi</label>
+                <select name="provinsi" id="filter-provinsi" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" onchange="onProvinsiChangeFilter()">
+                    <option value="">Semua Provinsi</option>
+                    @foreach($provinsiOptions as $provinsi)
+                        <option value="{{ $provinsi }}" {{ $selectedProvinsi == $provinsi ? 'selected' : '' }}>
+                            {{ ucwords(strtolower($provinsi)) }}
                         </option>
                     @endforeach
                 </select>
-                <button type="button" onclick="applyKecamatanFilter()" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Terapkan</button>
             </div>
-            <p class="mt-1 text-xs text-slate-500">Menampilkan peserta tervalidasi yang belum masuk kelas pada kegiatan ini.</p>
+            <div>
+                <label for="filter-kabkota" class="block text-sm font-medium text-slate-700">Kabupaten/Kota</label>
+                <select name="kab_kota" id="filter-kabkota" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" onchange="onKabKotaChangeFilter()">
+                    <option value="">Semua Kab/Kota</option>
+                    @foreach($kabKotaOptions as $kabKota)
+                        <option value="{{ $kabKota }}" {{ $selectedKabKota == $kabKota ? 'selected' : '' }}>
+                            {{ ucwords(strtolower($kabKota)) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="filter-kecamatan" class="block text-sm font-medium text-slate-700">Kecamatan</label>
+                <select name="kecamatan" id="filter-kecamatan" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <option value="">Semua Kecamatan</option>
+                    @foreach($kecamatanOptions as $kecamatan)
+                        <option value="{{ $kecamatan }}" {{ $selectedKecamatan == $kecamatan ? 'selected' : '' }}>
+                            {{ ucwords(strtolower($kecamatan)) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="flex items-center justify-between">
+            <p class="text-xs text-slate-500">Menampilkan peserta tervalidasi yang belum masuk kelas pada kegiatan ini.</p>
+            <button type="button" onclick="applyLocationFilter()" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Terapkan</button>
         </div>
     </form>
 
-    @if($selectedKecamatan)
+    @if($selectedProvinsi || $selectedKabKota || $selectedKecamatan)
         @if($availableRegistrations->isEmpty())
             <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                <p>Tidak ada peserta yang tersedia untuk ditambahkan di kecamatan <strong>{{ $selectedKecamatan }}</strong>.</p>
+                <p>Tidak ada peserta yang tersedia untuk ditambahkan dengan filter:
+                    @if($selectedProvinsi) <strong>{{ ucwords(strtolower($selectedProvinsi)) }}</strong> @endif
+                    @if($selectedKabKota) > <strong>{{ ucwords(strtolower($selectedKabKota)) }}</strong> @endif
+                    @if($selectedKecamatan) > <strong>{{ ucwords(strtolower($selectedKecamatan)) }}</strong> @endif
+                </p>
             </div>
         @else
             <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -473,7 +527,7 @@
                                 <p class="text-sm font-semibold text-slate-900">{{ $registration->nama_sekolah ?? '-' }}</p>
                                 <p class="text-xs text-slate-500">{{ $registration->email ?? '-' }}</p>
                                 <p class="text-xs text-slate-500 mt-1">
-                                    📍 {{ $registration->kecamatan ?? '-' }}
+                                    📍 {{ ucwords(strtolower($registration->provinsi ?? '-')) }} > {{ ucwords(strtolower($registration->kab_kota ?? '-')) }} > {{ ucwords(strtolower($registration->kecamatan ?? '-')) }}
                                 </p>
                                 <p class="text-xs text-slate-600 mt-1">
                                     @if($registration->jumlah_peserta > 0)
@@ -495,9 +549,17 @@
 
                 <div class="flex items-center justify-end gap-2">
                     <button type="button" onclick="document.getElementById('assignModal').close()" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Batal</button>
-                    <form method="POST" action="{{ route($routePrefix . '.classes.assignParticipantsByKecamatan', $class) }}" class="inline">
+                    <form method="POST" action="{{ route($routePrefix . '.classes.assignParticipantsByLocation', $class) }}" class="inline">
                         @csrf
-                        <input type="hidden" name="kecamatan" value="{{ $selectedKecamatan }}">
+                        @if($selectedProvinsi)
+                            <input type="hidden" name="provinsi" value="{{ $selectedProvinsi }}">
+                        @endif
+                        @if($selectedKabKota)
+                            <input type="hidden" name="kab_kota" value="{{ $selectedKabKota }}">
+                        @endif
+                        @if($selectedKecamatan)
+                            <input type="hidden" name="kecamatan" value="{{ $selectedKecamatan }}">
+                        @endif
                         <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
@@ -580,22 +642,114 @@
   </form>
 </dialog>
 
+<!-- Modal Assign Admin -->
+<dialog id="assignAdminModal" class="modal">
+  <div class="modal-box max-w-lg">
+    <div class="flex items-center justify-between mb-4">
+        <h5 class="text-lg font-semibold text-slate-900">Tambah Admin ke Kegiatan</h5>
+        <button type="button" onclick="document.getElementById('assignAdminModal').close()" class="btn btn-sm btn-circle btn-ghost">✕</button>
+    </div>
+
+    <form method="POST" action="{{ route('super-admin.classes.assignAdmin', $class) }}">
+        @csrf
+        <div class="space-y-4">
+            <div>
+                <label for="admin_id" class="block text-sm font-medium text-slate-700 mb-2">Pilih Admin</label>
+                @php
+                    $availableAdmins = \App\Models\User::where('role', 'admin')
+                        ->where('status', 'active')
+                        ->whereDoesntHave('adminMappings', function($query) use ($class) {
+                            $query->where('activity_id', $class->activity_id)
+                                ->where('status', 'active');
+                        })
+                        ->get();
+                @endphp
+
+                @if($availableAdmins->isEmpty())
+                    <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="mb-1 inline-block h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                        Semua admin sudah ditugaskan ke kegiatan ini.
+                    </div>
+                @else
+                    <select name="admin_id" id="admin_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" required>
+                        <option value="">Pilih Admin</option>
+                        @foreach($availableAdmins as $admin)
+                            <option value="{{ $admin->id }}">
+                                {{ $admin->name }} - {{ $admin->email }}
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
+            </div>
+
+            <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+                Admin akan ditugaskan untuk mengelola kegiatan <strong>{{ $class->activity->name }}</strong>.
+            </div>
+        </div>
+
+        <div class="modal-action mt-6">
+            <button type="button" onclick="document.getElementById('assignAdminModal').close()" class="btn btn-outline">Batal</button>
+            @if(!$availableAdmins->isEmpty())
+                <button type="submit" class="btn bg-amber-600 text-white hover:bg-amber-700 border-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambahkan Admin
+                </button>
+            @endif
+        </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
 <script>
-function applyKecamatanFilter() {
+function onProvinsiChangeFilter() {
+    const provinsi = document.getElementById('filter-provinsi').value;
+    // Reset kabkota dan kecamatan
+    document.getElementById('filter-kabkota').value = '';
+    document.getElementById('filter-kecamatan').value = '';
+}
+
+function onKabKotaChangeFilter() {
+    // Reset kecamatan
+    document.getElementById('filter-kecamatan').value = '';
+}
+
+function applyLocationFilter() {
+    const provinsi = document.getElementById('filter-provinsi').value;
+    const kabKota = document.getElementById('filter-kabkota').value;
     const kecamatan = document.getElementById('filter-kecamatan').value;
-    if (!kecamatan) {
-        alert('Silakan pilih kecamatan terlebih dahulu');
+    
+    if (!provinsi && !kabKota && !kecamatan) {
+        alert('Silakan pilih minimal satu filter (Provinsi, Kabupaten/Kota, atau Kecamatan)');
         return;
     }
 
     // Simpan status bahwa modal harus tetap terbuka
     sessionStorage.setItem('openAssignModal', 'true');
-    sessionStorage.setItem('selectedKecamatan', kecamatan);
 
-    // Redirect dengan parameter kecamatan
+    // Redirect dengan parameter filter
     const url = new URL(window.location.href);
-    url.searchParams.set('kecamatan', kecamatan);
+    if (provinsi) url.searchParams.set('provinsi', provinsi);
+    else url.searchParams.delete('provinsi');
+    
+    if (kabKota) url.searchParams.set('kab_kota', kabKota);
+    else url.searchParams.delete('kab_kota');
+    
+    if (kecamatan) url.searchParams.set('kecamatan', kecamatan);
+    else url.searchParams.delete('kecamatan');
+    
     window.location.href = url.toString();
+}
+
+// Backward compatibility - redirect old kecamatan filter
+function applyKecamatanFilter() {
+    applyLocationFilter();
 }
 
 // Saat halaman selesai loading, buka modal jika diperlukan
@@ -606,11 +760,11 @@ window.addEventListener('load', function() {
             if (modal) {
                 modal.showModal();
                 sessionStorage.removeItem('openAssignModal');
-                sessionStorage.removeItem('selectedKecamatan');
             }
         }, 100);
     }
 });
+
 
 document.addEventListener('alpine:init', () => {
     if (!Alpine.store('assign')) {

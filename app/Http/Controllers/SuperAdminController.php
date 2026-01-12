@@ -623,7 +623,19 @@ class SuperAdminController extends Controller
     public function showClass(Request $request, \App\Models\Classes $class)
     {
         $class->load(['activity.adminMappings.admin', 'participantMappings.participant', 'fasilitatorMappings.fasilitator', 'stages']);
+        
+        // Get filter parameters
+        $selectedProvinsi = $request->get('provinsi');
+        $selectedKabKota = $request->get('kab_kota');
         $selectedKecamatan = $request->get('kecamatan');
+        
+        // Normalize filters
+        $selectedProvinsiNormalized = $selectedProvinsi
+            ? preg_replace('/\s+|_+/', '', strtolower(trim($selectedProvinsi)))
+            : null;
+        $selectedKabKotaNormalized = $selectedKabKota
+            ? preg_replace('/\s+|_+/', '', strtolower(trim($selectedKabKota)))
+            : null;
         $selectedKecamatanNormalized = $selectedKecamatan
             ? preg_replace('/\s+|_+/', '', strtolower(trim($selectedKecamatan)))
             : null;
@@ -731,36 +743,74 @@ class SuperAdminController extends Controller
             ->whereNotIn('status', ['in', 'move', 'out'])
             ->update(['status' => 'in']);
 
-        // Daftar kecamatan untuk dropdown filter
-        $kecamatanOptions = \App\Models\Registration::where('activity_id', $class->activity_id)
+        // Build base query for filter options
+        $baseFilterQuery = \App\Models\Registration::where('activity_id', $class->activity_id)
             ->whereIn('status', $kecamatanStatuses)
-            ->whereNull('class_id')
-            ->whereNotNull('kecamatan')
+            ->whereNull('class_id');
+
+        // Daftar provinsi untuk dropdown filter
+        $provinsiQuery = clone $baseFilterQuery;
+        $provinsiOptions = $provinsiQuery->whereNotNull('provinsi')
+            ->distinct()
+            ->orderBy('provinsi')
+            ->pluck('provinsi');
+
+        // Daftar kabupaten/kota untuk dropdown filter (filtered by provinsi if selected)
+        $kabKotaQuery = clone $baseFilterQuery;
+        if ($selectedProvinsiNormalized) {
+            $kabKotaQuery->whereRaw('LOWER(REPLACE(REPLACE(TRIM(provinsi)," ",""),"_","")) = ?', [$selectedProvinsiNormalized]);
+        }
+        $kabKotaOptions = $kabKotaQuery->whereNotNull('kab_kota')
+            ->distinct()
+            ->orderBy('kab_kota')
+            ->pluck('kab_kota');
+
+        // Daftar kecamatan untuk dropdown filter (filtered by provinsi and kab_kota if selected)
+        $kecamatanQuery = clone $baseFilterQuery;
+        if ($selectedProvinsiNormalized) {
+            $kecamatanQuery->whereRaw('LOWER(REPLACE(REPLACE(TRIM(provinsi)," ",""),"_","")) = ?', [$selectedProvinsiNormalized]);
+        }
+        if ($selectedKabKotaNormalized) {
+            $kecamatanQuery->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kab_kota)," ",""),"_","")) = ?', [$selectedKabKotaNormalized]);
+        }
+        $kecamatanOptions = $kecamatanQuery->whereNotNull('kecamatan')
             ->distinct()
             ->orderBy('kecamatan')
             ->pluck('kecamatan');
 
-        // Available registrations (tidak hanya yang punya user, tapi semua yang eligible)
+        // Available registrations with all filters applied
         $availableRegistrationsQuery = \App\Models\Registration::with('user')
             ->where('activity_id', $class->activity_id)
             ->whereIn('status', $kecamatanStatuses)
             ->whereNull('class_id');
 
+        if ($selectedProvinsiNormalized) {
+            $availableRegistrationsQuery->whereRaw('LOWER(REPLACE(REPLACE(TRIM(provinsi)," ",""),"_","")) = ?', [$selectedProvinsiNormalized]);
+        }
+        if ($selectedKabKotaNormalized) {
+            $availableRegistrationsQuery->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kab_kota)," ",""),"_","")) = ?', [$selectedKabKotaNormalized]);
+        }
         if ($selectedKecamatanNormalized) {
             $availableRegistrationsQuery->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kecamatan)," ",""),"_","")) = ?', [$selectedKecamatanNormalized]);
         }
 
         $availableRegistrations = $availableRegistrationsQuery->get();
 
-        // Peserta/guru/kepsek yang punya registrasi tervalidasi dan belum masuk kelas, difilter kecamatan jika dipilih
+        // Peserta/guru/kepsek yang punya registrasi tervalidasi dan belum masuk kelas, difilter lokasi jika dipilih
         $availableParticipants = \App\Models\User::with(['registrations' => function($query) use ($class) {
                 $query->where('activity_id', $class->activity_id);
             }])
             ->whereIn('role', ['peserta', 'guru', 'kepala_sekolah'])
-            ->whereHas('registrations', function($query) use ($class, $selectedKecamatanNormalized, $kecamatanStatuses) {
+            ->whereHas('registrations', function($query) use ($class, $selectedProvinsiNormalized, $selectedKabKotaNormalized, $selectedKecamatanNormalized, $kecamatanStatuses) {
                 $query->where('activity_id', $class->activity_id)
                     ->whereIn('status', $kecamatanStatuses)
                     ->whereNull('class_id');
+                if ($selectedProvinsiNormalized) {
+                    $query->whereRaw('LOWER(REPLACE(REPLACE(TRIM(provinsi)," ",""),"_","")) = ?', [$selectedProvinsiNormalized]);
+                }
+                if ($selectedKabKotaNormalized) {
+                    $query->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kab_kota)," ",""),"_","")) = ?', [$selectedKabKotaNormalized]);
+                }
                 if ($selectedKecamatanNormalized) {
                     $query->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kecamatan)," ",""),"_","")) = ?', [$selectedKecamatanNormalized]);
                 }
@@ -786,7 +836,11 @@ class SuperAdminController extends Controller
             'availableParticipants',
             'availableFasilitators',
             'routePrefix',
+            'provinsiOptions',
+            'kabKotaOptions',
             'kecamatanOptions',
+            'selectedProvinsi',
+            'selectedKabKota',
             'selectedKecamatan'
         ));
     }
@@ -843,25 +897,51 @@ class SuperAdminController extends Controller
             ->with('success', 'Peserta berhasil ditambahkan ke kelas');
     }
 
-    public function assignParticipantsByKecamatan(Request $request, \App\Models\Classes $class)
+    public function assignParticipantsByLocation(Request $request, \App\Models\Classes $class)
     {
         $validated = $request->validate([
-            'kecamatan' => 'required|string',
+            'provinsi' => 'nullable|string',
+            'kab_kota' => 'nullable|string',
+            'kecamatan' => 'nullable|string',
         ]);
 
-        $kecamatanNormalized = preg_replace('/\s+|_+/', '', strtolower(trim($validated['kecamatan'])));
+        // At least one filter must be provided
+        if (empty($validated['provinsi']) && empty($validated['kab_kota']) && empty($validated['kecamatan'])) {
+            return redirect()->back()->with('error', 'Minimal satu filter harus dipilih');
+        }
+
+        // Normalize filters
+        $provinsiNormalized = !empty($validated['provinsi']) 
+            ? preg_replace('/\s+|_+/', '', strtolower(trim($validated['provinsi'])))
+            : null;
+        $kabKotaNormalized = !empty($validated['kab_kota'])
+            ? preg_replace('/\s+|_+/', '', strtolower(trim($validated['kab_kota'])))
+            : null;
+        $kecamatanNormalized = !empty($validated['kecamatan'])
+            ? preg_replace('/\s+|_+/', '', strtolower(trim($validated['kecamatan'])))
+            : null;
 
         $statuses = ['validated', 'payment_uploaded', 'payment_validated', 'approved', 'accepted', 'belum ditentukan', 'belum_ditentukan'];
 
-        // Find all eligible registrations by kecamatan
+        // Find all eligible registrations by location filters
         $eligibleRegistrations = \App\Models\Registration::where('activity_id', $class->activity_id)
             ->whereIn('status', $statuses)
-            ->whereNull('class_id')
-            ->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kecamatan)," ",""),"_","")) = ?', [$kecamatanNormalized])
-            ->get();
+            ->whereNull('class_id');
+
+        if ($provinsiNormalized) {
+            $eligibleRegistrations->whereRaw('LOWER(REPLACE(REPLACE(TRIM(provinsi)," ",""),"_","")) = ?', [$provinsiNormalized]);
+        }
+        if ($kabKotaNormalized) {
+            $eligibleRegistrations->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kab_kota)," ",""),"_","")) = ?', [$kabKotaNormalized]);
+        }
+        if ($kecamatanNormalized) {
+            $eligibleRegistrations->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kecamatan)," ",""),"_","")) = ?', [$kecamatanNormalized]);
+        }
+
+        $eligibleRegistrations = $eligibleRegistrations->get();
 
         if ($eligibleRegistrations->isEmpty()) {
-            return redirect()->back()->with('error', 'Tidak ada peserta yang tersedia di kecamatan tersebut');
+            return redirect()->back()->with('error', 'Tidak ada peserta yang tersedia dengan filter tersebut');
         }
 
         $countAdded = 0;
@@ -925,9 +1005,22 @@ class SuperAdminController extends Controller
             }
         }
 
+        // Build success message
+        $locationParts = [];
+        if (!empty($validated['provinsi'])) $locationParts[] = ucwords(strtolower($validated['provinsi']));
+        if (!empty($validated['kab_kota'])) $locationParts[] = ucwords(strtolower($validated['kab_kota']));
+        if (!empty($validated['kecamatan'])) $locationParts[] = ucwords(strtolower($validated['kecamatan']));
+        $locationStr = implode(' > ', $locationParts);
+
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
         return redirect()->route($routePrefix . '.classes.show', $class)
-            ->with('success', $countAdded . ' pendaftaran dari kecamatan ' . $validated['kecamatan'] . ' berhasil ditambahkan ke kelas');
+            ->with('success', $countAdded . ' pendaftaran dari ' . $locationStr . ' berhasil ditambahkan ke kelas');
+    }
+
+    // Keep old method for backward compatibility
+    public function assignParticipantsByKecamatan(Request $request, \App\Models\Classes $class)
+    {
+        return $this->assignParticipantsByLocation($request, $class);
     }
 
     public function assignFasilitatorToClass(Request $request, \App\Models\Classes $class)
@@ -1016,5 +1109,68 @@ class SuperAdminController extends Controller
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
         return redirect()->route($routePrefix . '.classes.show', $class)
             ->with('success', 'Kepala sekolah berhasil dikeluarkan dari kelas');
+    }
+
+    public function assignAdminToActivity(Request $request, \App\Models\Classes $class)
+    {
+        try {
+            $validated = $request->validate([
+                'admin_id' => 'required|exists:users,id',
+            ]);
+
+            // Check if admin exists
+            $admin = \App\Models\User::where('id', $validated['admin_id'])
+                ->where('role', 'admin')
+                ->where('status', 'active')
+                ->first();
+
+            if (!$admin) {
+                return redirect()->back()->with('error', 'Admin tidak ditemukan atau tidak aktif');
+            }
+
+            // Check if admin is already assigned to this activity
+            $existingMapping = \App\Models\AdminMapping::where('admin_id', $validated['admin_id'])
+                ->where('activity_id', $class->activity_id)
+                ->where('status', 'active')
+                ->first();
+
+            if ($existingMapping) {
+                return redirect()->back()->with('error', 'Admin sudah ditugaskan ke kegiatan ini');
+            }
+
+            // Create admin mapping
+            \App\Models\AdminMapping::create([
+                'activity_id' => $class->activity_id,
+                'admin_id' => $validated['admin_id'],
+                'assigned_by' => auth()->id(),
+                'assigned_date' => now(),
+                'status' => 'active',
+            ]);
+
+            return redirect()->route('super-admin.classes.show', $class)
+                ->with('success', 'Admin ' . $admin->name . ' berhasil ditambahkan ke kegiatan');
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    public function removeAdminFromActivity(\App\Models\Classes $class, \App\Models\AdminMapping $adminMapping)
+    {
+        try {
+            // Verify the admin mapping belongs to this activity
+            if ($adminMapping->activity_id != $class->activity_id) {
+                return redirect()->back()->with('error', 'Admin mapping tidak valid');
+            }
+
+            // Set status to inactive instead of deleting
+            $adminMapping->update(['status' => 'inactive']);
+
+            return redirect()->route('super-admin.classes.show', $class)
+                ->with('success', 'Admin berhasil dihapus dari kegiatan');
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 }

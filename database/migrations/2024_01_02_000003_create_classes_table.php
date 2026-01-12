@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('activity_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->integer('max_participants')->nullable();
             $table->enum('status', ['open', 'closed', 'completed'])->default('open');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');

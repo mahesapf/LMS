@@ -387,9 +387,19 @@
                 </svg>
                 Admin yang Ditugaskan
             </h2>
-            <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                <?php echo e($activeAdmins->count()); ?> Admin
-            </span>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                    <?php echo e($activeAdmins->count()); ?> Admin
+                </span>
+                <?php if(auth()->user()->role === 'super_admin'): ?>
+                <button onclick="document.getElementById('assignAdminModal').showModal()" class="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                    </svg>
+                    Tambah Admin
+                </button>
+                <?php endif; ?>
+            </div>
         </div>
         <div class="px-6 py-4">
             <?php if($activeAdmins->isEmpty()): ?>
@@ -411,6 +421,9 @@
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Instansi</th>
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Ditugaskan</th>
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Status</th>
+                                <?php if(auth()->user()->role === 'super_admin'): ?>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600">Aksi</th>
+                                <?php endif; ?>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
@@ -430,6 +443,19 @@
                                 <td class="px-4 py-2">
                                     <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Aktif</span>
                                 </td>
+                                <?php if(auth()->user()->role === 'super_admin'): ?>
+                                <td class="px-4 py-2 text-right">
+                                    <form action="<?php echo e(route('super-admin.classes.removeAdmin', [$class, $mapping])); ?>" method="POST" class="inline">
+                                        <?php echo csrf_field(); ?>
+                                        <?php echo method_field('DELETE'); ?>
+                                        <button type="submit" class="inline-flex items-center rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700" onclick="return confirm('Yakin ingin menghapus <?php echo e($mapping->admin->name ?? 'admin ini'); ?> dari kegiatan?')">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </td>
+                                <?php endif; ?>
                             </tr>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
@@ -449,28 +475,58 @@
     </div>
 
     <form id="filterForm" class="space-y-3 mb-4">
-        <div>
-            <label for="filter-kecamatan" class="block text-sm font-medium text-slate-700">Filter Kecamatan</label>
-            <div class="mt-1 flex gap-2">
-                <select name="kecamatan" id="filter-kecamatan" class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    <option value="">Semua Kecamatan</option>
-                    <?php $__currentLoopData = $kecamatanOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $kecamatan): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <option value="<?php echo e($kecamatan); ?>" <?php echo e($selectedKecamatan == $kecamatan ? 'selected' : ''); ?>>
-                            <?php echo e($kecamatan); ?>
+        <div class="grid gap-3 sm:grid-cols-3">
+            <div>
+                <label for="filter-provinsi" class="block text-sm font-medium text-slate-700">Provinsi</label>
+                <select name="provinsi" id="filter-provinsi" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" onchange="onProvinsiChangeFilter()">
+                    <option value="">Semua Provinsi</option>
+                    <?php $__currentLoopData = $provinsiOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $provinsi): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($provinsi); ?>" <?php echo e($selectedProvinsi == $provinsi ? 'selected' : ''); ?>>
+                            <?php echo e(ucwords(strtolower($provinsi))); ?>
 
                         </option>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
-                <button type="button" onclick="applyKecamatanFilter()" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Terapkan</button>
             </div>
-            <p class="mt-1 text-xs text-slate-500">Menampilkan peserta tervalidasi yang belum masuk kelas pada kegiatan ini.</p>
+            <div>
+                <label for="filter-kabkota" class="block text-sm font-medium text-slate-700">Kabupaten/Kota</label>
+                <select name="kab_kota" id="filter-kabkota" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" onchange="onKabKotaChangeFilter()">
+                    <option value="">Semua Kab/Kota</option>
+                    <?php $__currentLoopData = $kabKotaOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $kabKota): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($kabKota); ?>" <?php echo e($selectedKabKota == $kabKota ? 'selected' : ''); ?>>
+                            <?php echo e(ucwords(strtolower($kabKota))); ?>
+
+                        </option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </select>
+            </div>
+            <div>
+                <label for="filter-kecamatan" class="block text-sm font-medium text-slate-700">Kecamatan</label>
+                <select name="kecamatan" id="filter-kecamatan" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <option value="">Semua Kecamatan</option>
+                    <?php $__currentLoopData = $kecamatanOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $kecamatan): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($kecamatan); ?>" <?php echo e($selectedKecamatan == $kecamatan ? 'selected' : ''); ?>>
+                            <?php echo e(ucwords(strtolower($kecamatan))); ?>
+
+                        </option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </select>
+            </div>
+        </div>
+        <div class="flex items-center justify-between">
+            <p class="text-xs text-slate-500">Menampilkan peserta tervalidasi yang belum masuk kelas pada kegiatan ini.</p>
+            <button type="button" onclick="applyLocationFilter()" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Terapkan</button>
         </div>
     </form>
 
-    <?php if($selectedKecamatan): ?>
+    <?php if($selectedProvinsi || $selectedKabKota || $selectedKecamatan): ?>
         <?php if($availableRegistrations->isEmpty()): ?>
             <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                <p>Tidak ada peserta yang tersedia untuk ditambahkan di kecamatan <strong><?php echo e($selectedKecamatan); ?></strong>.</p>
+                <p>Tidak ada peserta yang tersedia untuk ditambahkan dengan filter:
+                    <?php if($selectedProvinsi): ?> <strong><?php echo e(ucwords(strtolower($selectedProvinsi))); ?></strong> <?php endif; ?>
+                    <?php if($selectedKabKota): ?> > <strong><?php echo e(ucwords(strtolower($selectedKabKota))); ?></strong> <?php endif; ?>
+                    <?php if($selectedKecamatan): ?> > <strong><?php echo e(ucwords(strtolower($selectedKecamatan))); ?></strong> <?php endif; ?>
+                </p>
             </div>
         <?php else: ?>
             <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -482,7 +538,7 @@
                                 <p class="text-sm font-semibold text-slate-900"><?php echo e($registration->nama_sekolah ?? '-'); ?></p>
                                 <p class="text-xs text-slate-500"><?php echo e($registration->email ?? '-'); ?></p>
                                 <p class="text-xs text-slate-500 mt-1">
-                                    📍 <?php echo e($registration->kecamatan ?? '-'); ?>
+                                    📍 <?php echo e(ucwords(strtolower($registration->provinsi ?? '-'))); ?> > <?php echo e(ucwords(strtolower($registration->kab_kota ?? '-'))); ?> > <?php echo e(ucwords(strtolower($registration->kecamatan ?? '-'))); ?>
 
                                 </p>
                                 <p class="text-xs text-slate-600 mt-1">
@@ -505,9 +561,17 @@
 
                 <div class="flex items-center justify-end gap-2">
                     <button type="button" onclick="document.getElementById('assignModal').close()" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Batal</button>
-                    <form method="POST" action="<?php echo e(route($routePrefix . '.classes.assignParticipantsByKecamatan', $class)); ?>" class="inline">
+                    <form method="POST" action="<?php echo e(route($routePrefix . '.classes.assignParticipantsByLocation', $class)); ?>" class="inline">
                         <?php echo csrf_field(); ?>
-                        <input type="hidden" name="kecamatan" value="<?php echo e($selectedKecamatan); ?>">
+                        <?php if($selectedProvinsi): ?>
+                            <input type="hidden" name="provinsi" value="<?php echo e($selectedProvinsi); ?>">
+                        <?php endif; ?>
+                        <?php if($selectedKabKota): ?>
+                            <input type="hidden" name="kab_kota" value="<?php echo e($selectedKabKota); ?>">
+                        <?php endif; ?>
+                        <?php if($selectedKecamatan): ?>
+                            <input type="hidden" name="kecamatan" value="<?php echo e($selectedKecamatan); ?>">
+                        <?php endif; ?>
                         <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
@@ -598,22 +662,115 @@ unset($__errorArgs, $__bag); ?>" id="fasilitator_id" name="fasilitator_id" requi
   </form>
 </dialog>
 
+<!-- Modal Assign Admin -->
+<dialog id="assignAdminModal" class="modal">
+  <div class="modal-box max-w-lg">
+    <div class="flex items-center justify-between mb-4">
+        <h5 class="text-lg font-semibold text-slate-900">Tambah Admin ke Kegiatan</h5>
+        <button type="button" onclick="document.getElementById('assignAdminModal').close()" class="btn btn-sm btn-circle btn-ghost">✕</button>
+    </div>
+
+    <form method="POST" action="<?php echo e(route('super-admin.classes.assignAdmin', $class)); ?>">
+        <?php echo csrf_field(); ?>
+        <div class="space-y-4">
+            <div>
+                <label for="admin_id" class="block text-sm font-medium text-slate-700 mb-2">Pilih Admin</label>
+                <?php
+                    $availableAdmins = \App\Models\User::where('role', 'admin')
+                        ->where('status', 'active')
+                        ->whereDoesntHave('adminMappings', function($query) use ($class) {
+                            $query->where('activity_id', $class->activity_id)
+                                ->where('status', 'active');
+                        })
+                        ->get();
+                ?>
+
+                <?php if($availableAdmins->isEmpty()): ?>
+                    <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="mb-1 inline-block h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                        Semua admin sudah ditugaskan ke kegiatan ini.
+                    </div>
+                <?php else: ?>
+                    <select name="admin_id" id="admin_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" required>
+                        <option value="">Pilih Admin</option>
+                        <?php $__currentLoopData = $availableAdmins; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $admin): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($admin->id); ?>">
+                                <?php echo e($admin->name); ?> - <?php echo e($admin->email); ?>
+
+                            </option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                <?php endif; ?>
+            </div>
+
+            <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+                Admin akan ditugaskan untuk mengelola kegiatan <strong><?php echo e($class->activity->name); ?></strong>.
+            </div>
+        </div>
+
+        <div class="modal-action mt-6">
+            <button type="button" onclick="document.getElementById('assignAdminModal').close()" class="btn btn-outline">Batal</button>
+            <?php if(!$availableAdmins->isEmpty()): ?>
+                <button type="submit" class="btn bg-amber-600 text-white hover:bg-amber-700 border-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambahkan Admin
+                </button>
+            <?php endif; ?>
+        </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
 <script>
-function applyKecamatanFilter() {
+function onProvinsiChangeFilter() {
+    const provinsi = document.getElementById('filter-provinsi').value;
+    // Reset kabkota dan kecamatan
+    document.getElementById('filter-kabkota').value = '';
+    document.getElementById('filter-kecamatan').value = '';
+}
+
+function onKabKotaChangeFilter() {
+    // Reset kecamatan
+    document.getElementById('filter-kecamatan').value = '';
+}
+
+function applyLocationFilter() {
+    const provinsi = document.getElementById('filter-provinsi').value;
+    const kabKota = document.getElementById('filter-kabkota').value;
     const kecamatan = document.getElementById('filter-kecamatan').value;
-    if (!kecamatan) {
-        alert('Silakan pilih kecamatan terlebih dahulu');
+    
+    if (!provinsi && !kabKota && !kecamatan) {
+        alert('Silakan pilih minimal satu filter (Provinsi, Kabupaten/Kota, atau Kecamatan)');
         return;
     }
 
     // Simpan status bahwa modal harus tetap terbuka
     sessionStorage.setItem('openAssignModal', 'true');
-    sessionStorage.setItem('selectedKecamatan', kecamatan);
 
-    // Redirect dengan parameter kecamatan
+    // Redirect dengan parameter filter
     const url = new URL(window.location.href);
-    url.searchParams.set('kecamatan', kecamatan);
+    if (provinsi) url.searchParams.set('provinsi', provinsi);
+    else url.searchParams.delete('provinsi');
+    
+    if (kabKota) url.searchParams.set('kab_kota', kabKota);
+    else url.searchParams.delete('kab_kota');
+    
+    if (kecamatan) url.searchParams.set('kecamatan', kecamatan);
+    else url.searchParams.delete('kecamatan');
+    
     window.location.href = url.toString();
+}
+
+// Backward compatibility - redirect old kecamatan filter
+function applyKecamatanFilter() {
+    applyLocationFilter();
 }
 
 // Saat halaman selesai loading, buka modal jika diperlukan
@@ -624,11 +781,11 @@ window.addEventListener('load', function() {
             if (modal) {
                 modal.showModal();
                 sessionStorage.removeItem('openAssignModal');
-                sessionStorage.removeItem('selectedKecamatan');
             }
         }, 100);
     }
 });
+
 
 document.addEventListener('alpine:init', () => {
     if (!Alpine.store('assign')) {

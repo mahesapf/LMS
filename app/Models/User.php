@@ -69,6 +69,20 @@ class User extends Authenticatable
         'kecamatan',
         'alamat_lengkap',
         'kcd',
+        'nama_sekolah',
+        'nama_kepala_sekolah',
+        'email_belajar_sekolah',
+        'no_wa',
+        'nama_pendaftar',
+        'jabatan_pendaftar',
+        'sk_pendaftar_path',
+        'approval_status',
+        'approved_at',
+        'approved_by',
+        'provinsi',
+        'kabupaten',
+        'pendaftar',
+        'sk_pendaftar',
     ];
 
     /**
@@ -174,5 +188,20 @@ class User extends Authenticatable
     public function isActive()
     {
         return $this->status === 'active';
+    }
+
+    public function isSekolah()
+    {
+        return $this->role === 'sekolah';
+    }
+
+    public function isApproved()
+    {
+        return $this->approval_status === 'approved';
+    }
+
+    public function isPending()
+    {
+        return $this->approval_status === 'pending';
     }
 }
