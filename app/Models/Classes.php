@@ -14,9 +14,16 @@ class Classes extends Model
         'activity_id',
         'name',
         'description',
+        'start_date',
+        'end_date',
         'max_participants',
         'status',
         'created_by',
+    ];
+
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
     ];
 
     // Relationships

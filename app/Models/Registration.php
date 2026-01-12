@@ -13,6 +13,7 @@ class Registration extends Model
     protected $fillable = [
         'activity_id',
         'user_id',
+        'kepala_sekolah_user_id',
         'name',
         'phone',
         'email',
@@ -21,6 +22,7 @@ class Registration extends Model
         'alamat_sekolah',
         'provinsi',
         'kab_kota',
+        'kecamatan',
         'kcd',
         'nama_kepala_sekolah',
         'nik_kepala_sekolah',
@@ -47,6 +49,14 @@ class Registration extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the kepala sekolah user for this registration.
+     */
+    public function kepalaSekolahUser()
+    {
+        return $this->belongsTo(User::class, 'kepala_sekolah_user_id');
     }
 
     /**
@@ -81,12 +91,12 @@ class Registration extends Model
         if (!$this->activity || $this->activity->registration_fee <= 0) {
             return 0;
         }
-        
+
         // Total peserta = jumlah_peserta (atau jumlah_kepala_sekolah + jumlah_guru jika jumlah_peserta = 0)
-        $totalPeserta = $this->jumlah_peserta > 0 
-            ? $this->jumlah_peserta 
+        $totalPeserta = $this->jumlah_peserta > 0
+            ? $this->jumlah_peserta
             : ($this->jumlah_kepala_sekolah + $this->jumlah_guru);
-        
+
         return $this->activity->registration_fee * $totalPeserta;
     }
 }

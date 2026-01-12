@@ -23,7 +23,7 @@ class ActivityRegistrationController extends Controller
             ->get();
 
         // Only get registrations if user is logged in
-        $myRegistrations = Auth::check() 
+        $myRegistrations = Auth::check()
             ? Registration::where('user_id', Auth::id())
                 ->with(['activity.program', 'payment'])
                 ->get()
@@ -65,6 +65,7 @@ class ActivityRegistrationController extends Controller
             'alamat_sekolah' => 'required|string',
             'provinsi' => 'required|string|max:255',
             'kab_kota' => 'required|string|max:255',
+            'kecamatan' => 'required|string|max:255',
             'kcd' => 'required|string|max:255',
             'nama_kepala_sekolah' => 'required|string|max:255',
             'nik_kepala_sekolah' => 'required|string|size:16|regex:/^[0-9]{16}$/',
@@ -84,6 +85,7 @@ class ActivityRegistrationController extends Controller
             'alamat_sekolah' => $validated['alamat_sekolah'],
             'provinsi' => $validated['provinsi'],
             'kab_kota' => $validated['kab_kota'],
+            'kecamatan' => $validated['kecamatan'],
             'kcd' => $validated['kcd'],
             'nama_kepala_sekolah' => $validated['nama_kepala_sekolah'],
             'nik_kepala_sekolah' => $validated['nik_kepala_sekolah'],
@@ -94,19 +96,19 @@ class ActivityRegistrationController extends Controller
             'status' => 'pending',
         ]);
 
-        $totalPeserta = $validated['jumlah_peserta'] > 0 
-            ? $validated['jumlah_peserta'] 
+        $totalPeserta = $validated['jumlah_peserta'] > 0
+            ? $validated['jumlah_peserta']
             : ($validated['jumlah_kepala_sekolah'] + $validated['jumlah_guru']);
 
         // Calculate total payment
         $totalBiaya = $registration->calculateTotalPayment();
-        
+
         $message = "Pendaftaran sekolah {$validated['nama_sekolah']} berhasil! Total {$totalPeserta} peserta terdaftar.";
-        
+
         if ($totalBiaya > 0) {
             $message .= " Total pembayaran: Rp " . number_format($totalBiaya, 0, ',', '.') . ". ";
             $message .= "Silakan lakukan pembayaran untuk menyelesaikan pendaftaran.";
-            
+
             // Redirect to payment page if there's a fee
             return redirect()->route('payment.create', $registration)
                 ->with('success', $message);
@@ -182,7 +184,7 @@ class ActivityRegistrationController extends Controller
         $suratTugasKepalaSekolahPath = null;
         if ($request->hasFile('surat_tugas_kepala_sekolah')) {
             $suratTugasKepalaSekolahPath = $request->file('surat_tugas_kepala_sekolah')->store('surat-tugas-kepala-sekolah', 'public');
-            
+
             // Update registration with surat tugas kepala sekolah
             $registration->update([
                 'surat_tugas_kepala_sekolah' => $suratTugasKepalaSekolahPath

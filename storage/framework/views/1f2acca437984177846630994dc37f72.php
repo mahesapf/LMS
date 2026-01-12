@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="<?php echo e(str_replace('_', '-', app()->getLocale())); ?>">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+
+    <title><?php echo e(config('app.name', 'Laravel')); ?> - <?php echo $__env->yieldContent('title', 'Sistem Informasi Penjaminan Mutu'); ?></title>
+
+    <!-- Fonts -->
+    <link rel="dns-prefetch" href="//fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
+
+    <!-- Scripts -->
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/sass/app.scss', 'resources/css/app.css', 'resources/js/app.js']); ?>
+    <link rel="stylesheet" href="<?php echo e(asset('css/auth.css')); ?>">
+
+    <!-- Indonesia Location Data - Load first -->
+    <script src="<?php echo e(asset('js/indonesia-location.js')); ?>"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        html, body {
+            overflow-x: hidden;
+            overscroll-behavior: none;
+            position: relative;
+            width: 100%;
+        }
+        body {
+            touch-action: pan-y;
+        }
+    </style>
+    <?php echo $__env->yieldPushContent('styles'); ?>
+</head>
+<body <?php if(isset($hideNavbar) && $hideNavbar): ?> class="auth-page" <?php endif; ?>>
+    <div id="app">
+        <?php if(!isset($hideNavbar) || !$hideNavbar): ?>
+        <nav class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur" x-data="{ open: false }">
+            <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <a href="<?php echo e(url('/')); ?>" class="flex items-center gap-3">
+                        <img src="<?php echo e(asset('storage/tut-wuri-handayani-kemdikdasmen-masafidhan.svg')); ?>" alt="Tut Wuri Handayani" class="h-10 w-10 object-contain">
+                        <span class="text-base font-semibold text-slate-900"><?php echo e(config('app.name', 'SIPM')); ?></span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="hidden items-center gap-4 text-sm font-semibold text-slate-700 lg:flex">
+                        <a href="<?php echo e(route('home')); ?>" class="hover:text-sky-700">Beranda</a>
+                        <a href="<?php echo e(route('activities.index')); ?>" class="hover:text-sky-700">Kegiatan</a>
+                        <a href="<?php echo e(route('news')); ?>" class="hover:text-sky-700">Berita</a>
+                    </div>
+                    <div class="hidden lg:flex items-center gap-2">
+                        <?php if(auth()->guard()->guest()): ?>
+                            <?php if(Route::has('login')): ?>
+                                <a href="<?php echo e(route('login')); ?>" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Login</a>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="relative" x-data="{ dd: false }">
+                                <button @click="dd = !dd" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                    <span class="hidden md:inline"><?php echo e(Auth::user()->name); ?></span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.189l3.71-3.96a.75.75 0 111.08 1.04l-4.25 4.53a.75.75 0 01-1.08 0l-4.25-4.53a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                                </button>
+                                <div x-show="dd" x-cloak @click.away="dd=false" class="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white shadow-lg">
+                                    <a href="<?php echo e(route('dashboard')); ?>" class="block px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Dashboard</a>
+                                    <div class="border-t border-slate-100"></div>
+                                    <a href="<?php echo e(route('logout')); ?>" class="block px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50"
+                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                        Logout
+                                    </a>
+                                    <form id="logout-form" action="<?php echo e(route('logout')); ?>" method="POST" class="hidden">
+                                        <?php echo csrf_field(); ?>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <button class="inline-flex items-center lg:hidden" @click="open = !open" aria-label="Toggle navigation">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div x-show="open" x-cloak class="lg:hidden border-t border-slate-200 bg-white shadow-sm" x-transition>
+                <div class="space-y-2 px-4 py-3 text-sm font-semibold text-slate-700">
+                    <a href="<?php echo e(route('home')); ?>" class="block rounded-lg px-3 py-2 hover:bg-slate-50">Beranda</a>
+                    <a href="<?php echo e(route('activities.index')); ?>" class="block rounded-lg px-3 py-2 hover:bg-slate-50">Kegiatan</a>
+                    <a href="<?php echo e(route('news')); ?>" class="block rounded-lg px-3 py-2 hover:bg-slate-50">Berita</a>
+                    <?php if(auth()->guard()->guest()): ?>
+                        <?php if(Route::has('login')): ?>
+                            <a href="<?php echo e(route('login')); ?>" class="block rounded-lg px-3 py-2 border border-slate-200 hover:bg-slate-50">Login</a>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <a href="<?php echo e(route('dashboard')); ?>" class="block rounded-lg px-3 py-2 hover:bg-slate-50">Dashboard</a>
+                        <a href="<?php echo e(route('logout')); ?>" class="block rounded-lg px-3 py-2 text-rose-600 hover:bg-rose-50"
+                           onclick="event.preventDefault(); document.getElementById('logout-form-mobile').submit();">
+                            Logout
+                        </a>
+                        <form id="logout-form-mobile" action="<?php echo e(route('logout')); ?>" method="POST" class="hidden">
+                            <?php echo csrf_field(); ?>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </nav>
+        <?php endif; ?>
+
+        <main class="<?php echo e(isset($hideNavbar) && $hideNavbar ? '' : 'py-6 bg-white'); ?>">
+            <?php echo $__env->yieldContent('content'); ?>
+        </main>
+    </div>
+</body>
+</html>
+<?php /**PATH C:\laragon\www\LMS\resources\views/layouts/app.blade.php ENDPATH**/ ?>

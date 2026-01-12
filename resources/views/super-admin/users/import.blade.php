@@ -74,8 +74,10 @@
                     <p>File CSV harus memiliki format sederhana berikut:</p>
 
                     <div class="alert alert-info">
-                        <strong>Header (baris pertama):</strong><br>
-                        <code>nama_lengkap,nik,email</code>
+                            <strong>Header (baris pertama):</strong><br>
+                            <code>Nama Lengkap,NIK,Email</code><br>
+                            <small class="text-muted">atau</small><br>
+                            <code>nama_lengkap,nik,email</code>
                     </div>
 
                     <h6>Keterangan Kolom:</h6>
@@ -107,8 +109,8 @@ Ahmad Yani,,ahmad.yani@example.com</pre>
                     <small class="text-muted">Note: Baris ketiga tidak memiliki NIK, sehingga password default <code>password123</code> akan digunakan.</small>
 
                     <div class="mt-3">
-                        <a href="data:text/csv;charset=utf-8,nama_lengkap,nik,email%0AContoh Nama,3201234567890123,contoh@example.com" 
-                           download="template_import_user.csv" 
+                        <a href="data:text/csv;charset=utf-8,nama_lengkap,nik,email%0AContoh Nama,3201234567890123,contoh@example.com"
+                           download="template_import_user.csv"
                            class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-download"></i> Download Template CSV
                         </a>

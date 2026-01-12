@@ -21,7 +21,7 @@ class AdminController extends Controller
             'total_classes' => Classes::count(),
             'active_participants' => ParticipantMapping::where('status', 'in')->count(),
         ];
-        
+
         return view('admin.dashboard', compact('stats'));
     }
 
@@ -136,8 +136,8 @@ class AdminController extends Controller
 
     public function deleteParticipant(User $participant)
     {
-        $participant->delete();
-        return redirect()->route('admin.participants')->with('success', 'Peserta berhasil dihapus');
+        $participant->forceDelete();
+        return redirect()->route('admin.participants')->with('success', 'Peserta berhasil dihapus permanent dari database');
     }
 
     public function suspendParticipant(User $participant)
@@ -157,14 +157,14 @@ class AdminController extends Controller
     public function classes(Request $request)
     {
         $query = Classes::with(['activity', 'creator']);
-        
+
         if ($request->has('activity_id')) {
             $query->where('activity_id', $request->activity_id);
         }
-        
+
         $classes = $query->latest()->paginate(20);
         $activities = Activity::all();
-        
+
         return view('admin.classes.index', compact('classes', 'activities'));
     }
 
@@ -214,33 +214,33 @@ class AdminController extends Controller
 
     public function deleteClass(Classes $class)
     {
-        $class->delete();
-        return redirect()->route('admin.classes')->with('success', 'Kelas berhasil dihapus');
+        $class->forceDelete();
+        return redirect()->route('admin.classes')->with('success', 'Kelas berhasil dihapus permanent dari database');
     }
 
     // Participant Mapping
     public function mappingsIndex(Request $request)
     {
         $query = Classes::with(['activity', 'participantMappings.participant']);
-        
+
         if ($request->has('activity_id') && $request->activity_id) {
             $query->where('activity_id', $request->activity_id);
         }
-        
+
         if ($request->has('class_id') && $request->class_id) {
             $query->where('id', $request->class_id);
         }
-        
+
         $classesWithMappings = $query->get();
         $activities = Activity::all();
         $classes = Classes::all();
-        
+
         $stats = [
             'in' => ParticipantMapping::where('status', 'in')->count(),
             'move' => ParticipantMapping::where('status', 'move')->count(),
             'out' => ParticipantMapping::where('status', 'out')->count(),
         ];
-        
+
         return view('admin.mappings.index', compact('classesWithMappings', 'activities', 'classes', 'stats'));
     }
 
@@ -250,12 +250,12 @@ class AdminController extends Controller
             ->where('class_id', $class->id)
             ->latest()
             ->get();
-            
+
         $availableParticipants = User::where('role', 'peserta')
             ->where('status', 'active')
             ->whereNotIn('id', $mappings->where('status', 'in')->pluck('participant_id'))
             ->get();
-            
+
         return view('admin.mappings.participants', compact('class', 'mappings', 'availableParticipants'));
     }
 
@@ -322,12 +322,12 @@ class AdminController extends Controller
             ->where('class_id', $class->id)
             ->latest()
             ->get();
-            
+
         $availableFasilitators = User::where('role', 'fasilitator')
             ->where('status', 'active')
             ->whereNotIn('id', $mappings->where('status', 'in')->pluck('fasilitator_id'))
             ->get();
-            
+
         return view('admin.classes.fasilitators', compact('class', 'mappings', 'availableFasilitators'));
     }
 

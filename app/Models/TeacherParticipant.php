@@ -12,6 +12,7 @@ class TeacherParticipant extends Model
 
     protected $fillable = [
         'registration_id',
+        'user_id',
         'nama_lengkap',
         'nip',
         'nik',
@@ -25,5 +26,13 @@ class TeacherParticipant extends Model
     public function registration()
     {
         return $this->belongsTo(Registration::class);
+    }
+
+    /**
+     * Get the user associated with this teacher participant.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

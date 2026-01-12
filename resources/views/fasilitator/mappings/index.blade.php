@@ -7,7 +7,6 @@
     <a class="nav-link" href="{{ route('fasilitator.dashboard') }}">Dashboard</a>
     <a class="nav-link" href="{{ route('fasilitator.profile') }}">Edit Biodata</a>
     <a class="nav-link" href="{{ route('fasilitator.classes') }}">Input Nilai</a>
-    <a class="nav-link" href="{{ route('fasilitator.documents') }}">Upload Dokumen</a>
     <a class="nav-link active" href="{{ route('fasilitator.mappings.index') }}">Pemetaan Peserta</a>
 </nav>
 @endsection

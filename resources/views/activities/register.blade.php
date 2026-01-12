@@ -34,11 +34,11 @@
 
                         <div class="mb-3">
                             <label for="nama_sekolah" class="form-label">Nama Sekolah <span class="text-danger">*</span></label>
-                            <input type="text" 
-                                   class="form-control @error('nama_sekolah') is-invalid @enderror" 
-                                   id="nama_sekolah" 
-                                   name="nama_sekolah" 
-                                   value="{{ old('nama_sekolah') }}" 
+                            <input type="text"
+                                   class="form-control @error('nama_sekolah') is-invalid @enderror"
+                                   id="nama_sekolah"
+                                   name="nama_sekolah"
+                                   value="{{ old('nama_sekolah') }}"
                                    required
                                    placeholder="Contoh: SMA Negeri 1 Jakarta">
                             @error('nama_sekolah')
@@ -48,10 +48,10 @@
 
                         <div class="mb-3">
                             <label for="alamat_sekolah" class="form-label">Alamat Sekolah <span class="text-danger">*</span></label>
-                            <textarea class="form-control @error('alamat_sekolah') is-invalid @enderror" 
-                                      id="alamat_sekolah" 
-                                      name="alamat_sekolah" 
-                                      rows="3" 
+                            <textarea class="form-control @error('alamat_sekolah') is-invalid @enderror"
+                                      id="alamat_sekolah"
+                                      name="alamat_sekolah"
+                                      rows="3"
                                       required
                                       placeholder="Masukkan alamat lengkap sekolah">{{ old('alamat_sekolah') }}</textarea>
                             @error('alamat_sekolah')
@@ -62,13 +62,16 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="provinsi" class="form-label">Provinsi <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control @error('provinsi') is-invalid @enderror" 
-                                       id="provinsi" 
-                                       name="provinsi" 
-                                       value="{{ old('provinsi') }}" 
-                                       required
-                                       placeholder="Contoh: DKI Jakarta">
+                                <select class="form-select @error('provinsi') is-invalid @enderror"
+                                        id="provinsi"
+                                        name="provinsi"
+                                        required
+                                        onchange="updateCities(this, document.getElementById('kab_kota'), document.getElementById('kecamatan'))">
+                                    <option value="">Pilih Provinsi</option>
+                                    <option value="Jawa Barat" {{ old('provinsi') == 'Jawa Barat' ? 'selected' : '' }}>Jawa Barat</option>
+                                    <option value="Bengkulu" {{ old('provinsi') == 'Bengkulu' ? 'selected' : '' }}>Bengkulu</option>
+                                    <option value="Lampung" {{ old('provinsi') == 'Lampung' ? 'selected' : '' }}>Lampung</option>
+                                </select>
                                 @error('provinsi')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -76,13 +79,13 @@
 
                             <div class="col-md-6 mb-3">
                                 <label for="kab_kota" class="form-label">Kabupaten/Kota <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control @error('kab_kota') is-invalid @enderror" 
-                                       id="kab_kota" 
-                                       name="kab_kota" 
-                                       value="{{ old('kab_kota') }}" 
-                                       required
-                                       placeholder="Contoh: Jakarta Selatan">
+                                <select class="form-select @error('kab_kota') is-invalid @enderror"
+                                        id="kab_kota"
+                                        name="kab_kota"
+                                        required
+                                        onchange="updateDistricts(document.getElementById('provinsi'), this, document.getElementById('kecamatan'))">
+                                    <option value="">Pilih Kabupaten/Kota</option>
+                                </select>
                                 @error('kab_kota')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -90,12 +93,53 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="kecamatan" class="form-label">Kecamatan <span class="text-danger">*</span></label>
+                            <select class="form-select @error('kecamatan') is-invalid @enderror"
+                                    id="kecamatan"
+                                    name="kecamatan"
+                                    required>
+                                <option value="">Pilih Kecamatan</option>
+                            </select>
+                            @error('kecamatan')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <script>
+                        // Initialize dropdowns on page load
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const provinceSelect = document.getElementById('provinsi');
+                            const citySelect = document.getElementById('kab_kota');
+                            const districtSelect = document.getElementById('kecamatan');
+
+                            const savedProvince = "{{ old('provinsi') }}";
+                            const savedCity = "{{ old('kab_kota') }}";
+                            const savedDistrict = "{{ old('kecamatan') }}";
+
+                            if (savedProvince) {
+                                updateCities(provinceSelect, citySelect, districtSelect);
+                                if (savedCity) {
+                                    setTimeout(() => {
+                                        citySelect.value = savedCity;
+                                        updateDistricts(provinceSelect, citySelect, districtSelect);
+                                        if (savedDistrict) {
+                                            setTimeout(() => {
+                                                districtSelect.value = savedDistrict;
+                                            }, 100);
+                                        }
+                                    }, 100);
+                                }
+                            }
+                        });
+                        </script>
+
+                        <div class="mb-3">
                             <label for="kcd" class="form-label">KCD (Kantor Cabang Dinas) <span class="text-danger">*</span></label>
-                            <input type="text" 
-                                   class="form-control @error('kcd') is-invalid @enderror" 
-                                   id="kcd" 
-                                   name="kcd" 
-                                   value="{{ old('kcd') }}" 
+                            <input type="text"
+                                   class="form-control @error('kcd') is-invalid @enderror"
+                                   id="kcd"
+                                   name="kcd"
+                                   value="{{ old('kcd') }}"
                                    required
                                    placeholder="Contoh: KCD Jakarta Selatan">
                             @error('kcd')
@@ -109,11 +153,11 @@
 
                         <div class="mb-3">
                             <label for="nama_kepala_sekolah" class="form-label">Nama Kepala Sekolah <span class="text-danger">*</span></label>
-                            <input type="text" 
-                                   class="form-control @error('nama_kepala_sekolah') is-invalid @enderror" 
-                                   id="nama_kepala_sekolah" 
-                                   name="nama_kepala_sekolah" 
-                                   value="{{ old('nama_kepala_sekolah') }}" 
+                            <input type="text"
+                                   class="form-control @error('nama_kepala_sekolah') is-invalid @enderror"
+                                   id="nama_kepala_sekolah"
+                                   name="nama_kepala_sekolah"
+                                   value="{{ old('nama_kepala_sekolah') }}"
                                    required
                                    placeholder="Masukkan nama lengkap kepala sekolah">
                             @error('nama_kepala_sekolah')
@@ -123,11 +167,11 @@
 
                         <div class="mb-3">
                             <label for="nomor_telp" class="form-label">Nomor yang Dapat Dihubungi <span class="text-danger">*</span></label>
-                            <input type="tel" 
-                                   class="form-control @error('nomor_telp') is-invalid @enderror" 
-                                   id="nomor_telp" 
-                                   name="nomor_telp" 
-                                   value="{{ old('nomor_telp') }}" 
+                            <input type="tel"
+                                   class="form-control @error('nomor_telp') is-invalid @enderror"
+                                   id="nomor_telp"
+                                   name="nomor_telp"
+                                   value="{{ old('nomor_telp') }}"
                                    required
                                    placeholder="Contoh: 081234567890">
                             @error('nomor_telp')
@@ -137,11 +181,11 @@
 
                         <div class="mb-3">
                             <label for="email" class="form-label">Email (Opsional)</label>
-                            <input type="email" 
-                                   class="form-control @error('email') is-invalid @enderror" 
-                                   id="email" 
-                                   name="email" 
-                                   value="{{ old('email') }}" 
+                            <input type="email"
+                                   class="form-control @error('email') is-invalid @enderror"
+                                   id="email"
+                                   name="email"
+                                   value="{{ old('email') }}"
                                    placeholder="email@sekolah.com">
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -155,7 +199,7 @@
 
                         @if($activity->registration_fee > 0)
                         <div class="alert alert-warning mb-3">
-                            <i class="bi bi-info-circle"></i> 
+                            <i class="bi bi-info-circle"></i>
                             <strong>Biaya Kegiatan:</strong> Rp {{ number_format($activity->registration_fee, 0, ',', '.') }} per peserta
                             <br>
                             <small>Total biaya akan dihitung berdasarkan jumlah peserta yang didaftarkan.</small>
@@ -165,12 +209,12 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="jumlah_peserta" class="form-label">Jumlah Peserta <span class="text-danger">*</span></label>
-                                <input type="number" 
-                                       class="form-control @error('jumlah_peserta') is-invalid @enderror" 
-                                       id="jumlah_peserta" 
-                                       name="jumlah_peserta" 
-                                       value="{{ old('jumlah_peserta', 0) }}" 
-                                       min="0" 
+                                <input type="number"
+                                       class="form-control @error('jumlah_peserta') is-invalid @enderror"
+                                       id="jumlah_peserta"
+                                       name="jumlah_peserta"
+                                       value="{{ old('jumlah_peserta', 0) }}"
+                                       min="0"
                                        required
                                        placeholder="0"
                                        onchange="calculateTotal()">
@@ -182,12 +226,12 @@
 
                             <div class="col-md-4 mb-3">
                                 <label for="jumlah_kepala_sekolah" class="form-label">Kepala Sekolah <span class="text-danger">*</span></label>
-                                <input type="number" 
-                                       class="form-control @error('jumlah_kepala_sekolah') is-invalid @enderror" 
-                                       id="jumlah_kepala_sekolah" 
-                                       name="jumlah_kepala_sekolah" 
-                                       value="{{ old('jumlah_kepala_sekolah', 0) }}" 
-                                       min="0" 
+                                <input type="number"
+                                       class="form-control @error('jumlah_kepala_sekolah') is-invalid @enderror"
+                                       id="jumlah_kepala_sekolah"
+                                       name="jumlah_kepala_sekolah"
+                                       value="{{ old('jumlah_kepala_sekolah', 0) }}"
+                                       min="0"
                                        required
                                        placeholder="0"
                                        onchange="calculateTotal()">
@@ -199,12 +243,12 @@
 
                             <div class="col-md-4 mb-3">
                                 <label for="jumlah_guru" class="form-label">Guru <span class="text-danger">*</span></label>
-                                <input type="number" 
-                                       class="form-control @error('jumlah_guru') is-invalid @enderror" 
-                                       id="jumlah_guru" 
-                                       name="jumlah_guru" 
-                                       value="{{ old('jumlah_guru', 0) }}" 
-                                       min="0" 
+                                <input type="number"
+                                       class="form-control @error('jumlah_guru') is-invalid @enderror"
+                                       id="jumlah_guru"
+                                       name="jumlah_guru"
+                                       value="{{ old('jumlah_guru', 0) }}"
+                                       min="0"
                                        required
                                        placeholder="0"
                                        onchange="calculateTotal()">
@@ -226,7 +270,7 @@
                         @endif
 
                         <div class="alert alert-info mt-4">
-                            <i class="bi bi-info-circle"></i> 
+                            <i class="bi bi-info-circle"></i>
                             <strong>Pendaftaran Per Sekolah:</strong> Sistem ini adalah pendaftaran per sekolah. Anda dapat mendaftarkan beberapa peserta (kepala sekolah dan guru) dari sekolah Anda dalam satu pendaftaran. Pembayaran akan dihitung berdasarkan total peserta yang didaftarkan.
                         </div>
 
@@ -251,15 +295,17 @@ function calculateTotal() {
     const jumlahPeserta = parseInt(document.getElementById('jumlah_peserta').value) || 0;
     const jumlahKepalaSekolah = parseInt(document.getElementById('jumlah_kepala_sekolah').value) || 0;
     const jumlahGuru = parseInt(document.getElementById('jumlah_guru').value) || 0;
-    
+
     // If jumlah_peserta is filled, use it; otherwise use sum of kepala sekolah + guru
     const totalPeserta = jumlahPeserta > 0 ? jumlahPeserta : (jumlahKepalaSekolah + jumlahGuru);
     const totalBiaya = totalPeserta * biayaPerPeserta;
-    
+
     document.getElementById('total-biaya').textContent = 'Rp ' + totalBiaya.toLocaleString('id-ID');
 }
 
 // Calculate on page load if values exist
 document.addEventListener('DOMContentLoaded', calculateTotal);
 </script>
+
+<script src="{{ asset('js/indonesia-location.js') }}"></script>
 @endsection

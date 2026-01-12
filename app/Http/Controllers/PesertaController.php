@@ -14,7 +14,7 @@ class PesertaController extends Controller
     public function dashboard()
     {
         $participantId = auth()->id();
-        
+
         $stats = [
             'total_classes' => ParticipantMapping::where('participant_id', $participantId)
                 ->where('status', 'in')
@@ -22,7 +22,7 @@ class PesertaController extends Controller
             'total_grades' => Grade::where('participant_id', $participantId)->count(),
             'total_documents' => Document::where('user_id', $participantId)->count(),
         ];
-        
+
         return view('peserta.dashboard', compact('stats'));
     }
 
@@ -36,7 +36,7 @@ class PesertaController extends Controller
     public function updateProfile(Request $request)
     {
         $user = auth()->user();
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
@@ -87,18 +87,18 @@ class PesertaController extends Controller
     public function myClasses()
     {
         $participantId = auth()->id();
-        
+
         $mappings = ParticipantMapping::with(['class.activity', 'assignedBy'])
             ->where('participant_id', $participantId)
             ->where('status', 'in')
             ->latest()
             ->paginate(20);
-            
+
         // Get grades for all classes
         $grades = Grade::where('participant_id', $participantId)
             ->get()
             ->groupBy('class_id');
-            
+
         return view('peserta.classes.index', compact('mappings', 'grades'));
     }
 
@@ -109,12 +109,12 @@ class PesertaController extends Controller
             ->where('class_id', $class->id)
             ->where('status', 'in')
             ->firstOrFail();
-            
+
         $fasilitators = $class->fasilitators;
         $myGrades = Grade::where('participant_id', auth()->id())
             ->where('class_id', $class->id)
             ->get();
-            
+
         return view('peserta.classes.detail', compact('class', 'mapping', 'fasilitators', 'myGrades'));
     }
 
@@ -125,7 +125,7 @@ class PesertaController extends Controller
             ->where('participant_id', auth()->id())
             ->latest('graded_date')
             ->paginate(20);
-            
+
         return view('peserta.grades.index', compact('grades'));
     }
 
@@ -138,7 +138,7 @@ class PesertaController extends Controller
             ->where('participant_id', auth()->id())
             ->where('status', 'in')
             ->get();
-            
+
         return view('peserta.documents.index', compact('myClasses'));
     }
 
@@ -153,7 +153,7 @@ class PesertaController extends Controller
 
         // Get requirement
         $requirement = \App\Models\DocumentRequirement::findOrFail($validated['document_requirement_id']);
-        
+
         // Check if participant is enrolled
         $mapping = ParticipantMapping::where('participant_id', auth()->id())
             ->where('class_id', $validated['class_id'])
@@ -170,9 +170,10 @@ class PesertaController extends Controller
             }
         }
 
-        // Validate file size (in KB)
-        if ($file->getSize() / 1024 > $requirement->max_file_size) {
-            return redirect()->back()->with('error', 'Ukuran file terlalu besar. Maksimal: ' . number_format($requirement->max_file_size / 1024, 1) . ' MB');
+        // Validate file size (max_file_size is in MB, convert to bytes)
+        $maxSizeInBytes = $requirement->max_file_size * 1024 * 1024;
+        if ($file->getSize() > $maxSizeInBytes) {
+            return redirect()->back()->with('error', 'Ukuran file terlalu besar. Maksimal: ' . number_format($requirement->max_file_size, 1) . ' MB');
         }
 
         // Delete old document if exists
@@ -181,7 +182,7 @@ class PesertaController extends Controller
             ->first();
         if ($oldDocument) {
             \Storage::delete($oldDocument->file_path);
-            $oldDocument->delete();
+            $oldDocument->forceDelete();
         }
 
         // Store file
@@ -212,9 +213,9 @@ class PesertaController extends Controller
         }
 
         \Storage::delete($document->file_path);
-        $document->delete();
+        $document->forceDelete();
 
-        return redirect()->back()->with('success', 'Dokumen berhasil dihapus');
+        return redirect()->back()->with('success', 'Dokumen berhasil dihapus permanent dari database');
     }
 
     public function storeDocument(Request $request)
@@ -261,9 +262,9 @@ class PesertaController extends Controller
         }
 
         Storage::disk('public')->delete($document->file_path);
-        $document->delete();
+        $document->forceDelete();
 
-        return redirect()->back()->with('success', 'Dokumen berhasil dihapus');
+        return redirect()->back()->with('success', 'Dokumen berhasil dihapus permanent dari database');
     }
 
     public function downloadDocument(Document $document)
@@ -286,7 +287,7 @@ class PesertaController extends Controller
     public function updateBiodata(Request $request)
     {
         $user = auth()->user();
-        
+
         $validated = $request->validate([
             'nik' => 'nullable|string|size:16',
             'name' => 'required|string|max:255',
@@ -302,6 +303,7 @@ class PesertaController extends Controller
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
             'kabupaten_kota' => 'nullable|string|max:255',
             'provinsi_peserta' => 'nullable|string|max:255',
+            'kecamatan' => 'nullable|string|max:255',
             'alamat_lengkap' => 'nullable|string',
             'kcd' => 'nullable|string|max:255',
             'pangkat' => 'nullable|string|max:100',
@@ -312,6 +314,17 @@ class PesertaController extends Controller
             'surat_tugas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'tanda_tangan' => 'nullable|image|max:1024',
         ]);
+
+        // Map form fields to database columns for location
+        if (isset($validated['provinsi_peserta'])) {
+            $validated['province'] = $validated['provinsi_peserta'];
+        }
+        if (isset($validated['kabupaten_kota'])) {
+            $validated['city'] = $validated['kabupaten_kota'];
+        }
+        if (isset($validated['kecamatan'])) {
+            $validated['district'] = $validated['kecamatan'];
+        }
 
         // Handle foto 3x4 upload
         if ($request->hasFile('foto_3x4')) {

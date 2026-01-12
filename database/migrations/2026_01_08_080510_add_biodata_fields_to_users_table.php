@@ -12,45 +12,64 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Email belajar.id
-            $table->string('email_belajar_id')->nullable()->after('email');
-            
+            // Skip email_belajar_id if it or email_belajar already exists
+            if (!Schema::hasColumn('users', 'email_belajar_id') && !Schema::hasColumn('users', 'email_belajar')) {
+                $table->string('email_belajar_id')->nullable();
+            }
+
             // Gelar dan Jabatan
-            $table->string('gelar')->nullable()->after('name');
-            $table->string('jabatan')->nullable()->after('gelar');
-            
+            if (!Schema::hasColumn('users', 'gelar')) {
+                $table->string('gelar')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'jabatan')) {
+                $table->string('jabatan')->nullable();
+            }
+
             // Nomor HP
-            $table->string('no_hp')->nullable()->after('phone');
-            
-            // NIP/NIPY
-            $table->string('nip_nipy')->nullable()->after('nik');
-            
-            // NPSN dan Instansi
-            $table->string('npsn')->nullable()->after('nip_nipy');
-            $table->string('instansi')->nullable()->after('npsn');
-            $table->text('alamat_sekolah')->nullable()->after('instansi');
-            
-            // Jenis Kelamin
-            $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan'])->nullable()->after('alamat_sekolah');
-            
+            if (!Schema::hasColumn('users', 'no_hp')) {
+                $table->string('no_hp')->nullable();
+            }
+
+            // Instansi
+            if (!Schema::hasColumn('users', 'instansi')) {
+                $table->string('instansi')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'alamat_sekolah')) {
+                $table->text('alamat_sekolah')->nullable();
+            }
+
             // Alamat Lengkap
-            $table->string('kabupaten_kota')->nullable()->after('jenis_kelamin');
-            $table->string('provinsi_peserta')->nullable()->after('kabupaten_kota');
-            $table->text('alamat_lengkap')->nullable()->after('provinsi_peserta');
-            $table->string('kcd')->nullable()->after('alamat_lengkap');
-            
-            // Kepegawaian
-            $table->string('pangkat')->nullable()->after('kcd');
-            $table->string('golongan')->nullable()->after('pangkat');
-            
+            if (!Schema::hasColumn('users', 'kabupaten_kota')) {
+                $table->string('kabupaten_kota')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'provinsi_peserta')) {
+                $table->string('provinsi_peserta')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'alamat_lengkap')) {
+                $table->text('alamat_lengkap')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'kcd')) {
+                $table->string('kcd')->nullable();
+            }
+
             // Pendidikan
-            $table->string('pendidikan_terakhir')->nullable()->after('golongan');
-            $table->string('jurusan')->nullable()->after('pendidikan_terakhir');
-            
+            if (!Schema::hasColumn('users', 'pendidikan_terakhir')) {
+                $table->string('pendidikan_terakhir')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'jurusan')) {
+                $table->string('jurusan')->nullable();
+            }
+
             // Upload Files
-            $table->string('foto_3x4')->nullable()->after('jurusan');
-            $table->string('surat_tugas')->nullable()->after('foto_3x4');
-            $table->string('tanda_tangan')->nullable()->after('surat_tugas');
+            if (!Schema::hasColumn('users', 'foto_3x4')) {
+                $table->string('foto_3x4')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'surat_tugas')) {
+                $table->string('surat_tugas')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'tanda_tangan')) {
+                $table->string('tanda_tangan')->nullable();
+            }
         });
     }
 

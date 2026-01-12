@@ -6,8 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Laravel') }} - @yield('title', 'Dashboard')</title>
 
+    <style>[x-cloak]{display:none!important;}</style>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="{{ asset('js/indonesia-location.js') }}"></script>
 </head>
 <body class="bg-slate-50 h-screen overflow-hidden">
     <div class="drawer lg:drawer-open h-screen">

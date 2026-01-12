@@ -7,7 +7,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ showCreateModal: false, showEditModal: {{ request('edit') ? 'true' : 'false' }} }">
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-slate-900">Manajemen Kelas</h1>
@@ -20,12 +20,12 @@
                 </svg>
                 Assign Peserta
             </a>
-            <a href="{{ route($routePrefix . '.classes.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+            <button @click="showCreateModal = true" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 Tambah Kelas
-            </a>
+            </button>
         </div>
     </div>
 
@@ -57,6 +57,7 @@
                         <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">No</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Nama Kelas</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Kegiatan</th>
+                        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Tanggal</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Max Peserta</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Status</th>
                         <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600">Pembuat</th>
@@ -74,6 +75,21 @@
                             @endif
                         </td>
                         <td class="px-4 py-2 text-sm text-slate-700">{{ $class->activity->name ?? '-' }}</td>
+                        <td class="px-4 py-2 text-sm text-slate-700">
+                            @if($class->start_date && $class->end_date)
+                                <div class="text-xs">
+                                    <div>{{ $class->start_date->format('d/m/Y') }}</div>
+                                    <div class="text-slate-500">s/d {{ $class->end_date->format('d/m/Y') }}</div>
+                                </div>
+                            @elseif($class->activity && $class->activity->start_date && $class->activity->end_date)
+                                <div class="text-xs">
+                                    <div>{{ $class->activity->start_date->format('d/m/Y') }}</div>
+                                    <div class="text-slate-500">s/d {{ $class->activity->end_date->format('d/m/Y') }}</div>
+                                </div>
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td class="px-4 py-2 text-sm text-slate-700">{{ $class->max_participants ?? 'Unlimited' }}</td>
                         <td class="px-4 py-2 text-sm">
                             @if($class->status == 'open')
@@ -88,7 +104,7 @@
                         <td class="px-4 py-2 text-sm">
                             <div class="flex justify-end gap-2">
                                 <a href="{{ route($routePrefix . '.classes.show', $class) }}" class="inline-flex items-center rounded-md border border-sky-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-sky-700 shadow-sm hover:bg-sky-50">Detail</a>
-                                <a href="{{ route($routePrefix . '.classes.edit', $class) }}" class="inline-flex items-center rounded-md bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-600">Edit</a>
+                                <a href="{{ route($routePrefix . '.classes.index') }}?edit={{ $class->id }}" class="inline-flex items-center rounded-md bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-600">Edit</a>
                                 <form action="{{ route($routePrefix . '.classes.delete', $class) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus kelas ini?')">
                                     @csrf
                                     @method('DELETE')
@@ -99,7 +115,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">Tidak ada data kelas</td>
+                        <td colspan="8" class="px-4 py-6 text-center text-sm text-slate-500">Tidak ada data kelas</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -112,5 +128,11 @@
         </div>
         @endif
     </div>
+
+    {{-- Create Class Modal --}}
+    @include('super-admin.classes.partials.create-modal')
+
+    {{-- Edit Class Modal --}}
+    @include('super-admin.classes.partials.edit-modal')
 </div>
 @endsection

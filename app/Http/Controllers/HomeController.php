@@ -16,15 +16,22 @@ class HomeController extends Controller
             ->latest('published_at')
             ->take(6)
             ->get();
-        
+
+        // Get 5 latest activities for slider
+        $latestActivities = Activity::whereIn('status', ['planned', 'ongoing'])
+            ->with('program')
+            ->latest('created_at')
+            ->take(5)
+            ->get();
+
         // Get active activities for homepage
         $activities = Activity::whereIn('status', ['planned', 'ongoing'])
             ->with('program')
             ->orderBy('start_date')
             ->take(6)
             ->get();
-            
-        return view('home', compact('news', 'activities'));
+
+        return view('home', compact('news', 'activities', 'latestActivities'));
     }
 
     public function news()
@@ -34,7 +41,7 @@ class HomeController extends Controller
             ->where('published_at', '<=', now())
             ->latest('published_at')
             ->paginate(12);
-            
+
         return view('news.index', compact('news'));
     }
 
@@ -43,7 +50,7 @@ class HomeController extends Controller
         $newsItem = News::where('status', 'published')
             ->where('id', $id)
             ->firstOrFail();
-            
+
         $relatedNews = News::where('status', 'published')
             ->where('id', '!=', $id)
             ->whereNotNull('published_at')
@@ -51,7 +58,7 @@ class HomeController extends Controller
             ->latest('published_at')
             ->take(3)
             ->get();
-            
+
         return view('news.detail', compact('newsItem', 'relatedNews'));
     }
 }

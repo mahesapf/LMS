@@ -28,6 +28,9 @@ class User extends Authenticatable
         'phone',
         'no_hp',
         'address',
+        'province',
+        'city',
+        'district',
         'institution',
         'instansi',
         'position',
@@ -63,6 +66,7 @@ class User extends Authenticatable
         'alamat_sekolah',
         'kabupaten_kota',
         'provinsi_peserta',
+        'kecamatan',
         'alamat_lengkap',
         'kcd',
     ];

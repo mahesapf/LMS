@@ -34,7 +34,7 @@ Route::post('password/reset', [App\Http\Controllers\Auth\ResetPasswordController
 // Dashboard Route - Redirect based on role
 Route::get('/dashboard', function () {
     $user = auth()->user();
-    
+
     return match($user->role) {
         'super_admin' => redirect()->route('super-admin.dashboard'),
         'admin' => redirect()->route('admin.dashboard'),
@@ -47,7 +47,7 @@ Route::get('/dashboard', function () {
 // Super Admin Routes
 Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:super_admin'])->group(function () {
     Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
-    
+
     // User Management
     Route::get('/users', [SuperAdminController::class, 'users'])->name('users');
     Route::get('/users/create', [SuperAdminController::class, 'createUser'])->name('users.create');
@@ -57,9 +57,8 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::delete('/users/{user}', [SuperAdminController::class, 'deleteUser'])->name('users.delete');
     Route::post('/users/{user}/suspend', [SuperAdminController::class, 'suspendUser'])->name('users.suspend');
     Route::post('/users/{user}/activate', [SuperAdminController::class, 'activateUser'])->name('users.activate');
-    Route::get('/users/import', [SuperAdminController::class, 'importUsers'])->name('users.import');
     Route::post('/users/import', [SuperAdminController::class, 'processImportUsers'])->name('users.import.process');
-    
+
     // Program Management
     Route::get('/programs', [SuperAdminController::class, 'programs'])->name('programs');
     Route::get('/programs/create', [SuperAdminController::class, 'createProgram'])->name('programs.create');
@@ -67,16 +66,18 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::get('/programs/{program}/edit', [SuperAdminController::class, 'editProgram'])->name('programs.edit');
     Route::put('/programs/{program}', [SuperAdminController::class, 'updateProgram'])->name('programs.update');
     Route::delete('/programs/{program}', [SuperAdminController::class, 'deleteProgram'])->name('programs.delete');
-    
+
     // Admin Mapping
     Route::get('/admin-mappings', [SuperAdminController::class, 'adminMappings'])->name('admin-mappings');
     Route::get('/admin-mappings/create', [SuperAdminController::class, 'createAdminMapping'])->name('admin-mappings.create');
     Route::post('/admin-mappings', [SuperAdminController::class, 'storeAdminMapping'])->name('admin-mappings.store');
     Route::post('/admin-mappings/{mapping}/status/{status}', [SuperAdminController::class, 'updateAdminMappingStatus'])->name('admin-mappings.update-status');
-    
+
     // Payment Validation (Super Admin Only)
     Route::get('/payments', [\App\Http\Controllers\PaymentValidationController::class, 'index'])->name('payments.index');
     Route::get('/payments/export/participants', [\App\Http\Controllers\PaymentValidationController::class, 'exportParticipants'])->name('payments.export-participants');
+    Route::get('/payments/export/single/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'exportSinglePayment'])->name('payments.export-single');
+    Route::post('/payments/export/by-schools', [\App\Http\Controllers\PaymentValidationController::class, 'exportBySchools'])->name('payments.export-by-schools');
     Route::get('/payments/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'show'])->name('payments.show');
     Route::patch('/payments/{payment}/approve', [\App\Http\Controllers\PaymentValidationController::class, 'approve'])->name('payments.approve');
     Route::patch('/payments/{payment}/reject', [\App\Http\Controllers\PaymentValidationController::class, 'reject'])->name('payments.reject');
@@ -91,12 +92,12 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::get('/activities/{activity}/edit', [SuperAdminController::class, 'editActivity'])->name('activities.edit');
     Route::put('/activities/{activity}', [SuperAdminController::class, 'updateActivity'])->name('activities.update');
     Route::delete('/activities/{activity}', [SuperAdminController::class, 'deleteActivity'])->name('activities.delete');
-    
+
     // Registration Management
     Route::get('/registrations', [\App\Http\Controllers\RegistrationManagementController::class, 'index'])->name('registrations.index');
     Route::patch('/registrations/{registration}/assign', [\App\Http\Controllers\RegistrationManagementController::class, 'assignToClass'])->name('registrations.assignToClass');
     Route::delete('/registrations/{registration}/remove', [\App\Http\Controllers\RegistrationManagementController::class, 'removeFromClass'])->name('registrations.removeFromClass');
-    
+
     // Class Management
     Route::get('/classes', [SuperAdminController::class, 'classes'])->name('classes.index');
     Route::get('/classes/create', [SuperAdminController::class, 'createClass'])->name('classes.create');
@@ -106,7 +107,10 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::put('/classes/{class}', [SuperAdminController::class, 'updateClass'])->name('classes.update');
     Route::delete('/classes/{class}', [SuperAdminController::class, 'deleteClass'])->name('classes.delete');
     Route::post('/classes/{class}/participants', [SuperAdminController::class, 'assignParticipantToClass'])->name('classes.assignParticipant');
+    Route::post('/classes/{class}/participants/bulk', [SuperAdminController::class, 'assignParticipantsByKecamatan'])->name('classes.assignParticipantsByKecamatan');
     Route::delete('/classes/{class}/participants/{participant}', [SuperAdminController::class, 'removeParticipant'])->name('classes.removeParticipant');
+    Route::delete('/classes/{class}/teacher-participants/{teacher}', [SuperAdminController::class, 'removeTeacherParticipant'])->name('classes.removeTeacherParticipant');
+    Route::delete('/classes/{class}/kepala-sekolah/{registration}', [SuperAdminController::class, 'removeKepalaSekolah'])->name('classes.removeKepalaSekolah');
     Route::get('/classes/{class}/fasilitators', function($class) { return redirect()->route('super-admin.classes.show', $class); });
     Route::post('/classes/{class}/fasilitators', [SuperAdminController::class, 'assignFasilitatorToClass'])->name('classes.assignFasilitator');
     Route::delete('/classes/{class}/fasilitators/{fasilitator}', [SuperAdminController::class, 'removeFasilitatorFromClass'])->name('classes.removeFasilitator');
@@ -115,7 +119,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
 // Admin Routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    
+
     // Activity Management (sama seperti super admin)
     Route::get('/activities', [SuperAdminController::class, 'activities'])->name('activities');
     Route::get('/activities/create', [SuperAdminController::class, 'createActivity'])->name('activities.create');
@@ -123,7 +127,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/activities/{activity}/edit', [SuperAdminController::class, 'editActivity'])->name('activities.edit');
     Route::put('/activities/{activity}', [SuperAdminController::class, 'updateActivity'])->name('activities.update');
     Route::delete('/activities/{activity}', [SuperAdminController::class, 'deleteActivity'])->name('activities.delete');
-    
+
     // Class Management (sama seperti super admin)
     Route::get('/classes', [SuperAdminController::class, 'classes'])->name('classes.index');
     Route::get('/classes/create', [SuperAdminController::class, 'createClass'])->name('classes.create');
@@ -133,11 +137,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('/classes/{class}', [SuperAdminController::class, 'updateClass'])->name('classes.update');
     Route::delete('/classes/{class}', [SuperAdminController::class, 'deleteClass'])->name('classes.delete');
     Route::post('/classes/{class}/participants', [SuperAdminController::class, 'assignParticipantToClass'])->name('classes.assignParticipant');
+    Route::post('/classes/{class}/participants/bulk', [SuperAdminController::class, 'assignParticipantsByKecamatan'])->name('classes.assignParticipantsByKecamatan');
     Route::delete('/classes/{class}/participants/{participant}', [SuperAdminController::class, 'removeParticipant'])->name('classes.removeParticipant');
+    Route::delete('/classes/{class}/teacher-participants/{teacher}', [SuperAdminController::class, 'removeTeacherParticipant'])->name('classes.removeTeacherParticipant');
+    Route::delete('/classes/{class}/kepala-sekolah/{registration}', [SuperAdminController::class, 'removeKepalaSekolah'])->name('classes.removeKepalaSekolah');
     Route::get('/classes/{class}/fasilitators', function($class) { return redirect()->route('admin.classes.show', $class); });
     Route::post('/classes/{class}/fasilitators', [SuperAdminController::class, 'assignFasilitatorToClass'])->name('classes.assignFasilitator');
     Route::delete('/classes/{class}/fasilitators/{fasilitator}', [SuperAdminController::class, 'removeFasilitatorFromClass'])->name('classes.removeFasilitator');
-    
+
     // Registration Management (sama seperti super admin)
     Route::get('/registrations', [\App\Http\Controllers\RegistrationManagementController::class, 'index'])->name('registrations.index');
     Route::patch('/registrations/{registration}/assign', [\App\Http\Controllers\RegistrationManagementController::class, 'assignToClass'])->name('registrations.assignToClass');
@@ -147,28 +154,31 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 // Fasilitator Routes
 Route::prefix('fasilitator')->name('fasilitator.')->middleware(['auth', 'role:fasilitator'])->group(function () {
     Route::get('/dashboard', [FasilitatorController::class, 'dashboard'])->name('dashboard');
-    
+
     // Profile
     Route::get('/profile', [FasilitatorController::class, 'profile'])->name('profile');
     Route::put('/profile', [FasilitatorController::class, 'updateProfile'])->name('profile.update');
-    
+
     // Classes
     Route::get('/classes', [FasilitatorController::class, 'myClasses'])->name('classes');
     Route::get('/classes/{class}', [FasilitatorController::class, 'classDetail'])->name('classes.detail');
-    
+
     // Grades
     Route::get('/classes/{class}/grades', [FasilitatorController::class, 'grades'])->name('grades');
     Route::post('/classes/{class}/grades', [FasilitatorController::class, 'storeGrade'])->name('grades.store');
-    
-    // Documents
-    Route::get('/documents', [FasilitatorController::class, 'documents'])->name('documents');
-    Route::get('/documents/upload', [FasilitatorController::class, 'uploadDocument'])->name('documents.upload');
-    Route::post('/documents', [FasilitatorController::class, 'storeDocument'])->name('documents.store');
-    Route::delete('/documents/{document}', [FasilitatorController::class, 'deleteDocument'])->name('documents.delete');
-    
+
+    // Documents - Removed: Upload now handled within class context via document-requirements
+
+    // Document Requirements & Submissions
+    Route::get('/classes/{class}/document-requirements', [FasilitatorController::class, 'viewDocumentRequirements'])->name('classes.document-requirements');
+    Route::get('/classes/{class}/document-requirements/create', [FasilitatorController::class, 'createDocumentRequirement'])->name('classes.document-requirements.create');
+    Route::post('/classes/{class}/document-requirements', [FasilitatorController::class, 'storeDocumentRequirement'])->name('classes.document-requirements.store');
+    Route::delete('/classes/{class}/document-requirements/{requirement}', [FasilitatorController::class, 'deleteDocumentRequirement'])->name('classes.document-requirements.delete');
+    Route::get('/classes/{class}/requirements/{requirement}/submissions', [FasilitatorController::class, 'viewSubmissions'])->name('classes.submissions');
+
     // Participant Mappings (Read Only)
     Route::get('/mappings', [FasilitatorController::class, 'participantMappingsIndex'])->name('mappings.index');
-    
+
     // Participant Mapping (Full Access)
     Route::get('/classes/{class}/participants', [FasilitatorController::class, 'participantMappings'])->name('classes.participants');
     Route::post('/classes/{class}/participants', [FasilitatorController::class, 'assignParticipant'])->name('classes.participants.assign');
@@ -179,24 +189,24 @@ Route::prefix('fasilitator')->name('fasilitator.')->middleware(['auth', 'role:fa
 // Peserta Routes
 Route::prefix('peserta')->name('peserta.')->middleware(['auth', 'role:peserta'])->group(function () {
     Route::get('/dashboard', [PesertaController::class, 'dashboard'])->name('dashboard');
-    
+
     // Profile
     Route::get('/profile', [PesertaController::class, 'profile'])->name('profile');
     Route::put('/profile', [PesertaController::class, 'updateProfile'])->name('profile.update');
-    
+
     // Biodata
     Route::get('/biodata', [PesertaController::class, 'biodata'])->name('biodata');
     Route::put('/biodata', [PesertaController::class, 'updateBiodata'])->name('biodata.update');
-    
+
     // Classes
     Route::get('/classes', [PesertaController::class, 'myClasses'])->name('classes');
     Route::get('/classes/{class}', [PesertaController::class, 'classDetail'])->name('classes.detail');
-    
+
     // Grades (redirect to classes)
     Route::get('/grades', function() {
         return redirect()->route('peserta.classes');
     })->name('grades');
-    
+
     // Documents
     Route::get('/documents', [PesertaController::class, 'documents'])->name('documents');
     Route::post('/documents/upload', [PesertaController::class, 'uploadDocument'])->name('documents.upload');

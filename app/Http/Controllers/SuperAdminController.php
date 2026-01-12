@@ -22,7 +22,7 @@ class SuperAdminController extends Controller
             'total_programs' => Program::count(),
             'total_activities' => Activity::count(),
         ];
-        
+
         return view('super-admin.dashboard', compact('stats'));
     }
 
@@ -30,21 +30,27 @@ class SuperAdminController extends Controller
     public function users(Request $request)
     {
         $role = $request->get('role', 'all');
-        
+
         $query = User::where('role', '!=', 'super_admin');
-        
+
         if ($role !== 'all') {
             $query->where('role', $role);
         }
-        
+
         $users = $query->latest()->paginate(20);
-        
-        return view('super-admin.users.index', compact('users', 'role'));
+
+        // Load user data for edit modal
+        $editUser = null;
+        if ($request->has('edit')) {
+            $editUser = User::find($request->get('edit'));
+        }
+
+        return view('super-admin.users.index', compact('users', 'role', 'editUser'));
     }
 
     public function createUser()
     {
-        return view('super-admin.users.create');
+        return redirect()->route('super-admin.users');
     }
 
     public function storeUser(Request $request)
@@ -100,7 +106,7 @@ class SuperAdminController extends Controller
 
     public function editUser(User $user)
     {
-        return view('super-admin.users.edit', compact('user'));
+        return redirect()->route('super-admin.users', ['edit' => $user->id]);
     }
 
     public function updateUser(Request $request, User $user)
@@ -169,8 +175,8 @@ class SuperAdminController extends Controller
 
     public function deleteUser(User $user)
     {
-        $user->delete();
-        return redirect()->route('super-admin.users')->with('success', 'User berhasil dihapus');
+        $user->forceDelete();
+        return redirect()->route('super-admin.users')->with('success', 'User berhasil dihapus permanent dari database');
     }
 
     public function suspendUser(User $user)
@@ -187,75 +193,104 @@ class SuperAdminController extends Controller
 
     public function importUsers()
     {
-        return view('super-admin.users.import');
+        // Redirect ke users index (modal sudah ada di halaman tersebut)
+        return redirect()->route('super-admin.users');
     }
 
     public function processImportUsers(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:csv,txt',
+            'file' => 'required|file|max:2048',
             'role' => 'required|in:admin,fasilitator,peserta',
         ]);
 
         $file = $request->file('file');
-        $data = array_map('str_getcsv', file($file));
+
+        // Check if file extension is csv
+        if ($file->getClientOriginalExtension() !== 'csv') {
+            return back()->with('error', 'File harus berformat CSV');
+        }
+
+        try {
+            $data = array_map('str_getcsv', file($file));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal membaca file CSV. Pastikan file tidak corrupt dan menggunakan encoding UTF-8.');
+        }
+
+        if (empty($data)) {
+            return back()->with('error', 'File CSV kosong atau tidak valid.');
+        }
+
         $header = array_shift($data);
-        
-        // Normalize header names (lowercase, remove spaces)
+
+        if (empty($header)) {
+            return back()->with('error', 'File CSV tidak memiliki header yang valid.');
+        }
+
+        // Normalize header names (lowercase, remove spaces, strip BOM)
         $header = array_map(function($h) {
+            $h = preg_replace('/^\xEF\xBB\xBF/', '', $h); // Strip UTF-8 BOM
             $h = trim($h);
             $h = str_replace(['"', "'"], '', $h); // Remove quotes
             $h = strtolower($h);
             $h = str_replace(' ', '_', $h); // Replace space with underscore
-            
+
             // Handle common variations
             if (in_array($h, ['nama', 'nama_lengkap', 'name'])) return 'nama_lengkap';
             if (in_array($h, ['nik', 'nip'])) return 'nik';
             if (in_array($h, ['email', 'e-mail'])) return 'email';
-            
+
             return $h;
         }, $header);
+
+            // Validasi kolom required
+            if (!in_array('nama_lengkap', $header)) {
+                return back()->with('error', 'Kolom "Nama Lengkap" atau "nama_lengkap" tidak ditemukan di file CSV.');
+            }
+            if (!in_array('email', $header)) {
+                return back()->with('error', 'Kolom "Email" tidak ditemukan di file CSV.');
+            }
 
         DB::beginTransaction();
         try {
             $imported = 0;
             $skipped = 0;
-            
+
             foreach ($data as $row) {
                 if (empty(array_filter($row))) continue; // Skip empty rows
-                
+
                 $rowData = array_combine($header, $row);
-                
+
                 // Clean data
                 $nama = trim($rowData['nama_lengkap'] ?? '');
                 $email = trim($rowData['email'] ?? '');
                 $nik = trim($rowData['nik'] ?? '');
-                
+
                 // Skip if nama is empty, dash, or email is empty
                 if (empty($nama) || $nama === '-' || empty($email)) {
                     $skipped++;
                     continue;
                 }
-                
+
                 // Check if email already exists
                 if (User::where('email', $email)->exists()) {
                     $skipped++;
                     continue;
                 }
-                
+
                 // Skip if NIK is just dash or invalid format
                 if ($nik === '-' || $nik === '0') {
                     $nik = null;
                 }
-                
+
                 // Validate NIK if provided (should be 16 digits)
                 if ($nik && strlen($nik) != 16) {
                     $nik = null; // Set to null if not 16 digits
                 }
-                
+
                 // Use NIK as password, or default to 'password123' if NIK is empty
                 $password = $nik ? $nik : 'password123';
-                
+
                 User::create([
                     'name' => $nama,
                     'email' => $email,
@@ -266,14 +301,14 @@ class SuperAdminController extends Controller
                 ]);
                 $imported++;
             }
-            
+
             DB::commit();
-            
+
             $message = "Import berhasil: {$imported} pengguna ditambahkan";
             if ($skipped > 0) {
                 $message .= ", {$skipped} data dilewati (email sudah terdaftar atau data tidak lengkap)";
             }
-            
+
             return redirect()->route('super-admin.users')->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -282,15 +317,22 @@ class SuperAdminController extends Controller
     }
 
     // Program Management
-    public function programs()
+    public function programs(Request $request)
     {
         $programs = Program::with('creator')->latest()->paginate(20);
-        return view('super-admin.programs.index', compact('programs'));
+
+        // Load program data for edit modal
+        $editProgram = null;
+        if ($request->has('edit')) {
+            $editProgram = Program::find($request->get('edit'));
+        }
+
+        return view('super-admin.programs.index', compact('programs', 'editProgram'));
     }
 
     public function createProgram()
     {
-        return view('super-admin.programs.create');
+        return redirect()->route('super-admin.programs');
     }
 
     public function storeProgram(Request $request)
@@ -312,7 +354,7 @@ class SuperAdminController extends Controller
 
     public function editProgram(Program $program)
     {
-        return view('super-admin.programs.edit', compact('program'));
+        return redirect()->route('super-admin.programs', ['edit' => $program->id]);
     }
 
     public function updateProgram(Request $request, Program $program)
@@ -332,23 +374,29 @@ class SuperAdminController extends Controller
 
     public function deleteProgram(Program $program)
     {
-        $program->delete();
-        return redirect()->route('super-admin.programs')->with('success', 'Program berhasil dihapus');
+        $program->forceDelete();
+        return redirect()->route('super-admin.programs')->with('success', 'Program berhasil dihapus permanent dari database');
     }
 
     // Activity Management
-    public function activities()
+    public function activities(Request $request)
     {
         $activities = Activity::with(['program', 'creator'])->latest()->paginate(20);
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        return view('super-admin.activities.index', compact('activities', 'routePrefix'));
+        $programs = Program::where('status', 'active')->get();
+
+        $editActivity = null;
+        if ($request->has('edit')) {
+            $editActivity = Activity::find($request->get('edit'));
+        }
+
+        return view('super-admin.activities.index', compact('activities', 'routePrefix', 'programs', 'editActivity'));
     }
 
     public function createActivity()
     {
-        $programs = Program::where('status', 'active')->get();
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        return view('super-admin.activities.create', compact('programs', 'routePrefix'));
+        return redirect()->route($routePrefix . '.activities');
     }
 
     public function storeActivity(Request $request)
@@ -358,6 +406,9 @@ class SuperAdminController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'batch' => 'nullable|string|max:50',
+            'financing_type' => 'nullable|string|max:255',
+            'apbn_type' => 'nullable|string|max:255',
+            'registration_fee' => 'nullable|numeric|min:0',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'funding_source' => 'nullable|in:DIPA,PNBP,APBD,BOS,Other',
@@ -375,9 +426,8 @@ class SuperAdminController extends Controller
 
     public function editActivity(Activity $activity)
     {
-        $programs = Program::where('status', 'active')->get();
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        return view('super-admin.activities.edit', compact('activity', 'programs', 'routePrefix'));
+        return redirect()->route($routePrefix . '.activities', ['edit' => $activity->id]);
     }
 
     public function updateActivity(Request $request, Activity $activity)
@@ -387,6 +437,9 @@ class SuperAdminController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'batch' => 'nullable|string|max:50',
+            'financing_type' => 'nullable|string|max:255',
+            'apbn_type' => 'nullable|string|max:255',
+            'registration_fee' => 'nullable|numeric|min:0',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'funding_source' => 'nullable|in:DIPA,PNBP,APBD,BOS,Other',
@@ -402,9 +455,9 @@ class SuperAdminController extends Controller
 
     public function deleteActivity(Activity $activity)
     {
-        $activity->delete();
+        $activity->forceDelete();
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        return redirect()->route($routePrefix . '.activities')->with('success', 'Kegiatan berhasil dihapus');
+        return redirect()->route($routePrefix . '.activities')->with('success', 'Kegiatan berhasil dihapus permanent dari database');
     }
 
     // Admin Mapping
@@ -419,7 +472,7 @@ class SuperAdminController extends Controller
         $admins = User::where('role', 'admin')->where('status', 'active')->get();
         $programs = Program::where('status', 'active')->get();
         $activities = Activity::whereIn('status', ['planned', 'ongoing'])->get();
-        
+
         return view('super-admin.admin-mappings.create', compact('admins', 'programs', 'activities'));
     }
 
@@ -458,25 +511,30 @@ class SuperAdminController extends Controller
     public function classes(Request $request)
     {
         $query = \App\Models\Classes::with(['activity', 'creator']);
-        
+
         if ($request->has('activity_id')) {
             $query->where('activity_id', $request->activity_id);
         }
-        
+
         $classes = $query->latest()->paginate(20);
         $activities = Activity::all();
-        
+
         // Detect route prefix based on user role
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        
-        return view('super-admin.classes.index', compact('classes', 'activities', 'routePrefix'));
+
+        // Load data for edit modal if present
+        $editClass = null;
+        if ($request->has('edit')) {
+            $editClass = \App\Models\Classes::find($request->get('edit'));
+        }
+
+        return view('super-admin.classes.index', compact('classes', 'activities', 'routePrefix', 'editClass'));
     }
 
     public function createClass()
     {
-        $activities = Activity::whereIn('status', ['planned', 'ongoing'])->get();
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        return view('super-admin.classes.create', compact('activities', 'routePrefix'));
+        return redirect()->route($routePrefix . '.classes.index');
     }
 
     public function storeClass(Request $request)
@@ -485,23 +543,38 @@ class SuperAdminController extends Controller
             'activity_id' => 'required|exists:activities,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'max_participants' => 'nullable|integer|min:1',
             'status' => 'required|in:open,closed,completed',
+            'stages' => 'nullable|array',
+            'stages.*.name' => 'required|string|max:255',
+            'stages.*.description' => 'nullable|string',
+            'stages.*.order' => 'required|integer',
+            'stages.*.start_date' => 'nullable|date',
+            'stages.*.end_date' => 'nullable|date|after_or_equal:stages.*.start_date',
+            'stages.*.status' => 'required|in:not_started,ongoing,completed',
         ]);
 
         $validated['created_by'] = auth()->id();
 
-        \App\Models\Classes::create($validated);
+        $class = \App\Models\Classes::create($validated);
+
+        // Create stages if provided
+        if (isset($validated['stages']) && is_array($validated['stages'])) {
+            foreach ($validated['stages'] as $stageData) {
+                $class->stages()->create($stageData);
+            }
+        }
 
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        return redirect()->route($routePrefix . '.classes.index')->with('success', 'Kelas berhasil dibuat');
+        return redirect()->route($routePrefix . '.classes.index')->with('success', 'Kelas berhasil dibuat' . (isset($validated['stages']) ? ' dengan ' . count($validated['stages']) . ' tahap' : ''));
     }
 
     public function editClass(\App\Models\Classes $class)
     {
-        $activities = Activity::whereIn('status', ['planned', 'ongoing'])->get();
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        return view('super-admin.classes.edit', compact('class', 'activities', 'routePrefix'));
+        return redirect()->route($routePrefix . '.classes.index', ['edit' => $class->id]);
     }
 
     public function updateClass(Request $request, \App\Models\Classes $class)
@@ -510,11 +583,31 @@ class SuperAdminController extends Controller
             'activity_id' => 'required|exists:activities,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'max_participants' => 'nullable|integer|min:1',
             'status' => 'required|in:open,closed,completed',
+            'stages' => 'nullable|array',
+            'stages.*.name' => 'required|string|max:255',
+            'stages.*.description' => 'nullable|string',
+            'stages.*.order' => 'required|integer',
+            'stages.*.start_date' => 'nullable|date',
+            'stages.*.end_date' => 'nullable|date|after_or_equal:stages.*.start_date',
+            'stages.*.status' => 'required|in:not_started,ongoing,completed',
         ]);
 
         $class->update($validated);
+
+        // Sync stages - delete old ones and create new ones
+        if (isset($validated['stages']) && is_array($validated['stages'])) {
+            // Delete existing stages
+            $class->stages()->delete();
+
+            // Create new stages
+            foreach ($validated['stages'] as $stageData) {
+                $class->stages()->create($stageData);
+            }
+        }
 
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
         return redirect()->route($routePrefix . '.classes.index')->with('success', 'Kelas berhasil diupdate');
@@ -522,25 +615,158 @@ class SuperAdminController extends Controller
 
     public function deleteClass(\App\Models\Classes $class)
     {
-        $class->delete();
+        $class->forceDelete();
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        return redirect()->route($routePrefix . '.classes.index')->with('success', 'Kelas berhasil dihapus');
+        return redirect()->route($routePrefix . '.classes.index')->with('success', 'Kelas berhasil dihapus permanent dari database');
     }
 
-    public function showClass(\App\Models\Classes $class)
+    public function showClass(Request $request, \App\Models\Classes $class)
     {
-        $class->load(['activity', 'participantMappings.participant', 'fasilitatorMappings.fasilitator']);
-        
-        // Get validated participants for this activity who are not yet in any class
-        $availableParticipants = \App\Models\User::where('role', 'peserta')
-            ->where('status', 'active')
-            ->whereHas('registrations', function($query) use ($class) {
+        $class->load(['activity.adminMappings.admin', 'participantMappings.participant', 'fasilitatorMappings.fasilitator', 'stages']);
+        $selectedKecamatan = $request->get('kecamatan');
+        $selectedKecamatanNormalized = $selectedKecamatan
+            ? preg_replace('/\s+|_+/', '', strtolower(trim($selectedKecamatan)))
+            : null;
+
+        $kecamatanStatuses = ['validated', 'payment_uploaded', 'payment_validated', 'approved', 'accepted', 'belum ditentukan', 'belum_ditentukan'];
+
+        // Load registrations yang sudah di-assign ke kelas ini (untuk ditampilkan sebagai peserta)
+        $assignedRegistrations = \App\Models\Registration::with(['user', 'teacherParticipants'])
+            ->where('activity_id', $class->activity_id)
+            ->where('class_id', $class->id)
+            ->whereIn('status', $kecamatanStatuses)
+            ->get();
+
+        // Collect all teacher participants from assigned registrations
+        $teacherParticipants = collect();
+        foreach ($assignedRegistrations as $reg) {
+            // Add kepala sekolah if exists
+            if ($reg->jumlah_kepala_sekolah > 0 && $reg->nama_kepala_sekolah) {
+                $teacherParticipants->push([
+                    'registration_id' => $reg->id,
+                    'nama_sekolah' => $reg->nama_sekolah,
+                    'nama_lengkap' => $reg->nama_kepala_sekolah,
+                    'nip' => $reg->nik_kepala_sekolah ?? '-',
+                    'email' => $reg->email,
+                    'kecamatan' => $reg->kecamatan,
+                    'status' => $reg->status,
+                    'jabatan' => 'Kepala Sekolah',
+                    'teacher_id' => null, // kepala sekolah from registration, not teacher_participants table
+                    'is_kepala_sekolah' => true,
+                ]);
+            }
+
+            // Add guru/teachers from teacher_participants
+            foreach ($reg->teacherParticipants as $teacher) {
+                $teacherParticipants->push([
+                    'registration_id' => $reg->id,
+                    'nama_sekolah' => $reg->nama_sekolah,
+                    'nama_lengkap' => $teacher->nama_lengkap,
+                    'nip' => $teacher->nip ?? '-',
+                    'email' => $teacher->email,
+                    'kecamatan' => $reg->kecamatan,
+                    'status' => $reg->status,
+                    'jabatan' => 'Guru',
+                    'teacher_id' => $teacher->id,
+                    'is_kepala_sekolah' => false,
+                ]);
+            }
+        };
+
+        // Sync registrations yang punya user_id ke participant_mappings
+        foreach ($assignedRegistrations as $reg) {
+            // Create mapping for original user_id (if exists)
+            if ($reg->user_id) {
+                $exists = \App\Models\ParticipantMapping::where('class_id', $class->id)
+                    ->where('participant_id', $reg->user_id)
+                    ->exists();
+                if (!$exists) {
+                    \App\Models\ParticipantMapping::create([
+                        'class_id' => $class->id,
+                        'participant_id' => $reg->user_id,
+                        'enrolled_date' => now(),
+                        'assigned_by' => auth()->id(),
+                        'status' => 'in',
+                    ]);
+                }
+            }
+
+            // Create mapping for kepala sekolah (if has user_id)
+            if ($reg->kepala_sekolah_user_id) {
+                $exists = \App\Models\ParticipantMapping::where('class_id', $class->id)
+                    ->where('participant_id', $reg->kepala_sekolah_user_id)
+                    ->exists();
+                if (!$exists) {
+                    \App\Models\ParticipantMapping::create([
+                        'class_id' => $class->id,
+                        'participant_id' => $reg->kepala_sekolah_user_id,
+                        'enrolled_date' => now(),
+                        'assigned_by' => auth()->id(),
+                        'status' => 'in',
+                    ]);
+                }
+            }
+
+            // Create mappings for all teachers with user_id
+            foreach ($reg->teacherParticipants as $teacher) {
+                if ($teacher->user_id) {
+                    $exists = \App\Models\ParticipantMapping::where('class_id', $class->id)
+                        ->where('participant_id', $teacher->user_id)
+                        ->exists();
+                    if (!$exists) {
+                        \App\Models\ParticipantMapping::create([
+                            'class_id' => $class->id,
+                            'participant_id' => $teacher->user_id,
+                            'enrolled_date' => now(),
+                            'assigned_by' => auth()->id(),
+                            'status' => 'in',
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Normalize any legacy participant mapping statuses for this class
+        \App\Models\ParticipantMapping::where('class_id', $class->id)
+            ->whereNotIn('status', ['in', 'move', 'out'])
+            ->update(['status' => 'in']);
+
+        // Daftar kecamatan untuk dropdown filter
+        $kecamatanOptions = \App\Models\Registration::where('activity_id', $class->activity_id)
+            ->whereIn('status', $kecamatanStatuses)
+            ->whereNull('class_id')
+            ->whereNotNull('kecamatan')
+            ->distinct()
+            ->orderBy('kecamatan')
+            ->pluck('kecamatan');
+
+        // Available registrations (tidak hanya yang punya user, tapi semua yang eligible)
+        $availableRegistrationsQuery = \App\Models\Registration::with('user')
+            ->where('activity_id', $class->activity_id)
+            ->whereIn('status', $kecamatanStatuses)
+            ->whereNull('class_id');
+
+        if ($selectedKecamatanNormalized) {
+            $availableRegistrationsQuery->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kecamatan)," ",""),"_","")) = ?', [$selectedKecamatanNormalized]);
+        }
+
+        $availableRegistrations = $availableRegistrationsQuery->get();
+
+        // Peserta/guru/kepsek yang punya registrasi tervalidasi dan belum masuk kelas, difilter kecamatan jika dipilih
+        $availableParticipants = \App\Models\User::with(['registrations' => function($query) use ($class) {
+                $query->where('activity_id', $class->activity_id);
+            }])
+            ->whereIn('role', ['peserta', 'guru', 'kepala_sekolah'])
+            ->whereHas('registrations', function($query) use ($class, $selectedKecamatanNormalized, $kecamatanStatuses) {
                 $query->where('activity_id', $class->activity_id)
-                    ->where('status', 'validated')
+                    ->whereIn('status', $kecamatanStatuses)
                     ->whereNull('class_id');
+                if ($selectedKecamatanNormalized) {
+                    $query->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kecamatan)," ",""),"_","")) = ?', [$selectedKecamatanNormalized]);
+                }
             })
             ->get();
-        
+
         // Get available fasilitators (who are not yet in this class)
         $availableFasilitators = \App\Models\User::where('role', 'fasilitator')
             ->where('status', 'active')
@@ -549,10 +775,20 @@ class SuperAdminController extends Controller
                     ->where('status', 'in');
             })
             ->get();
-        
+
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        
-        return view('super-admin.classes.show', compact('class', 'availableParticipants', 'availableFasilitators', 'routePrefix'));
+
+        return view('super-admin.classes.show', compact(
+            'class',
+            'assignedRegistrations',
+            'teacherParticipants',
+            'availableRegistrations',
+            'availableParticipants',
+            'availableFasilitators',
+            'routePrefix',
+            'kecamatanOptions',
+            'selectedKecamatan'
+        ));
     }
 
     public function removeParticipant(\App\Models\Classes $class, \App\Models\ParticipantMapping $participant)
@@ -561,10 +797,10 @@ class SuperAdminController extends Controller
         \App\Models\Registration::where('user_id', $participant->participant_id)
             ->where('class_id', $class->id)
             ->update(['class_id' => null]);
-        
+
         // Delete participant mapping
-        $participant->delete();
-        
+        $participant->forceDelete();
+
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
         return redirect()->route($routePrefix . '.classes.show', $class)
             ->with('success', 'Peserta berhasil dikeluarkan dari kelas');
@@ -599,7 +835,7 @@ class SuperAdminController extends Controller
             'participant_id' => $validated['participant_id'],
             'enrolled_date' => now(),
             'assigned_by' => auth()->id(),
-            'status' => 'active',
+            'status' => 'in',
         ]);
 
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
@@ -607,10 +843,97 @@ class SuperAdminController extends Controller
             ->with('success', 'Peserta berhasil ditambahkan ke kelas');
     }
 
+    public function assignParticipantsByKecamatan(Request $request, \App\Models\Classes $class)
+    {
+        $validated = $request->validate([
+            'kecamatan' => 'required|string',
+        ]);
+
+        $kecamatanNormalized = preg_replace('/\s+|_+/', '', strtolower(trim($validated['kecamatan'])));
+
+        $statuses = ['validated', 'payment_uploaded', 'payment_validated', 'approved', 'accepted', 'belum ditentukan', 'belum_ditentukan'];
+
+        // Find all eligible registrations by kecamatan
+        $eligibleRegistrations = \App\Models\Registration::where('activity_id', $class->activity_id)
+            ->whereIn('status', $statuses)
+            ->whereNull('class_id')
+            ->whereRaw('LOWER(REPLACE(REPLACE(TRIM(kecamatan)," ",""),"_","")) = ?', [$kecamatanNormalized])
+            ->get();
+
+        if ($eligibleRegistrations->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada peserta yang tersedia di kecamatan tersebut');
+        }
+
+        $countAdded = 0;
+
+        // Update registrations to set class_id
+        foreach ($eligibleRegistrations as $reg) {
+            $reg->update(['class_id' => $class->id]);
+            $countAdded++;
+
+            // Create mapping for original user_id (if exists)
+            if ($reg->user_id) {
+                $alreadyMapped = \App\Models\ParticipantMapping::where('class_id', $class->id)
+                    ->where('participant_id', $reg->user_id)
+                    ->exists();
+
+                if (!$alreadyMapped) {
+                    \App\Models\ParticipantMapping::create([
+                        'class_id' => $class->id,
+                        'participant_id' => $reg->user_id,
+                        'enrolled_date' => now(),
+                        'assigned_by' => auth()->id(),
+                        'status' => 'in',
+                    ]);
+                }
+            }
+
+            // Create mapping for kepala sekolah (if has user_id)
+            if ($reg->kepala_sekolah_user_id) {
+                $alreadyMapped = \App\Models\ParticipantMapping::where('class_id', $class->id)
+                    ->where('participant_id', $reg->kepala_sekolah_user_id)
+                    ->exists();
+
+                if (!$alreadyMapped) {
+                    \App\Models\ParticipantMapping::create([
+                        'class_id' => $class->id,
+                        'participant_id' => $reg->kepala_sekolah_user_id,
+                        'enrolled_date' => now(),
+                        'assigned_by' => auth()->id(),
+                        'status' => 'in',
+                    ]);
+                }
+            }
+
+            // Create mappings for all teachers with user_id
+            foreach ($reg->teacherParticipants as $teacher) {
+                if ($teacher->user_id) {
+                    $alreadyMapped = \App\Models\ParticipantMapping::where('class_id', $class->id)
+                        ->where('participant_id', $teacher->user_id)
+                        ->exists();
+
+                    if (!$alreadyMapped) {
+                        \App\Models\ParticipantMapping::create([
+                            'class_id' => $class->id,
+                            'participant_id' => $teacher->user_id,
+                            'enrolled_date' => now(),
+                            'assigned_by' => auth()->id(),
+                            'status' => 'in',
+                        ]);
+                    }
+                }
+            }
+        }
+
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.classes.show', $class)
+            ->with('success', $countAdded . ' pendaftaran dari kecamatan ' . $validated['kecamatan'] . ' berhasil ditambahkan ke kelas');
+    }
+
     public function assignFasilitatorToClass(Request $request, \App\Models\Classes $class)
     {
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
-        
+
         try {
             $validated = $request->validate([
                 'fasilitator_id' => 'required|exists:users,id',
@@ -638,7 +961,7 @@ class SuperAdminController extends Controller
 
             return redirect()->route($routePrefix . '.classes.show', $class)
                 ->with('success', 'Fasilitator berhasil ditambahkan ke kelas');
-                
+
         } catch (\Exception $e) {
             return redirect()->route($routePrefix . '.classes.show', $class)
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -652,9 +975,46 @@ class SuperAdminController extends Controller
             'status' => 'out',
             'removed_date' => now(),
         ]);
-        
+
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
         return redirect()->route($routePrefix . '.classes.show', $class)
             ->with('success', 'Fasilitator berhasil dikeluarkan dari kelas');
+    }
+
+    public function removeTeacherParticipant(\App\Models\Classes $class, $teacherId)
+    {
+        $teacher = \App\Models\TeacherParticipant::findOrFail($teacherId);
+        $registration = $teacher->registration;
+
+        // Delete the teacher participant
+        $teacher->forceDelete();
+
+        // Check if registration has no more teacher participants and no kepala sekolah
+        if ($registration->teacherParticipants()->count() == 0 && $registration->jumlah_kepala_sekolah == 0) {
+            // Remove class_id from registration
+            $registration->update(['class_id' => null]);
+        }
+
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.classes.show', $class)
+            ->with('success', 'Peserta berhasil dikeluarkan dari kelas');
+    }
+
+    public function removeKepalaSekolah(\App\Models\Classes $class, $registrationId)
+    {
+        $registration = \App\Models\Registration::findOrFail($registrationId);
+
+        // Set jumlah kepala sekolah to 0
+        $registration->update(['jumlah_kepala_sekolah' => 0]);
+
+        // Check if registration has no more participants (both kepala sekolah and teachers)
+        if ($registration->teacherParticipants()->count() == 0 && $registration->jumlah_kepala_sekolah == 0) {
+            // Remove class_id from registration
+            $registration->update(['class_id' => null]);
+        }
+
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+        return redirect()->route($routePrefix . '.classes.show', $class)
+            ->with('success', 'Kepala sekolah berhasil dikeluarkan dari kelas');
     }
 }

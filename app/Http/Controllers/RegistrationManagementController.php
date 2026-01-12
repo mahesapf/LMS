@@ -15,7 +15,7 @@ class RegistrationManagementController extends Controller
     public function index(Request $request)
     {
         $status = $request->get('status', 'validated'); // Default to validated
-        
+
         $registrations = Registration::with(['activity.program', 'user', 'class', 'teacherParticipants', 'payment'])
             ->when($status !== 'all', function($query) use ($status) {
                 return $query->where('status', $status);
@@ -24,7 +24,7 @@ class RegistrationManagementController extends Controller
             ->get();
 
         $classes = Classes::with('activity.program')->get();
-        
+
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
 
         return view('admin.registrations.index', compact('registrations', 'classes', 'routePrefix', 'status'));
@@ -71,7 +71,7 @@ class RegistrationManagementController extends Controller
             // Remove participant mapping
             ParticipantMapping::where('participant_id', $registration->user_id)
                 ->where('class_id', $registration->class_id)
-                ->delete();
+                ->forceDelete();
 
             $registration->update([
                 'class_id' => null

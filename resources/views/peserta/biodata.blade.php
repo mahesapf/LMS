@@ -40,8 +40,8 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">NIK</label>
-                        <input type="text" name="nik" class="form-control @error('nik') is-invalid @enderror" 
-                               value="{{ old('nik', $user->nik) }}" maxlength="16" pattern="[0-9]{16}" 
+                        <input type="text" name="nik" class="form-control @error('nik') is-invalid @enderror"
+                               value="{{ old('nik', $user->nik) }}" maxlength="16" pattern="[0-9]{16}"
                                placeholder="16 digit NIK">
                         @error('nik')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -50,7 +50,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" 
+                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
                                value="{{ old('name', $user->name) }}" required>
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -61,7 +61,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label">Gelar</label>
-                        <input type="text" name="gelar" class="form-control @error('gelar') is-invalid @enderror" 
+                        <input type="text" name="gelar" class="form-control @error('gelar') is-invalid @enderror"
                                value="{{ old('gelar', $user->gelar) }}" placeholder="Contoh: S.Pd, M.Pd">
                         @error('gelar')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -80,7 +80,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">No HP</label>
-                        <input type="text" name="no_hp" class="form-control @error('no_hp') is-invalid @enderror" 
+                        <input type="text" name="no_hp" class="form-control @error('no_hp') is-invalid @enderror"
                                value="{{ old('no_hp', $user->no_hp) }}" placeholder="08xxxxxxxxxx">
                         @error('no_hp')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -96,7 +96,7 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Email <span class="text-danger">*</span></label>
-                        <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" 
+                        <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
                                value="{{ old('email', $user->email) }}" required>
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -104,8 +104,8 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Email Belajar.id</label>
-                        <input type="email" name="email_belajar_id" class="form-control @error('email_belajar_id') is-invalid @enderror" 
-                               value="{{ old('email_belajar_id', $user->email_belajar_id) }}" 
+                        <input type="email" name="email_belajar_id" class="form-control @error('email_belajar_id') is-invalid @enderror"
+                               value="{{ old('email_belajar_id', $user->email_belajar_id) }}"
                                placeholder="nama@belajar.id">
                         @error('email_belajar_id')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -121,8 +121,8 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label">Jabatan</label>
-                        <input type="text" name="jabatan" class="form-control @error('jabatan') is-invalid @enderror" 
-                               value="{{ old('jabatan', $user->jabatan) }}" 
+                        <input type="text" name="jabatan" class="form-control @error('jabatan') is-invalid @enderror"
+                               value="{{ old('jabatan', $user->jabatan) }}"
                                placeholder="Contoh: Guru Matematika">
                         @error('jabatan')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -130,7 +130,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">NIP/NIPY</label>
-                        <input type="text" name="nip_nipy" class="form-control @error('nip_nipy') is-invalid @enderror" 
+                        <input type="text" name="nip_nipy" class="form-control @error('nip_nipy') is-invalid @enderror"
                                value="{{ old('nip_nipy', $user->nip_nipy) }}">
                         @error('nip_nipy')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -139,7 +139,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">NPSN</label>
-                        <input type="text" name="npsn" class="form-control @error('npsn') is-invalid @enderror" 
+                        <input type="text" name="npsn" class="form-control @error('npsn') is-invalid @enderror"
                                value="{{ old('npsn', $user->npsn) }}">
                         @error('npsn')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -151,8 +151,8 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label">Pangkat</label>
-                        <input type="text" name="pangkat" class="form-control @error('pangkat') is-invalid @enderror" 
-                               value="{{ old('pangkat', $user->pangkat) }}" 
+                        <input type="text" name="pangkat" class="form-control @error('pangkat') is-invalid @enderror"
+                               value="{{ old('pangkat', $user->pangkat) }}"
                                placeholder="Contoh: Penata">
                         @error('pangkat')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -160,8 +160,8 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Golongan</label>
-                        <input type="text" name="golongan" class="form-control @error('golongan') is-invalid @enderror" 
-                               value="{{ old('golongan', $user->golongan) }}" 
+                        <input type="text" name="golongan" class="form-control @error('golongan') is-invalid @enderror"
+                               value="{{ old('golongan', $user->golongan) }}"
                                placeholder="Contoh: III/c">
                         @error('golongan')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -169,8 +169,8 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">KCD</label>
-                        <input type="text" name="kcd" class="form-control @error('kcd') is-invalid @enderror" 
-                               value="{{ old('kcd', $user->kcd) }}" 
+                        <input type="text" name="kcd" class="form-control @error('kcd') is-invalid @enderror"
+                               value="{{ old('kcd', $user->kcd) }}"
                                placeholder="Kantor Cabang Dinas">
                         @error('kcd')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -186,7 +186,7 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Instansi/Nama Sekolah</label>
-                        <input type="text" name="instansi" class="form-control @error('instansi') is-invalid @enderror" 
+                        <input type="text" name="instansi" class="form-control @error('instansi') is-invalid @enderror"
                                value="{{ old('instansi', $user->instansi) }}">
                         @error('instansi')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -194,7 +194,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Alamat Sekolah</label>
-                        <textarea name="alamat_sekolah" class="form-control @error('alamat_sekolah') is-invalid @enderror" 
+                        <textarea name="alamat_sekolah" class="form-control @error('alamat_sekolah') is-invalid @enderror"
                                   rows="2">{{ old('alamat_sekolah', $user->alamat_sekolah) }}</textarea>
                         @error('alamat_sekolah')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -208,27 +208,71 @@
                 </h5>
 
                 <div class="row mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label">Provinsi</label>
-                        <input type="text" name="provinsi_peserta" class="form-control @error('provinsi_peserta') is-invalid @enderror" 
-                               value="{{ old('provinsi_peserta', $user->provinsi_peserta) }}">
+                        <select name="provinsi_peserta" id="provinsi_peserta" class="form-select @error('provinsi_peserta') is-invalid @enderror"
+                                onchange="updateCities(this, document.getElementById('kabupaten_kota'), document.getElementById('kecamatan'))">
+                            <option value="">Pilih Provinsi</option>
+                            <option value="Jawa Barat" {{ old('provinsi_peserta', $user->provinsi_peserta) == 'Jawa Barat' ? 'selected' : '' }}>Jawa Barat</option>
+                            <option value="Bengkulu" {{ old('provinsi_peserta', $user->provinsi_peserta) == 'Bengkulu' ? 'selected' : '' }}>Bengkulu</option>
+                            <option value="Lampung" {{ old('provinsi_peserta', $user->provinsi_peserta) == 'Lampung' ? 'selected' : '' }}>Lampung</option>
+                        </select>
                         @error('provinsi_peserta')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label">Kabupaten/Kota</label>
-                        <input type="text" name="kabupaten_kota" class="form-control @error('kabupaten_kota') is-invalid @enderror" 
-                               value="{{ old('kabupaten_kota', $user->kabupaten_kota) }}">
+                        <select name="kabupaten_kota" id="kabupaten_kota" class="form-select @error('kabupaten_kota') is-invalid @enderror"
+                                onchange="updateDistricts(document.getElementById('provinsi_peserta'), this, document.getElementById('kecamatan'))">
+                            <option value="">Pilih Kabupaten/Kota</option>
+                        </select>
                         @error('kabupaten_kota')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Kecamatan</label>
+                        <select name="kecamatan" id="kecamatan" class="form-select @error('kecamatan') is-invalid @enderror">
+                            <option value="">Pilih Kecamatan</option>
+                        </select>
+                        @error('kecamatan')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
 
+                <script>
+                // Initialize dropdowns on page load
+                document.addEventListener('DOMContentLoaded', function() {
+                    const provinceSelect = document.getElementById('provinsi_peserta');
+                    const citySelect = document.getElementById('kabupaten_kota');
+                    const districtSelect = document.getElementById('kecamatan');
+
+                    const savedProvince = "{{ old('provinsi_peserta', $user->provinsi_peserta) }}";
+                    const savedCity = "{{ old('kabupaten_kota', $user->kabupaten_kota) }}";
+                    const savedDistrict = "{{ old('kecamatan', $user->kecamatan) }}";
+
+                    if (savedProvince) {
+                        updateCities(provinceSelect, citySelect, districtSelect);
+                        if (savedCity) {
+                            setTimeout(() => {
+                                citySelect.value = savedCity;
+                                updateDistricts(provinceSelect, citySelect, districtSelect);
+                                if (savedDistrict) {
+                                    setTimeout(() => {
+                                        districtSelect.value = savedDistrict;
+                                    }, 100);
+                                }
+                            }, 100);
+                        }
+                    }
+                });
+                </script>
+
                 <div class="mb-3">
                     <label class="form-label">Alamat Lengkap</label>
-                    <textarea name="alamat_lengkap" class="form-control @error('alamat_lengkap') is-invalid @enderror" 
+                    <textarea name="alamat_lengkap" class="form-control @error('alamat_lengkap') is-invalid @enderror"
                               rows="3">{{ old('alamat_lengkap', $user->alamat_lengkap) }}</textarea>
                     @error('alamat_lengkap')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -257,8 +301,8 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Jurusan</label>
-                        <input type="text" name="jurusan" class="form-control @error('jurusan') is-invalid @enderror" 
-                               value="{{ old('jurusan', $user->jurusan) }}" 
+                        <input type="text" name="jurusan" class="form-control @error('jurusan') is-invalid @enderror"
+                               value="{{ old('jurusan', $user->jurusan) }}"
                                placeholder="Contoh: Pendidikan Matematika">
                         @error('jurusan')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -286,7 +330,7 @@
                         @enderror
                         <small class="text-muted">Format: JPG, PNG (Max: 2MB)</small>
                     </div>
-                    
+
                     <div class="col-md-4">
                         <label class="form-label">Surat Tugas</label>
                         @if($user->surat_tugas)
@@ -296,14 +340,14 @@
                                 </a>
                             </div>
                         @endif
-                        <input type="file" name="surat_tugas" class="form-control @error('surat_tugas') is-invalid @enderror" 
+                        <input type="file" name="surat_tugas" class="form-control @error('surat_tugas') is-invalid @enderror"
                                accept=".pdf,.jpg,.jpeg,.png">
                         @error('surat_tugas')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                         <small class="text-muted">Format: PDF, JPG, PNG (Max: 2MB)</small>
                     </div>
-                    
+
                     <div class="col-md-4">
                         <label class="form-label">Tanda Tangan Digital</label>
                         @if($user->tanda_tangan)
@@ -330,4 +374,6 @@
         </div>
     </div>
 </div>
+
+<script src="{{ asset('js/indonesia-location.js') }}"></script>
 @endsection
