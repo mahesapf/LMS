@@ -5,12 +5,20 @@ use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\FasilitatorController;
 use App\Http\Controllers\PesertaController;
+use App\Http\Controllers\SekolahController;
+use App\Http\Controllers\PublicSekolahController;
+use App\Http\Controllers\SekolahManagementController;
+use App\Http\Controllers\Auth\SekolahRegisterController;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/news', [HomeController::class, 'news'])->name('news');
 Route::get('/news/{id}', [HomeController::class, 'newsDetail'])->name('news.detail');
+
+// Registrasi Sekolah (Public)
+Route::get('/sekolah/register', [PublicSekolahController::class, 'showRegistrationForm'])->name('sekolah.register');
+Route::post('/sekolah/register', [PublicSekolahController::class, 'register'])->name('sekolah.register.submit');
 
 // Activity Registration Routes (public access)
 Route::get('/activities', [\App\Http\Controllers\ActivityRegistrationController::class, 'index'])->name('activities.index');
@@ -40,6 +48,7 @@ Route::get('/dashboard', function () {
         'admin' => redirect()->route('admin.dashboard'),
         'fasilitator' => redirect()->route('fasilitator.dashboard'),
         'peserta' => redirect()->route('peserta.dashboard'),
+        'sekolah' => redirect()->route('sekolah.dashboard'),
         default => abort(403),
     };
 })->middleware('auth')->name('dashboard');
@@ -80,6 +89,14 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::post('/payments/export/by-schools', [\App\Http\Controllers\PaymentValidationController::class, 'exportBySchools'])->name('payments.export-by-schools');
     Route::get('/payments/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'show'])->name('payments.show');
     Route::patch('/payments/{payment}/approve', [\App\Http\Controllers\PaymentValidationController::class, 'approve'])->name('payments.approve');
+
+    // Sekolah Management
+    Route::get('/sekolah', [SekolahManagementController::class, 'index'])->name('sekolah.index');
+    Route::get('/sekolah/{sekolah}', [SekolahManagementController::class, 'show'])->name('sekolah.show');
+    Route::patch('/sekolah/{sekolah}/approve', [SekolahManagementController::class, 'approve'])->name('sekolah.approve');
+    Route::patch('/sekolah/{sekolah}/reject', [SekolahManagementController::class, 'reject'])->name('sekolah.reject');
+    Route::get('/sekolah/{sekolah}/download-sk', [SekolahManagementController::class, 'downloadSK'])->name('sekolah.download-sk');
+    Route::delete('/sekolah/{sekolah}', [SekolahManagementController::class, 'destroy'])->name('sekolah.destroy');
     Route::patch('/payments/{payment}/reject', [\App\Http\Controllers\PaymentValidationController::class, 'reject'])->name('payments.reject');
 });
 
@@ -107,13 +124,16 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::put('/classes/{class}', [SuperAdminController::class, 'updateClass'])->name('classes.update');
     Route::delete('/classes/{class}', [SuperAdminController::class, 'deleteClass'])->name('classes.delete');
     Route::post('/classes/{class}/participants', [SuperAdminController::class, 'assignParticipantToClass'])->name('classes.assignParticipant');
-    Route::post('/classes/{class}/participants/bulk', [SuperAdminController::class, 'assignParticipantsByKecamatan'])->name('classes.assignParticipantsByKecamatan');
+    Route::post('/classes/{class}/participants/bulk', [SuperAdminController::class, 'assignParticipantsByLocation'])->name('classes.assignParticipantsByLocation');
+    Route::post('/classes/{class}/participants/by-kecamatan', [SuperAdminController::class, 'assignParticipantsByKecamatan'])->name('classes.assignParticipantsByKecamatan');
     Route::delete('/classes/{class}/participants/{participant}', [SuperAdminController::class, 'removeParticipant'])->name('classes.removeParticipant');
     Route::delete('/classes/{class}/teacher-participants/{teacher}', [SuperAdminController::class, 'removeTeacherParticipant'])->name('classes.removeTeacherParticipant');
     Route::delete('/classes/{class}/kepala-sekolah/{registration}', [SuperAdminController::class, 'removeKepalaSekolah'])->name('classes.removeKepalaSekolah');
     Route::get('/classes/{class}/fasilitators', function($class) { return redirect()->route('super-admin.classes.show', $class); });
     Route::post('/classes/{class}/fasilitators', [SuperAdminController::class, 'assignFasilitatorToClass'])->name('classes.assignFasilitator');
     Route::delete('/classes/{class}/fasilitators/{fasilitator}', [SuperAdminController::class, 'removeFasilitatorFromClass'])->name('classes.removeFasilitator');
+    Route::post('/classes/{class}/admins', [SuperAdminController::class, 'assignAdminToActivity'])->name('classes.assignAdmin');
+    Route::delete('/classes/{class}/admins/{adminMapping}', [SuperAdminController::class, 'removeAdminFromActivity'])->name('classes.removeAdmin');
 });
 
 // Admin Routes
@@ -137,7 +157,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('/classes/{class}', [SuperAdminController::class, 'updateClass'])->name('classes.update');
     Route::delete('/classes/{class}', [SuperAdminController::class, 'deleteClass'])->name('classes.delete');
     Route::post('/classes/{class}/participants', [SuperAdminController::class, 'assignParticipantToClass'])->name('classes.assignParticipant');
-    Route::post('/classes/{class}/participants/bulk', [SuperAdminController::class, 'assignParticipantsByKecamatan'])->name('classes.assignParticipantsByKecamatan');
+    Route::post('/classes/{class}/participants/bulk', [SuperAdminController::class, 'assignParticipantsByLocation'])->name('classes.assignParticipantsByLocation');
+    Route::post('/classes/{class}/participants/by-kecamatan', [SuperAdminController::class, 'assignParticipantsByKecamatan'])->name('classes.assignParticipantsByKecamatan');
     Route::delete('/classes/{class}/participants/{participant}', [SuperAdminController::class, 'removeParticipant'])->name('classes.removeParticipant');
     Route::delete('/classes/{class}/teacher-participants/{teacher}', [SuperAdminController::class, 'removeTeacherParticipant'])->name('classes.removeTeacherParticipant');
     Route::delete('/classes/{class}/kepala-sekolah/{registration}', [SuperAdminController::class, 'removeKepalaSekolah'])->name('classes.removeKepalaSekolah');
@@ -211,6 +232,14 @@ Route::prefix('peserta')->name('peserta.')->middleware(['auth', 'role:peserta'])
     Route::get('/documents', [PesertaController::class, 'documents'])->name('documents');
     Route::post('/documents/upload', [PesertaController::class, 'uploadDocument'])->name('documents.upload');
     Route::delete('/documents/{document}', [PesertaController::class, 'destroyDocument'])->name('documents.destroy');
+});
+
+// Sekolah Routes
+Route::prefix('sekolah')->name('sekolah.')->middleware(['auth', 'role:sekolah'])->group(function () {
+    Route::get('/dashboard', [SekolahController::class, 'dashboard'])->name('dashboard');
+    Route::get('/profile', [SekolahController::class, 'profile'])->name('profile');
+    Route::put('/profile', [SekolahController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/registrations', [SekolahController::class, 'registrations'])->name('registrations');
 });
 
 Auth::routes();

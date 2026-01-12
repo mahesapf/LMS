@@ -25,6 +25,59 @@ class LoginController extends Controller
     use AuthenticatesUsers;
 
     /**
+     * Get the login username to be used by the controller.
+     *
+     * @return string
+     */
+    public function username()
+    {
+        $login = request()->input('email');
+        
+        // Check if the login input is NPSN (numeric)
+        if (is_numeric($login)) {
+            return 'npsn';
+        }
+        
+        return 'email';
+    }
+
+    /**
+     * Validate the user login request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return void
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    protected function validateLogin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
+        ], [
+            'email.required' => 'Email atau NPSN harus diisi',
+            'password.required' => 'Password harus diisi',
+        ]);
+    }
+
+    /**
+     * Get the needed authorization credentials from the request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    protected function credentials(Request $request)
+    {
+        $login = $request->input('email');
+        $field = is_numeric($login) ? 'npsn' : 'email';
+        
+        return [
+            $field => $login,
+            'password' => $request->input('password'),
+        ];
+    }
+
+    /**
      * Where to redirect users after login.
      *
      * @var string
@@ -40,6 +93,18 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
+        // Check if sekolah account is still pending approval
+        if ($user->role === 'sekolah' && $user->approval_status === 'pending') {
+            auth()->logout();
+            return redirect()->route('login')->with('error', 'Akun sekolah Anda masih menunggu persetujuan dari administrator. Silakan cek email Anda setelah akun disetujui.');
+        }
+
+        // Check if sekolah account was rejected
+        if ($user->role === 'sekolah' && $user->approval_status === 'rejected') {
+            auth()->logout();
+            return redirect()->route('login')->with('error', 'Akun sekolah Anda ditolak oleh administrator. Silakan hubungi administrator untuk informasi lebih lanjut.');
+        }
+
         // Sync user with teacher_participants and registrations
         $this->syncUserWithParticipants($user);
 
@@ -54,11 +119,10 @@ class LoginController extends Controller
      */
     protected function syncUserWithParticipants($user)
     {
-        // Sync teacher_participants by email or NIK
-        $teachers = TeacherParticipant::where(function($query) use ($user) {
-            $query->where('email', $user->email)
-                  ->orWhere('nik', $user->nik);
-        })->whereNull('user_id')->get();
+        // Sync teacher_participants by email only
+        $teachers = TeacherParticipant::where('email', $user->email)
+            ->whereNull('user_id')
+            ->get();
 
         foreach ($teachers as $teacher) {
             $teacher->update(['user_id' => $user->id]);
@@ -147,6 +211,7 @@ class LoginController extends Controller
             'admin' => route('admin.dashboard'),
             'fasilitator' => route('fasilitator.dashboard'),
             'peserta' => route('peserta.dashboard'),
+            'sekolah' => route('sekolah.dashboard'),
             default => route('home'),
         };
     }

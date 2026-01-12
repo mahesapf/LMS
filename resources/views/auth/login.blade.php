@@ -20,8 +20,8 @@
             @csrf
 
             <div class="auth-form-group">
-                <label for="email" class="auth-form-label">Email Address</label>
-                <input id="email" type="email" class="auth-form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="nama@email.com">
+                <label for="email" class="auth-form-label">Email atau NPSN</label>
+                <input id="email" type="text" class="auth-form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="Email atau NPSN">
                 @error('email')
                     <span class="invalid-feedback" role="alert">
                         <strong>{{ $message }}</strong>
@@ -54,7 +54,10 @@
             </button>
 
             <div class="auth-footer-text text-center mt-3">
-                <small class="text-muted">Belum punya akun? Hubungi admin untuk dibuatkan akun.</small>
+                <small class="text-muted">
+                    Sekolah belum punya akun? 
+                    <a href="{{ route('sekolah.register') }}" class="auth-link">Daftar di sini</a>
+                </small>
             </div>
         </form>
     </div>
