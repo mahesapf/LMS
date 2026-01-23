@@ -11,16 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('teacher_participants', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('registration_id')->constrained()->onDelete('cascade');
-            $table->string('nama_lengkap');
-            $table->string('nip')->nullable();
-            $table->string('email')->nullable();
-            $table->string('surat_tugas')->nullable(); // path to file
-            $table->timestamps();
-            $table->softDeletes();
-        });
+        if (!Schema::hasTable('teacher_participants')) {
+            Schema::create('teacher_participants', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('registration_id')->constrained()->onDelete('cascade');
+                $table->string('nama_lengkap');
+                $table->string('nip')->nullable();
+                $table->string('email')->nullable();
+                $table->string('surat_tugas')->nullable(); // path to file
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
     }
 
     /**

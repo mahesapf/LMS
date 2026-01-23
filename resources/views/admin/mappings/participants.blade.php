@@ -37,7 +37,7 @@
             <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Tambah Peserta ke Kelas</h5>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ route('admin.classes.participants.assign', $class) }}" class="row g-3">
+            <form method="POST" action="{{ route('admin.classes.assignParticipant', $class) }}" class="row g-3">
                 @csrf
                 <div class="col-md-4">
                     <label for="participant_id" class="form-label">Pilih Peserta <span class="text-danger">*</span></label>

@@ -12,14 +12,30 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['super_admin', 'admin', 'fasilitator', 'peserta'])->default('peserta')->after('email');
-            $table->string('phone')->nullable()->after('email');
-            $table->text('address')->nullable()->after('phone');
-            $table->string('institution')->nullable()->after('address');
-            $table->string('position')->nullable()->after('institution');
-            $table->string('degree')->nullable()->after('name'); // gelar
-            $table->enum('status', ['active', 'suspended', 'inactive'])->default('active')->after('password');
-            $table->softDeletes();
+            if (!Schema::hasColumn('users', 'role')) {
+                $table->enum('role', ['super_admin', 'admin', 'fasilitator', 'peserta'])->default('peserta')->after('email');
+            }
+            if (!Schema::hasColumn('users', 'phone')) {
+                $table->string('phone')->nullable()->after('email');
+            }
+            if (!Schema::hasColumn('users', 'address')) {
+                $table->text('address')->nullable()->after('phone');
+            }
+            if (!Schema::hasColumn('users', 'institution')) {
+                $table->string('institution')->nullable()->after('address');
+            }
+            if (!Schema::hasColumn('users', 'position')) {
+                $table->string('position')->nullable()->after('institution');
+            }
+            if (!Schema::hasColumn('users', 'degree')) {
+                $table->string('degree')->nullable()->after('name');
+            }
+            if (!Schema::hasColumn('users', 'status')) {
+                $table->enum('status', ['active', 'suspended', 'inactive'])->default('active')->after('password');
+            }
+            if (!Schema::hasColumn('users', 'deleted_at')) {
+                $table->softDeletes();
+            }
         });
     }
 

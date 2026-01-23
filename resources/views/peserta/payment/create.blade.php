@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.peserta')
 
 @section('title', 'Pembayaran')
 
@@ -40,8 +40,8 @@
 
                         <div class="mb-3">
                             <label for="bank_name" class="form-label">Nama Bank <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('bank_name') is-invalid @enderror" 
-                                   id="bank_name" name="bank_name" value="{{ old('bank_name') }}" 
+                            <input type="text" class="form-control @error('bank_name') is-invalid @enderror"
+                                   id="bank_name" name="bank_name" value="{{ old('bank_name') }}"
                                    placeholder="Contoh: BCA, Mandiri, BNI" required>
                             @error('bank_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -52,8 +52,8 @@
                             <label for="amount" class="form-label">Jumlah yang Dibayar <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
-                                <input type="number" class="form-control @error('amount') is-invalid @enderror" 
-                                       id="amount" name="amount" value="{{ old('amount', $registration->program->registration_fee) }}" 
+                                <input type="number" class="form-control @error('amount') is-invalid @enderror"
+                                       id="amount" name="amount" value="{{ old('amount', $registration->program->registration_fee) }}"
                                        min="0" step="0.01" required>
                             </div>
                             @error('amount')
@@ -66,8 +66,8 @@
 
                         <div class="mb-3">
                             <label for="payment_date" class="form-label">Tanggal Pembayaran <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control @error('payment_date') is-invalid @enderror" 
-                                   id="payment_date" name="payment_date" value="{{ old('payment_date', date('Y-m-d')) }}" 
+                            <input type="date" class="form-control @error('payment_date') is-invalid @enderror"
+                                   id="payment_date" name="payment_date" value="{{ old('payment_date', date('Y-m-d')) }}"
                                    max="{{ date('Y-m-d') }}" required>
                             @error('payment_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -76,7 +76,7 @@
 
                         <div class="mb-3">
                             <label for="proof_file" class="form-label">Bukti Pembayaran <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control @error('proof_file') is-invalid @enderror" 
+                            <input type="file" class="form-control @error('proof_file') is-invalid @enderror"
                                    id="proof_file" name="proof_file" accept="image/*" required>
                             @error('proof_file')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -88,7 +88,7 @@
 
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Perhatian:</strong> Pembayaran harus dilakukan maksimal 1 minggu sebelum program dimulai 
+                            <strong>Perhatian:</strong> Pembayaran harus dilakukan maksimal 1 minggu sebelum program dimulai
                             ({{ $registration->program->start_date->copy()->subWeek()->format('d F Y') }})
                         </div>
 

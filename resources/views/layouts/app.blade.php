@@ -16,6 +16,9 @@
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
     <!-- Indonesia Location Data - Load first -->
     <script src="{{ asset('js/indonesia-location.js') }}"></script>
@@ -27,18 +30,39 @@
         [x-cloak] { display: none !important; }
         html, body {
             overflow-x: hidden;
-            overscroll-behavior: none;
             position: relative;
             width: 100%;
+            height: 100%;
         }
         body {
+            overflow-y: auto;
+            min-height: 100vh;
+        }
+        
+        /* Only apply touch restrictions to auth pages */
+        body.auth-page {
+            overscroll-behavior: none;
             touch-action: pan-y;
+            overflow: hidden;
+        }
+        
+        /* Override Tailwind CSS for auth back button */
+        .auth-card-header .btn-outline-secondary,
+        .auth-card-header .btn-outline-secondary i,
+        .auth-card-header .btn-outline-secondary .bi {
+            color: #374151 !important;
+        }
+        
+        .auth-card-header .btn-outline-secondary:hover,
+        .auth-card-header .btn-outline-secondary:hover i,
+        .auth-card-header .btn-outline-secondary:hover .bi {
+            color: #1f2937 !important;
         }
     </style>
     @stack('styles')
 </head>
-<body @if(isset($hideNavbar) && $hideNavbar) class="auth-page" @endif>
-    <div id="app">
+<body @if(isset($hideNavbar) && $hideNavbar) class="auth-page" @endif class="flex flex-col min-h-screen">
+    <div id="app" class="flex flex-col min-h-screen">
         @if (!isset($hideNavbar) || !$hideNavbar)
         <nav class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur" x-data="{ open: false }">
             <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
@@ -52,7 +76,7 @@
                     <div class="hidden items-center gap-4 text-sm font-semibold text-slate-700 lg:flex">
                         <a href="{{ route('home') }}" class="hover:text-sky-700">Beranda</a>
                         <a href="{{ route('activities.index') }}" class="hover:text-sky-700">Kegiatan</a>
-                        <a href="{{ route('news') }}" class="hover:text-sky-700">Berita</a>
+                        <a href="#" class="hover:text-sky-700">Panduan & FAQ</a>
                     </div>
                     <div class="hidden lg:flex items-center gap-2">
                         @guest
@@ -90,7 +114,7 @@
                 <div class="space-y-2 px-4 py-3 text-sm font-semibold text-slate-700">
                     <a href="{{ route('home') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-50">Beranda</a>
                     <a href="{{ route('activities.index') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-50">Kegiatan</a>
-                    <a href="{{ route('news') }}" class="block rounded-lg px-3 py-2 hover:bg-slate-50">Berita</a>
+                    <a href="#" class="block rounded-lg px-3 py-2 hover:bg-slate-50">Panduan & FAQ</a>
                     @guest
                         @if (Route::has('login'))
                             <a href="{{ route('login') }}" class="block rounded-lg px-3 py-2 border border-slate-200 hover:bg-slate-50">Login</a>
@@ -110,7 +134,7 @@
         </nav>
         @endif
 
-        <main class="{{ isset($hideNavbar) && $hideNavbar ? '' : 'py-6 bg-white' }}">
+        <main class="{{ isset($hideNavbar) && $hideNavbar ? '' : 'flex-1' }}">
             @yield('content')
         </main>
     </div>

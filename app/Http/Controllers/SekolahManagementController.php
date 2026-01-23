@@ -19,12 +19,27 @@ class SekolahManagementController extends Controller
 
         $query = User::where('role', 'sekolah');
 
-        if ($status !== 'all') {
-            $query->where('approval_status', $status);
+        // Admin hanya bisa melihat sekolah yang sudah approved
+        if (auth()->user()->role === 'admin') {
+            $query->where('status', 'active');
+        } elseif ($status !== 'all') {
+            // Map status filter to user status (untuk super-admin)
+            // pending = inactive, approved = active, rejected = suspended
+            if ($status === 'pending') {
+                $query->where('status', 'inactive');
+            } elseif ($status === 'approved') {
+                $query->where('status', 'active');
+            } elseif ($status === 'rejected') {
+                $query->where('status', 'suspended');
+            }
         }
 
         $sekolahs = $query->latest()->paginate(20);
 
+        // Gunakan view berbeda untuk admin dan super-admin
+        if (auth()->user()->role === 'admin') {
+            return view('admin.sekolah.index', compact('sekolahs', 'status'));
+        }
         return view('super-admin.sekolah.index', compact('sekolahs', 'status'));
     }
 
@@ -35,6 +50,10 @@ class SekolahManagementController extends Controller
     {
         $sekolah = User::where('role', 'sekolah')->findOrFail($id);
 
+        // Gunakan view berbeda untuk admin dan super-admin
+        if (auth()->user()->role === 'admin') {
+            return view('admin.sekolah.show', compact('sekolah'));
+        }
         return view('super-admin.sekolah.show', compact('sekolah'));
     }
 
@@ -47,21 +66,18 @@ class SekolahManagementController extends Controller
             $sekolah = User::where('role', 'sekolah')->findOrFail($id);
 
             // Check if already approved
-            if ($sekolah->approval_status === 'approved') {
+            if ($sekolah->status === 'active') {
                 return redirect()->back()->with('info', 'Akun sekolah sudah disetujui sebelumnya.');
             }
 
             $sekolah->update([
-                'approval_status' => 'approved',
                 'status' => 'active',
-                'approved_at' => now(),
-                'approved_by' => auth()->id(),
             ]);
 
             // Send approval email
             try {
-                // Use email or email_belajar_sekolah
-                $emailTo = $sekolah->email_belajar_sekolah ?: $sekolah->email;
+                // Use email or email_belajar
+                $emailTo = $sekolah->email_belajar ?: $sekolah->email;
                 if ($emailTo) {
                     Mail::to($emailTo)->send(new SekolahApproved($sekolah));
                 }
@@ -88,18 +104,25 @@ class SekolahManagementController extends Controller
     {
         try {
             $sekolah = User::where('role', 'sekolah')
-                ->where('approval_status', 'pending')
                 ->findOrFail($id);
 
+            // Check if already rejected/suspended
+            if ($sekolah->status === 'suspended') {
+                return redirect()->back()->with('info', 'Akun sekolah sudah ditolak/suspend sebelumnya.');
+            }
+
             $sekolah->update([
-                'approval_status' => 'rejected',
-                'approved_by' => auth()->id(),
+                'status' => 'suspended',
             ]);
 
-            return redirect()->back()->with('success', 'Pendaftaran sekolah berhasil ditolak.');
+            $message = $sekolah->status === 'inactive'
+                ? 'Pendaftaran sekolah berhasil ditolak.'
+                : 'Akun sekolah berhasil di-suspend.';
+
+            return redirect()->back()->with('success', $message);
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menolak pendaftaran sekolah.');
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menolak/suspend sekolah.');
         }
     }
 
@@ -110,11 +133,15 @@ class SekolahManagementController extends Controller
     {
         $sekolah = User::where('role', 'sekolah')->findOrFail($id);
 
-        if (!$sekolah->sk_pendaftar) {
+        $skPathValue = $sekolah->sk_pendaftar ?: $sekolah->sk_pendaftar_path;
+
+        if (!$skPathValue) {
             abort(404, 'File SK tidak ditemukan.');
         }
 
-        $filePath = 'public/' . $sekolah->sk_pendaftar;
+        $filePath = str_starts_with($skPathValue, 'public/')
+            ? $skPathValue
+            : 'public/' . $skPathValue;
 
         if (!Storage::exists($filePath)) {
             abort(404, 'File SK tidak ditemukan.');
@@ -125,25 +152,43 @@ class SekolahManagementController extends Controller
 
     /**
      * Delete sekolah account.
+     * Note: This is a SOFT DELETE - sekolah record is not permanently deleted,
+     * just marked with deleted_at timestamp. Related peserta accounts are NOT deleted.
      */
     public function destroy($id)
     {
         try {
             $sekolah = User::where('role', 'sekolah')->findOrFail($id);
 
-            // Delete SK file if exists
-            if ($sekolah->sk_pendaftar) {
-                $filePath = 'public/' . $sekolah->sk_pendaftar;
-                if (Storage::exists($filePath)) {
-                    Storage::delete($filePath);
-                }
+            // Check if there are related peserta accounts with the same NPSN
+            $relatedPeserta = User::where('role', 'peserta')
+                ->where('npsn', $sekolah->npsn)
+                ->whereNotNull('npsn')
+                ->count();
+
+            if ($relatedPeserta > 0) {
+                // Warn admin about related peserta accounts
+                \Log::warning('Deleting sekolah with related peserta accounts', [
+                    'sekolah_id' => $sekolah->id,
+                    'sekolah_name' => $sekolah->name,
+                    'npsn' => $sekolah->npsn,
+                    'related_peserta_count' => $relatedPeserta
+                ]);
             }
 
+            // Soft delete the sekolah account only (peserta are NOT affected)
+            // This sets deleted_at timestamp but keeps the record in database
             $sekolah->delete();
 
-            return redirect()->back()->with('success', 'Akun sekolah berhasil dihapus.');
+            $message = 'Akun sekolah berhasil dihapus.';
+            if ($relatedPeserta > 0) {
+                $message .= " Terdapat {$relatedPeserta} akun peserta dengan NPSN yang sama yang TIDAK ikut terhapus.";
+            }
+
+            return redirect()->back()->with('success', $message);
 
         } catch (\Exception $e) {
+            \Log::error('Error deleting sekolah: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus akun sekolah.');
         }
     }

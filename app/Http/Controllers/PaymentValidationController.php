@@ -66,7 +66,8 @@ class PaymentValidationController extends Controller
         ]);
 
         $user = $payment->registration->user;
-        if ($user && $user->role !== 'peserta') {
+        // Jangan ubah role sekolah menjadi peserta
+        if ($user && $user->role !== 'peserta' && $user->role !== 'sekolah') {
             $user->update(['role' => 'peserta']);
         }
 
@@ -259,6 +260,88 @@ class PaymentValidationController extends Controller
     }
 
     /**
+     * Delete payment (Super Admin only).
+     */
+    public function destroy(Payment $payment)
+    {
+        // Update registration status back to pending or appropriate status
+        $registration = $payment->registration;
+        if ($registration) {
+            $registration->update([
+                'status' => 'pending'
+            ]);
+        }
+
+        // Soft delete the payment
+        $payment->delete();
+
+        return redirect()->route('super-admin.payments.index')
+            ->with('success', 'Pembayaran berhasil dihapus.');
+    }
+
+    /**
+     * Export selected payments data.
+     */
+    public function exportSelected(Request $request)
+    {
+        $request->validate([
+            'school_ids' => 'required|array',
+            'school_ids.*' => 'exists:payments,id',
+        ]);
+
+        $payments = Payment::with(['registration.activity.program', 'registration.teacherParticipants', 'validator'])
+            ->whereIn('id', $request->school_ids)
+            ->where('status', 'validated')
+            ->orderBy('validated_at', 'desc')
+            ->get();
+
+        $filename = 'data_peserta_selected_' . count($request->school_ids) . '_payments_' . date('Y-m-d_His') . '.csv';
+
+        $callback = function() use ($payments) {
+            $file = fopen('php://output', 'w');
+
+            // Add BOM for Excel UTF-8 support
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // CSV Headers
+            fputcsv($file, [
+                'Nama Lengkap',
+                'NIK',
+                'Email'
+            ]);
+
+            foreach ($payments as $payment) {
+                $registration = $payment->registration;
+
+                // Export Kepala Sekolah if exists
+                if ($registration->jumlah_kepala_sekolah > 0) {
+                    fputcsv($file, [
+                        $registration->nama_kepala_sekolah,
+                        $registration->nik_kepala_sekolah ?? '-',
+                        $registration->email ?? '-'
+                    ]);
+                }
+
+                // Export Teachers
+                foreach ($registration->teacherParticipants as $teacher) {
+                    fputcsv($file, [
+                        $teacher->nama_lengkap,
+                        $teacher->nik ?? '-',
+                        $teacher->email ?? '-'
+                    ]);
+                }
+            }
+
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /**
      * Export payments by selected schools.
      */
     public function exportBySchools(Request $request)
@@ -284,56 +367,20 @@ class PaymentValidationController extends Controller
 
             // CSV Headers
             fputcsv($file, [
-                'Sekolah',
                 'Nama Lengkap',
-                'Jabatan',
                 'NIK',
-                'Email',
-                'Kegiatan',
-                'Program',
-                'Jumlah Pembayaran',
-                'Tanggal Validasi',
-                'Validator'
+                'Email'
             ]);
 
             foreach ($payments as $payment) {
                 $registration = $payment->registration;
-                $schoolName = $registration->nama_sekolah;
-                $activityName = $registration->activity->name;
-                $programName = $registration->activity->program->name ?? '-';
-                $amount = 'Rp ' . number_format($payment->amount, 0, ',', '.');
-                $validatedAt = $payment->validated_at ? $payment->validated_at->format('d M Y H:i') : '-';
-                $validator = $payment->validator->name ?? '-';
 
-                // Export Kepala Sekolah if exists
-                if ($registration->jumlah_kepala_sekolah > 0) {
+                // Export all participants (Kepala Sekolah dan Guru from teacherParticipants table)
+                foreach ($registration->teacherParticipants as $participant) {
                     fputcsv($file, [
-                        $schoolName,
-                        $registration->nama_kepala_sekolah,
-                        'Kepala Sekolah',
-                        $registration->nik_kepala_sekolah ?? '-',
-                        $registration->email ?? '-',
-                        $activityName,
-                        $programName,
-                        $amount,
-                        $validatedAt,
-                        $validator
-                    ]);
-                }
-
-                // Export Teachers
-                foreach ($registration->teacherParticipants as $teacher) {
-                    fputcsv($file, [
-                        $schoolName,
-                        $teacher->nama_lengkap,
-                        'Guru',
-                        $teacher->nik ?? '-',
-                        $teacher->email ?? '-',
-                        $activityName,
-                        $programName,
-                        $amount,
-                        $validatedAt,
-                        $validator
+                        $participant->nama_lengkap,
+                        $participant->nik ?? '-',
+                        $participant->email ?? '-'
                     ]);
                 }
             }

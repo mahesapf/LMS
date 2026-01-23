@@ -12,16 +12,29 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // First, update any invalid role values to 'peserta'
+        DB::statement("UPDATE users SET role = 'peserta' WHERE role NOT IN ('super_admin', 'admin', 'fasilitator', 'peserta')");
+
         // Update role enum to include 'sekolah'
         DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('super_admin', 'admin', 'fasilitator', 'peserta', 'sekolah') DEFAULT 'peserta'");
-        
+
         Schema::table('users', function (Blueprint $table) {
             // Fields for sekolah role - add at the end of the table
-            $table->string('provinsi')->nullable();
-            $table->string('kabupaten')->nullable();
-            $table->string('pendaftar')->nullable();
-            $table->string('sk_pendaftar')->nullable();
-            $table->enum('approval_status', ['pending', 'approved', 'rejected'])->default('pending');
+            if (!Schema::hasColumn('users', 'provinsi')) {
+                $table->string('provinsi')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'kabupaten')) {
+                $table->string('kabupaten')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'pendaftar')) {
+                $table->string('pendaftar')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'sk_pendaftar')) {
+                $table->string('sk_pendaftar')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'approval_status')) {
+                $table->enum('approval_status', ['pending', 'approved', 'rejected'])->default('pending');
+            }
         });
     }
 
@@ -39,7 +52,7 @@ return new class extends Migration
                 'approval_status'
             ]);
         });
-        
+
         // Revert role enum back
         DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('super_admin', 'admin', 'fasilitator', 'peserta') DEFAULT 'peserta'");
     }

@@ -12,11 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->timestamp('approved_at')->nullable()->after('approval_status');
-            $table->unsignedBigInteger('approved_by')->nullable()->after('approved_at');
-            
-            // Add foreign key constraint
-            $table->foreign('approved_by')->references('id')->on('users')->onDelete('set null');
+            if (!Schema::hasColumn('users', 'approved_at')) {
+                $table->timestamp('approved_at')->nullable()->after('approval_status');
+            }
+            if (!Schema::hasColumn('users', 'approved_by')) {
+                $table->unsignedBigInteger('approved_by')->nullable()->after('approved_at');
+
+                // Add foreign key constraint
+                $table->foreign('approved_by')->references('id')->on('users')->onDelete('set null');
+            }
         });
     }
 

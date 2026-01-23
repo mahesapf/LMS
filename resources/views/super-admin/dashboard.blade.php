@@ -22,7 +22,7 @@
                     </svg>
                     Tambah pengguna
                 </a>
-                <a href="{{ route('super-admin.activities') }}" class="inline-flex items-center gap-2 rounded-lg bg-white text-sky-700 px-4 py-2 text-sm font-semibold shadow-sm transition hover:shadow">
+                <a href="{{ route('super-admin.activities') }}" class="inline-flex items-center gap-2 rounded-lg bg-white text-[#0284c7] px-4 py-2 text-sm font-semibold shadow-sm transition hover:shadow">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m-8 4h10a2 2 0 002-2V6a2 2 0 00-2-2H8l-4 4v10a2 2 0 002 2h1" />
                     </svg>
@@ -35,7 +35,7 @@
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center gap-3">
-                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0284c7]/10 text-[#0284c7]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                     </svg>
@@ -65,7 +65,7 @@
 
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center gap-3">
-                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700">
+                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0284c7]/10 text-[#0284c7]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-9-3a1 1 0 112 0v2a1 1 0 11-2 0V7zm0 4a1 1 0 112 0 1 1 0 01-2 0z" clip-rule="evenodd" />
                     </svg>
@@ -102,7 +102,7 @@
                     <h2 class="mt-1 text-2xl font-semibold text-slate-900">{{ $stats['total_activities'] }} kegiatan aktif</h2>
                     <p class="mt-2 text-sm text-slate-500">Ikuti detail jadwal, pendanaan, dan progres kegiatan.</p>
                 </div>
-                <a href="{{ route('super-admin.activities') }}" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700">
+                <a href="{{ route('super-admin.activities') }}" class="inline-flex items-center gap-2 rounded-lg bg-[#0284c7] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0369a1]">
                     Lihat kegiatan
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
@@ -122,7 +122,7 @@
                     </div>
                     <p class="mt-2 text-sm text-slate-500">Pastikan semua pembayaran telah diverifikasi tepat waktu.</p>
                     <div class="mt-3">
-                        <a href="{{ route('super-admin.payments.index') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">Kelola pembayaran →</a>
+                        <a href="{{ route('super-admin.payments.index') }}" class="text-sm font-semibold text-[#0284c7] hover:text-[#0369a1]">Kelola pembayaran →</a>
                     </div>
                 </div>
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -138,7 +138,7 @@
                     </div>
                     <p class="mt-2 text-sm text-slate-500">Aktifkan/suspend akun dan atur peran pengguna.</p>
                     <div class="mt-3">
-                        <a href="{{ route('super-admin.users') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">Buka manajemen →</a>
+                        <a href="{{ route('super-admin.users') }}" class="text-sm font-semibold text-[#0284c7] hover:text-[#0369a1]">Buka manajemen →</a>
                     </div>
                 </div>
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -153,9 +153,9 @@
                     </div>
                     <p class="mt-2 text-sm text-slate-500">Sinkronkan program, kegiatan, dan kelas aktif.</p>
                     <div class="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
-                        <a href="{{ route('super-admin.programs') }}" class="text-sky-700 hover:text-sky-800">Program →</a>
+                        <a href="{{ route('super-admin.programs') }}" class="text-[#0284c7] hover:text-[#0369a1]">Program →</a>
                         <span class="text-slate-300">|</span>
-                        <a href="{{ route('super-admin.classes.index') }}" class="text-sky-700 hover:text-sky-800">Kelas →</a>
+                        <a href="{{ route('super-admin.classes.index') }}" class="text-[#0284c7] hover:text-[#0369a1]">Kelas →</a>
                     </div>
                 </div>
             </div>
@@ -167,7 +167,7 @@
                     <p class="text-sm font-medium text-slate-500">Snapshot ringkas</p>
                     <h3 class="mt-1 text-xl font-semibold text-slate-900">Data terbaru</h3>
                 </div>
-                <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">Live</span>
+                <span class="rounded-full bg-[#0284c7]/10 px-3 py-1 text-xs font-semibold text-[#0284c7]">Live</span>
             </div>
             <div class="mt-5 space-y-2.5">
                 <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
@@ -182,7 +182,7 @@
                             <p class="font-semibold text-slate-900">{{ $stats['total_activities'] }} total</p>
                         </div>
                     </div>
-                    <a href="{{ route('super-admin.activities') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">→</a>
+                    <a href="{{ route('super-admin.activities') }}" class="text-sm font-semibold text-[#0284c7] hover:text-[#0369a1]">→</a>
                 </div>
                 <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                     <div class="flex items-center gap-3">
@@ -196,7 +196,7 @@
                             <p class="font-semibold text-slate-900">{{ $stats['total_programs'] }} program</p>
                         </div>
                     </div>
-                    <a href="{{ route('super-admin.programs') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">→</a>
+                    <a href="{{ route('super-admin.programs') }}" class="text-sm font-semibold text-[#0284c7] hover:text-[#0369a1]">→</a>
                 </div>
                 <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                     <div class="flex items-center gap-3">
@@ -210,7 +210,7 @@
                             <p class="font-semibold text-slate-900">Pastikan distribusi merata</p>
                         </div>
                     </div>
-                    <a href="{{ route('super-admin.admin-mappings') }}" class="text-sm font-semibold text-sky-700 hover:text-sky-800">→</a>
+                    <a href="{{ route('super-admin.admin-mappings') }}" class="text-sm font-semibold text-[#0284c7] hover:text-[#0369a1]">→</a>
                 </div>
             </div>
         </div>

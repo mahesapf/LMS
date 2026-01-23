@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('documents', function (Blueprint $table) {
-            $table->foreignId('document_requirement_id')->nullable()->after('class_id')->constrained('document_requirements')->onDelete('cascade');
-            $table->unsignedBigInteger('file_size')->nullable()->after('file_name');
-            $table->foreignId('uploaded_by')->nullable()->after('uploaded_date')->constrained('users')->onDelete('set null');
+            if (!Schema::hasColumn('documents', 'document_requirement_id')) {
+                $table->foreignId('document_requirement_id')->nullable()->after('class_id')->constrained('document_requirements')->onDelete('cascade');
+            }
+            if (!Schema::hasColumn('documents', 'file_size')) {
+                $table->unsignedBigInteger('file_size')->nullable()->after('file_name');
+            }
+            if (!Schema::hasColumn('documents', 'uploaded_by')) {
+                $table->foreignId('uploaded_by')->nullable()->after('uploaded_date')->constrained('users')->onDelete('set null');
+            }
         });
     }
 

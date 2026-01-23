@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('payments', function (Blueprint $table) {
-            $table->string('contact_number')->nullable()->after('proof_file');
-        });
+        if (Schema::hasTable('payments') && !Schema::hasColumn('payments', 'contact_number')) {
+            Schema::table('payments', function (Blueprint $table) {
+                $table->string('contact_number')->nullable()->after('proof_file');
+            });
+        }
     }
 
     /**

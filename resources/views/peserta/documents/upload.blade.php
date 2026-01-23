@@ -1,16 +1,6 @@
-@extends('layouts.dashboard')
+@extends('layouts.peserta')
 
 @section('title', 'Upload Dokumen')
-
-@section('sidebar')
-<nav class="nav flex-column">
-    <a class="nav-link" href="{{ route('peserta.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ route('peserta.profile') }}">Profil</a>
-    <a class="nav-link" href="{{ route('peserta.classes') }}">Kelas Saya</a>
-    <a class="nav-link" href="{{ route('peserta.grades') }}">Nilai Saya</a>
-    <a class="nav-link active" href="{{ route('peserta.documents') }}">Dokumen</a>
-</nav>
-@endsection
 
 @section('content')
 <div class="container-fluid">
@@ -33,7 +23,7 @@
 
                         <div class="mb-3">
                             <label for="title" class="form-label">Judul Dokumen <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('title') is-invalid @enderror" 
+                            <input type="text" class="form-control @error('title') is-invalid @enderror"
                                    id="title" name="title" value="{{ old('title') }}" required>
                             @error('title')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -42,7 +32,7 @@
 
                         <div class="mb-3">
                             <label for="type" class="form-label">Tipe Dokumen <span class="text-danger">*</span></label>
-                            <select class="form-select @error('type') is-invalid @enderror" 
+                            <select class="form-select @error('type') is-invalid @enderror"
                                     id="type" name="type" required>
                                 <option value="">Pilih Tipe</option>
                                 <option value="surat_tugas" {{ old('type') == 'surat_tugas' ? 'selected' : '' }}>Surat Tugas</option>
@@ -56,7 +46,7 @@
 
                         <div class="mb-3">
                             <label for="class_id" class="form-label">Kelas (Opsional)</label>
-                            <select class="form-select @error('class_id') is-invalid @enderror" 
+                            <select class="form-select @error('class_id') is-invalid @enderror"
                                     id="class_id" name="class_id">
                                 <option value="">Tidak terkait kelas</option>
                                 @foreach($myClasses as $mapping)
@@ -73,7 +63,7 @@
 
                         <div class="mb-3">
                             <label for="description" class="form-label">Deskripsi</label>
-                            <textarea class="form-control @error('description') is-invalid @enderror" 
+                            <textarea class="form-control @error('description') is-invalid @enderror"
                                       id="description" name="description" rows="3">{{ old('description') }}</textarea>
                             @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -82,7 +72,7 @@
 
                         <div class="mb-3">
                             <label for="file" class="form-label">File Dokumen <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control @error('file') is-invalid @enderror" 
+                            <input type="file" class="form-control @error('file') is-invalid @enderror"
                                    id="file" name="file" required
                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
                             @error('file')

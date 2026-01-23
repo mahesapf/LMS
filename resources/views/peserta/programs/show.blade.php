@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.peserta')
 
 @section('title', 'Detail Program')
 
@@ -33,7 +33,7 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <h2 class="card-title">{{ $program->name }}</h2>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <p class="mb-2">
@@ -151,7 +151,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="name" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                        <input type="text" class="form-control @error('name') is-invalid @enderror"
                                id="name" name="name" value="{{ old('name', Auth::user()->name) }}" required>
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -160,7 +160,7 @@
 
                     <div class="mb-3">
                         <label for="phone" class="form-label">Nomor Telepon <span class="text-danger">*</span></label>
-                        <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
+                        <input type="tel" class="form-control @error('phone') is-invalid @enderror"
                                id="phone" name="phone" value="{{ old('phone', Auth::user()->phone) }}" required>
                         @error('phone')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -169,7 +169,7 @@
 
                     <div class="mb-3">
                         <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                        <input type="email" class="form-control @error('email') is-invalid @enderror"
                                id="email" name="email" value="{{ old('email', Auth::user()->email) }}" required>
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -178,7 +178,7 @@
 
                     <div class="mb-3">
                         <label for="position" class="form-label">Jabatan <span class="text-danger">*</span></label>
-                        <select class="form-select @error('position') is-invalid @enderror" 
+                        <select class="form-select @error('position') is-invalid @enderror"
                                 id="position" name="position" required>
                             <option value="">Pilih Jabatan</option>
                             <option value="Kepala Sekolah" {{ old('position') == 'Kepala Sekolah' ? 'selected' : '' }}>Kepala Sekolah</option>
@@ -191,7 +191,7 @@
 
                     <div class="mb-3">
                         <label for="school_name" class="form-label">Nama Sekolah <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control @error('school_name') is-invalid @enderror" 
+                        <input type="text" class="form-control @error('school_name') is-invalid @enderror"
                                id="school_name" name="school_name" value="{{ old('school_name', Auth::user()->institution) }}" required>
                         @error('school_name')
                             <div class="invalid-feedback">{{ $message }}</div>

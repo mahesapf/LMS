@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Laravel') }} - @yield('title', 'Dashboard')</title>
+    <title>{{ config('app.name', 'Sistem Informasi Penjaminan Mutu') }} - @yield('title', 'Dashboard')</title>
 
     <style>[x-cloak]{display:none!important;}</style>
 
@@ -105,7 +105,7 @@
                     <div class="flex items-center gap-3">
                         <img src="{{ asset('storage/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="h-12 w-12 object-contain">
                         <div class="leading-tight">
-                            <h2 class="text-[17px] font-semibold text-slate-900">{{ config('app.name', 'SIPM') }}</h2>
+                            <h2 class="text-[17px] font-semibold text-slate-900">{{ config('app.name', 'Sistem Informasi Penjaminan Mutu') }}</h2>
                         </div>
                     </div>
                 </div>
@@ -124,5 +124,7 @@
     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
         @csrf
     </form>
+
+    @stack('scripts')
 </body>
 </html>

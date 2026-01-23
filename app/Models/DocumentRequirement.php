@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class DocumentRequirement extends Model
 {
@@ -12,16 +13,42 @@ class DocumentRequirement extends Model
     protected $fillable = [
         'class_id',
         'stage_id',
+        'target_role',
         'document_name',
         'document_type',
         'description',
         'is_required',
         'max_file_size',
+        'template_file_path',
+        'template_file_name',
     ];
 
     protected $casts = [
         'is_required' => 'boolean',
     ];
+
+    public const TARGET_PESERTA = 'peserta';
+    public const TARGET_FASILITATOR = 'fasilitator';
+
+    public function scopeForPeserta($query)
+    {
+        $table = (new static())->getTable();
+        if (!Schema::hasColumn($table, 'target_role')) {
+            return $query;
+        }
+
+        return $query->where('target_role', self::TARGET_PESERTA);
+    }
+
+    public function scopeForFasilitator($query)
+    {
+        $table = (new static())->getTable();
+        if (!Schema::hasColumn($table, 'target_role')) {
+            return $query;
+        }
+
+        return $query->where('target_role', self::TARGET_FASILITATOR);
+    }
 
     /**
      * Get the class that owns this requirement

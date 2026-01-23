@@ -25,11 +25,11 @@
 <div class="bg-slate-50" x-data="{ showRegistrationModal: {{ (old('nama_sekolah') || old('email')) ? 'true' : 'false' }} }">
     <div class="max-w-6xl mx-auto px-4 py-10">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <a href="{{ route('activities.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900">
+            <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
-                Kembali ke daftar kegiatan
+                Kembali
             </a>
 
             <div class="flex items-center gap-2 text-xs text-slate-500">
@@ -198,12 +198,28 @@
                                 <p class="mt-1 text-sm">Satu sekolah dapat mendaftarkan beberapa peserta dalam satu pengajuan. Total biaya mengikuti jumlah peserta.</p>
                             </div>
 
-                            <button type="button" @click="showRegistrationModal = true" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
-                                </svg>
-                                Daftarkan Sekolah
-                            </button>
+                            @auth
+                                @if(auth()->user()->role == 'sekolah')
+                                    <button type="button" @click="showRegistrationModal = true" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
+                                        </svg>
+                                        Daftarkan Sekolah
+                                    </button>
+                                @else
+                                    <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                                        <p class="font-semibold">Akses Terbatas</p>
+                                        <p class="mt-1">Hanya akun sekolah yang dapat mendaftar kegiatan ini.</p>
+                                    </div>
+                                @endif
+                            @else
+                                <a href="{{ route('login') }}" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                    </svg>
+                                    Login untuk Mendaftar
+                                </a>
+                            @endauth
                         @endif
                     </div>
                 </div>
@@ -212,7 +228,9 @@
     </div>
 
     <!-- Modal Form Pendaftaran -->
-    <div x-show="showRegistrationModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    @auth
+        @if(auth()->user()->role == 'sekolah')
+            <div x-show="showRegistrationModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div x-show="showRegistrationModal"
                  x-transition:enter="ease-out duration-300"
@@ -352,12 +370,11 @@
                             <h6 class="mt-6 mb-3 border-b border-slate-200 pb-2 text-sm font-semibold text-slate-900">📞 Informasi Kontak</h6>
                             <div class="mb-4 grid gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700">Nama Kepala Sekolah <span class="text-red-600">*</span></label>
+                                    <label class="block text-sm font-medium text-slate-700">Nama Kepala Sekolah</label>
                                     <input type="text"
                                            class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:ring-sky-500 @error('nama_kepala_sekolah') border-red-500 @enderror"
                                            name="nama_kepala_sekolah"
                                            value="{{ old('nama_kepala_sekolah') }}"
-                                           required
                                            placeholder="Masukkan nama lengkap kepala sekolah">
                                     @error('nama_kepala_sekolah')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -365,12 +382,11 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700">NIK Kepala Sekolah <span class="text-red-600">*</span></label>
+                                    <label class="block text-sm font-medium text-slate-700">NIK Kepala Sekolah</label>
                                     <input type="text"
                                            class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:ring-sky-500 @error('nik_kepala_sekolah') border-red-500 @enderror"
                                            name="nik_kepala_sekolah"
                                            value="{{ old('nik_kepala_sekolah') }}"
-                                           required
                                            maxlength="16"
                                            pattern="[0-9]{16}"
                                            placeholder="Masukkan NIK 16 digit">
@@ -509,6 +525,8 @@
         </div>
     </div>
     <!-- End Modal Form Pendaftaran -->
+        @endif
+    @endauth
 
 </div>
 

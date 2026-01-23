@@ -109,12 +109,91 @@ class FasilitatorController extends Controller
             ->where('status', 'in')
             ->firstOrFail();
 
-        $participants = ParticipantMapping::with('participant')
+        // Get participants from registrations (same as super admin)
+        $kecamatanStatuses = ['validated', 'payment_uploaded', 'payment_validated', 'approved', 'accepted', 'belum ditentukan', 'belum_ditentukan'];
+
+        $assignedRegistrations = \App\Models\Registration::with(['user', 'teacherParticipants.user'])
+            ->where('activity_id', $class->activity_id)
             ->where('class_id', $class->id)
-            ->where('status', 'in')
+            ->whereIn('status', $kecamatanStatuses)
             ->get();
 
-        return view('fasilitator.classes.detail', compact('class', 'participants'));
+        // Collect all participants (kepala sekolah + guru) from registrations
+        $participants = collect();
+        foreach ($assignedRegistrations as $reg) {
+            // Add kepala sekolah if exists
+            if ($reg->jumlah_kepala_sekolah > 0 && $reg->nama_kepala_sekolah) {
+                // Get kepala sekolah email from User if exists
+                $kepalaSekolahEmail = '-';
+                $kepalaSekolahPhone = '-';
+                $kepalaSekolahUserId = $reg->kepala_sekolah_user_id ?? null;
+                if ($reg->kepala_sekolah_user_id) {
+                    $kepalaUser = \App\Models\User::find($reg->kepala_sekolah_user_id);
+                    if ($kepalaUser) {
+                        $kepalaSekolahEmail = $kepalaUser->email;
+                        $kepalaSekolahPhone = $kepalaUser->phone ?? '-';
+                    }
+                }
+
+                $participants->push([
+                    'type' => 'kepala_sekolah',
+                    'registration_id' => $reg->id,
+                    'user_id' => $kepalaSekolahUserId,
+                    'name' => $reg->nama_kepala_sekolah,
+                    'email' => $kepalaSekolahEmail,
+                    'institution' => $reg->nama_sekolah,
+                    'position' => 'Kepala Sekolah',
+                    'phone' => $kepalaSekolahPhone,
+                    'nik' => $reg->nik_kepala_sekolah ?? null,
+                ]);
+            }
+
+            // Add guru dari teacher participants
+            foreach ($reg->teacherParticipants as $teacher) {
+                // Get position from related user if available
+                $position = 'Guru'; // default
+                if ($teacher->user_id && $teacher->user) {
+                    $position = $teacher->user->position_type
+                        ?? $teacher->user->jabatan
+                        ?? ($teacher->user->role === 'kepala_sekolah' ? 'Kepala Sekolah' : 'Guru');
+                }
+
+                $participants->push([
+                    'type' => 'guru',
+                    'registration_id' => $reg->id,
+                    'teacher_participant_id' => $teacher->id,
+                    'user_id' => $teacher->user_id ?? null,
+                    'name' => $teacher->nama_lengkap,
+                    'email' => $teacher->email ?? '-',
+                    'institution' => $reg->nama_sekolah,
+                    'position' => $position,
+                    'phone' => $teacher->phone ?? $reg->user->phone ?? '-',
+                    'nik' => $teacher->nik ?? null,
+                ]);
+            }
+        }
+
+        // Get stages with document requirements (tasks for peserta only)
+        $stages = \App\Models\Stage::with(['documentRequirements' => function ($query) {
+                $query->forPeserta();
+            }])
+            ->where('class_id', $class->id)
+            ->orderBy('order')
+            ->get();
+
+        // Get facilitator required documents (created by super admin)
+        $fasilitatorRequirementsByStage = DocumentRequirement::forFasilitator()
+            ->where('class_id', $class->id)
+            ->with(['stage', 'documents' => function ($query) {
+                $query->where('uploaded_by', auth()->id());
+            }])
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy('stage_id');
+
+        $fasilitatorGeneralRequirements = $fasilitatorRequirementsByStage->get(null, collect());
+
+        return view('fasilitator.classes.detail', compact('class', 'participants', 'stages', 'fasilitatorRequirementsByStage', 'fasilitatorGeneralRequirements'));
     }
 
     // Grading
@@ -126,14 +205,14 @@ class FasilitatorController extends Controller
             ->where('status', 'in')
             ->firstOrFail();
 
-        // Get participants who have submitted documents
+        // Get all active participants in this class (only users with role 'peserta')
         $participants = ParticipantMapping::with(['participant', 'participant.grades' => function($q) use ($class) {
             $q->where('class_id', $class->id);
         }])
             ->where('class_id', $class->id)
             ->where('status', 'in')
-            ->whereHas('participant.documents', function($q) use ($class) {
-                $q->where('class_id', $class->id);
+            ->whereHas('participant', function($q) {
+                $q->where('role', 'peserta');
             })
             ->get();
 
@@ -149,8 +228,26 @@ class FasilitatorController extends Controller
             'graded_date' => 'nullable|date',
         ]);
 
+        // Pastikan fasilitator mengampu kelas ini
+        FasilitatorMapping::where('fasilitator_id', auth()->id())
+            ->where('class_id', $class->id)
+            ->where('status', 'in')
+            ->firstOrFail();
+
+        // Pastikan peserta memang terdaftar di kelas ini
+        $participantMapping = ParticipantMapping::where('class_id', $class->id)
+            ->where('participant_id', $validated['participant_id'])
+            ->where('status', 'in')
+            ->first();
+
+        if (!$participantMapping) {
+            return redirect()->back()->with('error', 'Peserta tidak terdaftar di kelas ini.');
+        }
+
+        $participant_id = $validated['participant_id'];
+
         // Check if grade already exists
-        $existingGrade = Grade::where('participant_id', $validated['participant_id'])
+        $existingGrade = Grade::where('participant_id', $participant_id)
             ->where('class_id', $class->id)
             ->first();
 
@@ -179,7 +276,7 @@ class FasilitatorController extends Controller
             ]);
         } else {
             Grade::create([
-                'participant_id' => $validated['participant_id'],
+                'participant_id' => $participant_id,
                 'class_id' => $class->id,
                 'fasilitator_id' => auth()->id(),
                 'final_score' => $validated['final_score'],
@@ -245,6 +342,59 @@ class FasilitatorController extends Controller
         $document->forceDelete();
 
         return redirect()->back()->with('success', 'Dokumen berhasil dihapus permanent dari database');
+    }
+
+    public function storeTask(Request $request, Classes $class)
+    {
+        // Check if fasilitator is assigned to this class
+        FasilitatorMapping::where('fasilitator_id', auth()->id())
+            ->where('class_id', $class->id)
+            ->where('status', 'in')
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'stage_id' => 'required|exists:stages,id',
+            'document_name' => 'required|string|max:255',
+            'document_type' => 'required|string|max:100',
+            'description' => 'nullable|string',
+            'is_required' => 'nullable|boolean',
+            'max_file_size' => 'nullable|integer|min:1',
+        ]);
+
+        // Verify stage belongs to this class
+        $stage = \App\Models\Stage::where('id', $validated['stage_id'])
+            ->where('class_id', $class->id)
+            ->firstOrFail();
+
+        DocumentRequirement::create([
+            'class_id' => $class->id,
+            'stage_id' => $validated['stage_id'],
+            'document_name' => $validated['document_name'],
+            'document_type' => $validated['document_type'],
+            'description' => $validated['description'],
+            'is_required' => $validated['is_required'] ?? true,
+            'max_file_size' => $validated['max_file_size'] ?? 5120, // Default 5MB
+        ]);
+
+        return redirect()->back()->with('success', 'Tugas berhasil ditambahkan');
+    }
+
+    public function deleteTask(DocumentRequirement $task, Classes $class)
+    {
+        // Check if fasilitator is assigned to this class
+        FasilitatorMapping::where('fasilitator_id', auth()->id())
+            ->where('class_id', $class->id)
+            ->where('status', 'in')
+            ->firstOrFail();
+
+        // Verify task belongs to this class
+        if ($task->class_id !== $class->id) {
+            abort(403);
+        }
+
+        $task->delete();
+
+        return redirect()->back()->with('success', 'Tugas berhasil dihapus');
     }
 
     // Participant Mapping
@@ -435,6 +585,7 @@ class FasilitatorController extends Controller
             DocumentRequirement::create([
                 'class_id' => $class->id,
                 'stage_id' => $validated['stage_id'],
+                'target_role' => DocumentRequirement::TARGET_PESERTA,
                 'document_name' => $docData['document_name'],
                 'document_type' => $docData['document_type'],
                 'description' => $docData['description'] ?? null,
@@ -530,5 +681,234 @@ class FasilitatorController extends Controller
             'participantSubmissions',
             'stats'
         ));
+    }
+
+    public function uploadRequiredDocument(Request $request)
+    {
+        $validated = $request->validate([
+            'document_requirement_id' => 'required|exists:document_requirements,id',
+            'class_id' => 'required|exists:classes,id',
+            'file' => 'required|file',
+            'notes' => 'nullable|string',
+        ]);
+
+        // Ensure fasilitator is assigned to class
+        FasilitatorMapping::where('fasilitator_id', auth()->id())
+            ->where('class_id', $validated['class_id'])
+            ->where('status', 'in')
+            ->firstOrFail();
+
+        $requirement = DocumentRequirement::where('id', $validated['document_requirement_id'])
+            ->where('class_id', $validated['class_id'])
+            ->firstOrFail();
+
+        if ($requirement->target_role !== DocumentRequirement::TARGET_FASILITATOR) {
+            abort(403);
+        }
+
+        $file = $request->file('file');
+
+        if ($requirement->document_type) {
+            $allowedTypes = array_map('trim', explode(',', $requirement->document_type));
+            $fileExtension = strtolower($file->getClientOriginalExtension());
+            if (!in_array($fileExtension, $allowedTypes)) {
+                return redirect()->back()->with('error', 'Tipe file tidak sesuai. Hanya diperbolehkan: ' . $requirement->document_type);
+            }
+        }
+
+        // Validate file size (keep consistent with existing peserta upload logic)
+        $maxSizeInBytes = $requirement->max_file_size * 1024 * 1024;
+        if ($file->getSize() > $maxSizeInBytes) {
+            return redirect()->back()->with('error', 'Ukuran file terlalu besar. Maksimal: ' . number_format($requirement->max_file_size, 1) . ' MB');
+        }
+
+        $oldDocument = Document::where('document_requirement_id', $requirement->id)
+            ->where('uploaded_by', auth()->id())
+            ->first();
+        if ($oldDocument) {
+            Storage::disk('public')->delete($oldDocument->file_path);
+            $oldDocument->forceDelete();
+        }
+
+        $path = $file->store('documents/fasilitator-required', 'public');
+
+        Document::create([
+            'class_id' => $validated['class_id'],
+            'document_requirement_id' => $requirement->id,
+            'user_id' => auth()->id(),
+            'uploaded_by' => auth()->id(),
+            'title' => $requirement->document_name,
+            'file_path' => $path,
+            'file_name' => $file->getClientOriginalName(),
+            'file_size' => $file->getSize(),
+            'description' => $validated['notes'] ?? null,
+            'uploaded_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Dokumen berhasil diupload');
+    }
+
+    public function taskSubmissions(Classes $class)
+    {
+        // Check if fasilitator has access to this class
+        $fasilitatorMapping = FasilitatorMapping::where('class_id', $class->id)
+            ->where('fasilitator_id', auth()->id())
+            ->where('status', 'in')
+            ->first();
+
+        if (!$fasilitatorMapping) {
+            abort(403, 'Anda tidak memiliki akses ke kelas ini');
+        }
+
+        // Get all stages for this class with document requirements (only for peserta)
+        $stages = $class->stages()
+            ->with(['documentRequirements' => function($query) {
+                $query->forPeserta()->orderBy('created_at', 'desc');
+            }])
+            ->orderBy('order')
+            ->get();
+
+        // Get all participants in this class
+        $participants = $this->getClassParticipants($class);
+        $participantIds = collect($participants)->pluck('user_id')->filter()->toArray();
+
+        // Get all document submissions for this class
+        $allSubmissions = Document::where('class_id', $class->id)
+            ->whereIn('user_id', $participantIds)
+            ->with('user')
+            ->get();
+
+        // Group submissions by stage and requirement
+        $submissionsByStage = [];
+        foreach ($stages as $stage) {
+            $stageData = [
+                'stage' => $stage,
+                'requirements' => []
+            ];
+
+            foreach ($stage->documentRequirements as $requirement) {
+                $submissions = $allSubmissions->where('document_requirement_id', $requirement->id);
+
+                $requirementData = [
+                    'requirement' => $requirement,
+                    'total_submitted' => $submissions->count(),
+                    'total_participants' => count($participants),
+                    'percentage' => count($participants) > 0
+                        ? round(($submissions->count() / count($participants)) * 100, 1)
+                        : 0,
+                    'submissions' => $submissions->map(function($doc) {
+                        return [
+                            'id' => $doc->id,
+                            'participant_name' => $doc->user->name ?? 'Unknown',
+                            'participant_email' => $doc->user->email ?? '-',
+                            'file_name' => $doc->file_name,
+                            'file_path' => $doc->file_path,
+                            'uploaded_at' => $doc->created_at,
+                            'description' => $doc->description,
+                        ];
+                    })
+                ];
+
+                $stageData['requirements'][] = $requirementData;
+            }
+
+            $submissionsByStage[] = $stageData;
+        }
+
+        // Calculate overall stats
+        $totalTasks = $stages->sum(fn($stage) => $stage->documentRequirements->count());
+        $totalSubmissions = $allSubmissions->count();
+        $expectedSubmissions = count($participants) * $totalTasks;
+        $overallPercentage = $expectedSubmissions > 0
+            ? round(($totalSubmissions / $expectedSubmissions) * 100, 1)
+            : 0;
+
+        $stats = [
+            'total_participants' => count($participants),
+            'total_tasks' => $totalTasks,
+            'total_submissions' => $totalSubmissions,
+            'expected_submissions' => $expectedSubmissions,
+            'overall_percentage' => $overallPercentage,
+        ];
+
+        return view('fasilitator.tasks.submissions', compact('class', 'submissionsByStage', 'stats', 'participants'));
+    }
+
+    /**
+     * Get all participants (kepala sekolah + guru) for a class
+     */
+    private function getClassParticipants(Classes $class)
+    {
+        $kecamatanStatuses = ['validated', 'payment_uploaded', 'payment_validated', 'approved', 'accepted', 'belum ditentukan', 'belum_ditentukan'];
+
+        $assignedRegistrations = \App\Models\Registration::with(['user', 'teacherParticipants.user'])
+            ->where('activity_id', $class->activity_id)
+            ->where('class_id', $class->id)
+            ->whereIn('status', $kecamatanStatuses)
+            ->get();
+
+        // Collect all participants (kepala sekolah + guru) from registrations
+        $participants = collect();
+        foreach ($assignedRegistrations as $reg) {
+            // Add kepala sekolah if exists
+            if ($reg->jumlah_kepala_sekolah > 0 && $reg->nama_kepala_sekolah) {
+                $userId = $reg->kepala_sekolah_user_id ?? $reg->user_id;
+
+                // Get kepala sekolah email from User if exists
+                $kepalaSekolahEmail = '-';
+                $kepalaSekolahPhone = '-';
+                if ($reg->kepala_sekolah_user_id) {
+                    $kepalaUser = \App\Models\User::find($reg->kepala_sekolah_user_id);
+                    if ($kepalaUser) {
+                        $kepalaSekolahEmail = $kepalaUser->email;
+                        $kepalaSekolahPhone = $kepalaUser->phone ?? '-';
+                    }
+                }
+
+                $participants->push([
+                    'type' => 'kepala_sekolah',
+                    'registration_id' => $reg->id,
+                    'user_id' => $userId,
+                    'name' => $reg->nama_kepala_sekolah,
+                    'email' => $kepalaSekolahEmail,
+                    'institution' => $reg->nama_sekolah,
+                    'position' => 'Kepala Sekolah',
+                    'phone' => $kepalaSekolahPhone,
+                    'nik' => $reg->nik_kepala_sekolah ?? null,
+                ]);
+            }
+
+            // Add guru dari teacher participants
+            foreach ($reg->teacherParticipants as $teacher) {
+                // Get position with priority: teacher_participants.jabatan > user.position_type > user.jabatan > default
+                $position = 'Guru'; // default
+
+                // First check if jabatan is set directly in teacher_participants table
+                if (!empty($teacher->jabatan)) {
+                    $position = $teacher->jabatan;
+                }
+                // Otherwise, try to get from related user if available
+                elseif ($teacher->user_id && $teacher->user) {
+                    $position = $teacher->user->position_type
+                        ?? $teacher->user->jabatan
+                        ?? ($teacher->user->role === 'kepala_sekolah' ? 'Kepala Sekolah' : 'Guru');
+                }
+
+                $participants->push([
+                    'type' => 'guru',
+                    'registration_id' => $reg->id,
+                    'teacher_participant_id' => $teacher->id,
+                    'user_id' => $teacher->user_id ?? null,
+                    'name' => $teacher->nama_lengkap,
+                    'email' => $teacher->email ?? '-',
+                    'institution' => $reg->nama_sekolah,
+                    'position' => $position,
+                    'phone' => $teacher->phone ?? $reg->user->phone ?? '-',
+                    'nik' => $teacher->nik ?? null,
+                ]);
+            }
+        }
+
+        return $participants;
     }
 }

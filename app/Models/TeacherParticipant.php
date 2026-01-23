@@ -17,6 +17,7 @@ class TeacherParticipant extends Model
         'nip',
         'nik',
         'email',
+        'jabatan',
         'surat_tugas',
     ];
 

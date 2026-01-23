@@ -29,12 +29,15 @@
                     <select name="activity_id" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('activity_id') border-red-500 @enderror" required>
                         <option value="">Pilih Kegiatan</option>
                         @foreach($activities as $activity)
-                        <option value="{{ $activity->id }}" {{ old('activity_id', $editClass->activity_id) == $activity->id ? 'selected' : '' }}>{{ $activity->name }}</option>
+                        <option value="{{ $activity->id }}" {{ old('activity_id', $editClass->activity_id) == $activity->id ? 'selected' : '' }}>
+                            {{ $activity->name }} - {{ $activity->program->name ?? 'No Program' }} ({{ ucfirst($activity->status) }})
+                        </option>
                         @endforeach
                     </select>
                     @error('activity_id')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
+                    <p class="mt-1 text-xs text-slate-500">Pilih kegiatan pelatihan untuk kelas ini</p>
                 </div>
 
                 <div>
@@ -187,7 +190,7 @@
 
             <div class="flex items-center justify-end gap-3 bg-slate-50 px-6 py-4">
                 <button type="button" @click="showEditModal = false" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white">Batal</button>
-                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-[#0284c7] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0369a1]">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>

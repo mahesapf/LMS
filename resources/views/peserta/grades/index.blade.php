@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.peserta')
 
 @section('title', 'Nilai Saya')
 
@@ -49,7 +49,7 @@
                             <td>{{ $grade->class->name ?? '-' }}</td>
                             <td>{{ $grade->class->activity->name ?? '-' }}</td>
                             <td>
-                                <span class="badge 
+                                <span class="badge
                                     @if($grade->final_score >= 80) bg-success
                                     @elseif($grade->final_score >= 70) bg-primary
                                     @elseif($grade->final_score >= 60) bg-warning
@@ -104,7 +104,7 @@
                     <dl class="row mb-0">
                         <dt class="col-sm-6">Total Nilai:</dt>
                         <dd class="col-sm-6">{{ $grades->total() }}</dd>
-                        
+
                         <dt class="col-sm-6">Rata-rata:</dt>
                         <dd class="col-sm-6">
                             <strong>{{ number_format($grades->avg('score'), 2) }}</strong>

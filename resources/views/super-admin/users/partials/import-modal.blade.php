@@ -22,13 +22,12 @@
             @endif
 
             @if(session('success'))
-                <div class="border-l-4 border-emerald-600 bg-emerald-50 p-4 text-emerald-700">
+                <div class="border-l-4 border-[#0284c7] bg-[#0284c7]/10 p-4 text-slate-900">
                     {{ session('success') }}
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('super-admin.users.import.process') }}" enctype="multipart/form-data" class="divide-y divide-slate-100">
-                @csrf
+            <form method="POST" action="{{ route($routePrefix . '.users.import.process') }}" enctype="multipart/form-data" class="divide-y divide-slate-100">                @csrf
 
                 <div class="space-y-6 px-6 py-6">
                     <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -87,7 +86,7 @@
 
                 <div class="flex items-center justify-end gap-3 bg-slate-50 px-6 py-4">
                     <button type="button" @click="showImportModal = false" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white">Batal</button>
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-[#0284c7] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0369a1]">
                         <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v4a1 1 0 11-2 0V4H5v12h9v-3a1 1 0 112 0v4a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm7 5a1 1 0 011 1v1h2a1 1 0 110 2h-2v1a1 1 0 11-2 0v-1H6a1 1 0 110-2h2V9a1 1 0 011-1z" clip-rule="evenodd" />
                         </svg>

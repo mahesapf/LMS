@@ -30,15 +30,14 @@ class SekolahRegisterController extends Controller
             'provinsi' => ['required', 'string'],
             'kabupaten' => ['required', 'string', 'max:255'],
             'nama_kepala_sekolah' => ['required', 'string', 'max:255'],
-            'email_belajar_id' => ['required', 'string', 'email', 'max:255', 'unique:users,email_belajar_id', 'regex:/belajar\.id$/i'],
+            'email_belajar_id' => ['required', 'string', 'email', 'max:255', 'unique:users,email_belajar_id'],
             'no_wa' => ['required', 'string', 'max:20'],
             'pendaftar' => ['required', 'string', 'max:255'],
             'jabatan_pendaftar' => ['required', 'string', 'in:Wakasek Kurikulum,Wakasek Hubin/Humas'],
             'sk_pendaftar' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
         ], [
-            'email_belajar_id.regex' => 'Email harus menggunakan domain belajar.id (contoh: nama@smk.belajar.id)',
             'npsn.unique' => 'NPSN sudah terdaftar.',
-            'email_belajar_id.unique' => 'Email belajar.id sudah terdaftar.',
+            'email_belajar_id.unique' => 'Email sudah terdaftar.',
         ]);
 
         if ($validator->fails()) {

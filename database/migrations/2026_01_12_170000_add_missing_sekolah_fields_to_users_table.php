@@ -10,11 +10,21 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Field yang missing
-            $table->string('nama_kepala_sekolah')->nullable()->after('nama_sekolah');
-            $table->string('email_belajar_sekolah')->nullable()->unique()->after('email_belajar_id');
-            $table->string('kabupaten_kota')->nullable()->after('kabupaten');
-            $table->string('nama_pendaftar')->nullable()->after('pendaftar');
-            $table->string('sk_pendaftar_path')->nullable()->after('sk_pendaftar');
+            if (!Schema::hasColumn('users', 'nama_kepala_sekolah')) {
+                $table->string('nama_kepala_sekolah')->nullable()->after('nama_sekolah');
+            }
+            if (!Schema::hasColumn('users', 'email_belajar_sekolah')) {
+                $table->string('email_belajar_sekolah')->nullable()->unique()->after('email_belajar_id');
+            }
+            if (!Schema::hasColumn('users', 'kabupaten_kota')) {
+                $table->string('kabupaten_kota')->nullable()->after('kabupaten');
+            }
+            if (!Schema::hasColumn('users', 'nama_pendaftar')) {
+                $table->string('nama_pendaftar')->nullable()->after('pendaftar');
+            }
+            if (!Schema::hasColumn('users', 'sk_pendaftar_path')) {
+                $table->string('sk_pendaftar_path')->nullable()->after('sk_pendaftar');
+            }
         });
     }
 

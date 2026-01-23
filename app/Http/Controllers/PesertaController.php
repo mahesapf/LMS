@@ -6,6 +6,7 @@ use App\Models\Classes;
 use App\Models\ParticipantMapping;
 use App\Models\Grade;
 use App\Models\Document;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -38,24 +39,27 @@ class PesertaController extends Controller
         $user = auth()->user();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'npsn' => 'nullable|string|max:50',
-            'nip' => 'nullable|string|max:50',
-            'nik' => 'nullable|string|max:16',
-            'birth_place' => 'nullable|string|max:100',
+            'name' => 'required|string|max:50',
+            'phone' => 'required|string|max:16|regex:/^[0-9]{10,16}$/',
+            'email_belajar' => 'nullable|email|max:50',
+            'npsn' => 'nullable|string|size:8|regex:/^[0-9]{8}$/',
+            'nip' => 'nullable|string|size:18|regex:/^[0-9]{18}$/',
+            'nik' => 'nullable|string|size:16|regex:/^[0-9]{16}$/',
+            'birth_place' => 'nullable|string|max:50',
             'birth_date' => 'nullable|date',
             'gender' => 'nullable|in:L,P',
             'pns_status' => 'nullable|in:PNS,Non PNS',
-            'rank' => 'nullable|string|max:100',
-            'group' => 'nullable|string|max:50',
-            'last_education' => 'nullable|string|max:100',
-            'major' => 'nullable|string|max:100',
-            'institution' => 'nullable|string|max:255',
+            'rank' => 'nullable|string|max:50',
+            'group' => 'nullable|string|max:10',
             'position_type' => 'nullable|in:Guru,Kepala Sekolah,Lainnya',
-            'position' => 'nullable|string|max:255',
-            'email_belajar' => 'nullable|email',
-            'address' => 'nullable|string',
+            'position' => 'nullable|string|max:100',
+            'institution' => 'nullable|string|max:50',
+            'last_education' => 'nullable|in:SMA/SMK,D3,S1,S2,S3',
+            'major' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:100',
+            'province' => 'nullable|string|max:50',
+            'city' => 'nullable|string|max:50',
+            'district' => 'nullable|string|max:50',
             'photo' => 'nullable|image|max:2048',
             'digital_signature' => 'nullable|image|max:1024',
         ]);
@@ -115,7 +119,13 @@ class PesertaController extends Controller
             ->where('class_id', $class->id)
             ->get();
 
-        return view('peserta.classes.detail', compact('class', 'mapping', 'fasilitators', 'myGrades'));
+        // Get admins for this activity
+        $admins = User::whereHas('adminMappings', function($query) use ($class) {
+            $query->where('activity_id', $class->activity_id)
+                  ->where('status', 'in');
+        })->get();
+
+        return view('peserta.classes.detail', compact('class', 'mapping', 'fasilitators', 'myGrades', 'admins'));
     }
 
     // My Grades
@@ -130,14 +140,39 @@ class PesertaController extends Controller
     }
 
     // Documents
-    public function documents()
+    public function documentClasses()
     {
-        $myClasses = ParticipantMapping::with(['class.stages.documentRequirements.documents' => function($query) {
-                $query->where('uploaded_by', auth()->id());
-            }, 'class.activity', 'class.stages'])
+        $myClasses = ParticipantMapping::with(['class.activity'])
             ->where('participant_id', auth()->id())
             ->where('status', 'in')
+            ->latest()
             ->get();
+
+        return view('peserta.documents.classes', compact('myClasses'));
+    }
+
+    public function documents(Classes $class)
+    {
+        // Verify that the participant is enrolled in this class
+        $mapping = ParticipantMapping::where('participant_id', auth()->id())
+            ->where('class_id', $class->id)
+            ->where('status', 'in')
+            ->firstOrFail();
+
+        $myClasses = ParticipantMapping::with([
+                'class.stages.documentRequirements' => function ($query) {
+                    $query->forPeserta();
+                },
+                'class.stages.documentRequirements.documents' => function($query) {
+                    $query->where('uploaded_by', auth()->id());
+                },
+                'class.activity',
+                'class.stages'
+            ])
+            ->where('participant_id', auth()->id())
+            ->where('class_id', $class->id)
+            ->where('status', 'in')
+            ->firstOrFail();
 
         return view('peserta.documents.index', compact('myClasses'));
     }
@@ -318,12 +353,15 @@ class PesertaController extends Controller
         // Map form fields to database columns for location
         if (isset($validated['provinsi_peserta'])) {
             $validated['province'] = $validated['provinsi_peserta'];
+            unset($validated['provinsi_peserta']);
         }
         if (isset($validated['kabupaten_kota'])) {
             $validated['city'] = $validated['kabupaten_kota'];
+            unset($validated['kabupaten_kota']);
         }
         if (isset($validated['kecamatan'])) {
             $validated['district'] = $validated['kecamatan'];
+            unset($validated['kecamatan']);
         }
 
         // Handle foto 3x4 upload

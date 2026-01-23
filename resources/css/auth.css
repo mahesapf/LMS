@@ -246,38 +246,104 @@ body.auth-page {
     margin-top: 20px;
 }
 
+/* Alert Styling for Auth Pages */
+.auth-card-body .alert {
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    border: 2px solid;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+}
+
+.auth-card-body .alert-danger {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.auth-card-body .alert-success {
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+.auth-card-body .alert-info {
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1e40af;
+}
+
+.auth-card-body .alert-warning {
+    background-color: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.auth-card-body .alert ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.auth-card-body .alert li {
+    margin: 4px 0;
+}
+
+.auth-card-body .alert .close {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 12px;
+    transition: opacity 0.3s ease;
+}
+
+.auth-card-body .alert .close:hover {
+    opacity: 1;
+}
+
+.auth-card-body .alert-dismissible {
+    padding-right: 40px;
+}
+
 @media (max-width: 768px) {
     .auth-wrapper {
         flex-direction: column;
     }
-    
+
     .auth-left {
         min-height: 200px;
         flex: none;
     }
-    
+
     .auth-right {
         padding: 30px 20px;
     }
-    
+
     .auth-card-body {
         padding: 20px 0;
     }
-    
+
     .auth-card-header {
         padding: 20px 0;
     }
-    
+
     .remember-forgot-wrapper {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
     }
-    
+
     .auth-form-group {
         margin-bottom: 16px;
     }
-    
+
     .auth-card {
         margin-right: 0;
     }

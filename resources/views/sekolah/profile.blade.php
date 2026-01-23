@@ -3,148 +3,204 @@
 @section('title', 'Profil Sekolah')
 
 @section('content')
-<div class="content-wrapper">
-    <div class="page-header">
-        <h3 class="page-title">Profil Sekolah</h3>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('sekolah.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Profil</li>
-            </ol>
-        </nav>
-    </div>
-
+<div class="space-y-6">
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             {{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
         </div>
     @endif
 
-    <div class="row">
-        <div class="col-lg-8 grid-margin stretch-card">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Informasi Sekolah</h4>
-                    <form method="POST" action="{{ route('sekolah.profile.update') }}">
-                        @csrf
-                        @method('PUT')
+    @if($errors->any())
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <p class="font-semibold">Periksa kembali data yang kamu input.</p>
+        </div>
+    @endif
 
-                        <div class="form-group">
-                            <label>Nama Sekolah</label>
-                            <input type="text" class="form-control" value="{{ $user->nama_sekolah }}" disabled>
-                        </div>
-
-                        <div class="form-group">
-                            <label>NPSN</label>
-                            <input type="text" class="form-control" value="{{ $user->npsn }}" disabled>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Provinsi</label>
-                            <input type="text" class="form-control" value="{{ $user->provinsi }}" disabled>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Kabupaten/Kota</label>
-                            <input type="text" name="kabupaten" class="form-control @error('kabupaten') is-invalid @enderror" 
-                                   value="{{ old('kabupaten', $user->kabupaten) }}" required>
-                            @error('kabupaten')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label>Nama Kepala Sekolah</label>
-                            <input type="text" name="nama_kepala_sekolah" class="form-control @error('nama_kepala_sekolah') is-invalid @enderror" 
-                                   value="{{ old('nama_kepala_sekolah', $user->nama_kepala_sekolah) }}" required>
-                            @error('nama_kepala_sekolah')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label>Email Belajar.id</label>
-                            <input type="email" class="form-control" value="{{ $user->email_belajar_id }}" disabled>
-                        </div>
-
-                        <div class="form-group">
-                            <label>No WhatsApp</label>
-                            <input type="text" name="no_wa" class="form-control @error('no_wa') is-invalid @enderror" 
-                                   value="{{ old('no_wa', $user->no_wa) }}" required>
-                            @error('no_wa')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label>Nama Pendaftar</label>
-                            <input type="text" name="pendaftar" class="form-control @error('pendaftar') is-invalid @enderror" 
-                                   value="{{ old('pendaftar', $user->pendaftar) }}" required>
-                            @error('pendaftar')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label>Jabatan Pendaftar</label>
-                            <input type="text" class="form-control" value="{{ $user->jabatan_pendaftar }}" disabled>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Tanggal Daftar</label>
-                            <input type="text" class="form-control" value="{{ $user->created_at->format('d M Y H:i') }}" disabled>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                    </form>
+    <div class="grid gap-4 lg:grid-cols-3">
+        <div class="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Informasi sekolah</p>
+                    <h2 class="mt-1 text-xl font-semibold text-slate-900">Data profil</h2>
                 </div>
+                <span class="inline-flex items-center rounded-full bg-[#0284c7] px-2.5 py-0.5 text-xs font-semibold text-white">Live</span>
             </div>
+
+            <form method="POST" action="{{ route('sekolah.profile.update') }}" class="mt-6 space-y-5">
+                @csrf
+                @method('PUT')
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Nama Sekolah</label>
+                        <input type="text" class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700" value="{{ $user->nama_sekolah ?? $user->name }}" disabled>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">NPSN</label>
+                        <input type="text" class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700" value="{{ $user->npsn }}" disabled>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Provinsi</label>
+                        <input type="text" class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700" value="{{ $user->provinsi ?? $user->province }}" disabled>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Kabupaten/Kota</label>
+                        <input type="text" name="kabupaten" class="mt-2 w-full rounded-lg border px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 @error('kabupaten') border-rose-300 bg-rose-50 @else border-slate-200 @enderror" value="{{ old('kabupaten', $user->kabupaten ?? $user->kabupaten_kota ?? $user->city) }}" required>
+                        @error('kabupaten')
+                            <p class="mt-2 text-xs font-semibold text-rose-700">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Nama Kepala Sekolah</label>
+                        <input type="text" name="nama_kepala_sekolah" class="mt-2 w-full rounded-lg border px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 @error('nama_kepala_sekolah') border-rose-300 bg-rose-50 @else border-slate-200 @enderror" value="{{ old('nama_kepala_sekolah', $user->nama_kepala_sekolah) }}" required>
+                        @error('nama_kepala_sekolah')
+                            <p class="mt-2 text-xs font-semibold text-rose-700">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Email</label>
+                        <input type="email" class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700" value="{{ $user->email_belajar_id ?? $user->email_belajar ?? $user->email }}" disabled>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">No WhatsApp</label>
+                        <input type="text" name="no_wa" class="mt-2 w-full rounded-lg border px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 @error('no_wa') border-rose-300 bg-rose-50 @else border-slate-200 @enderror" value="{{ old('no_wa', $user->no_wa ?? $user->no_hp) }}" required>
+                        @error('no_wa')
+                            <p class="mt-2 text-xs font-semibold text-rose-700">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Nama Pendaftar</label>
+                        <input type="text" name="pendaftar" class="mt-2 w-full rounded-lg border px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 @error('pendaftar') border-rose-300 bg-rose-50 @else border-slate-200 @enderror" value="{{ old('pendaftar', $user->nama_pendaftar ?? $user->pendaftar) }}" required>
+                        @error('pendaftar')
+                            <p class="mt-2 text-xs font-semibold text-rose-700">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700">Jabatan Pendaftar</label>
+                        <select name="jabatan_pendaftar" class="mt-2 w-full rounded-lg border px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 @error('jabatan_pendaftar') border-rose-300 bg-rose-50 @else border-slate-200 @enderror" required>
+                            <option value="">Pilih Jabatan</option>
+                            <option value="Wakasek Kurikulum" {{ old('jabatan_pendaftar', $user->jabatan_pendaftar) == 'Wakasek Kurikulum' ? 'selected' : '' }}>Wakasek Kurikulum</option>
+                            <option value="Wakasek Humas Hubin" {{ old('jabatan_pendaftar', $user->jabatan_pendaftar) == 'Wakasek Humas Hubin' ? 'selected' : '' }}>Wakasek Humas Hubin</option>
+                            <option value="Lainnya" {{ old('jabatan_pendaftar', $user->jabatan_pendaftar) == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                        </select>
+                        @error('jabatan_pendaftar')
+                            <p class="mt-2 text-xs font-semibold text-rose-700">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <span class="text-slate-500">Tanggal daftar:</span>
+                    <span class="font-semibold text-slate-900">{{ $user->created_at->format('d M Y H:i') }}</span>
+                </div>
+
+                <div class="flex items-center justify-end gap-3">
+                    <button type="submit" class="inline-flex items-center rounded-lg bg-[#0284c7] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#0369a1] focus:outline-none focus:ring-2 focus:ring-[#0284c7]">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </form>
         </div>
 
-        <div class="col-lg-4 grid-margin stretch-card">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Status Akun</h4>
-                    
-                    <div class="mb-3">
-                        <p class="text-muted mb-1">Status Approval</p>
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Status akun</p>
+                    <h3 class="mt-1 text-xl font-semibold text-slate-900">Ringkasan</h3>
+                </div>
+                <span class="inline-flex items-center rounded-full bg-[#0284c7] px-2.5 py-0.5 text-xs font-semibold text-white">Info</span>
+            </div>
+
+            <div class="mt-5 space-y-3">
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Status Approval</p>
+                    <div class="mt-2">
                         @if($user->approval_status == 'approved')
-                            <span class="badge badge-success">Disetujui</span>
+                            <div class="flex items-center gap-1.5">
+                                <svg class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-semibold text-emerald-700">Status</span>
+                                    <span class="text-[10px] text-emerald-600">Disetujui</span>
+                                </div>
+                            </div>
                         @elseif($user->approval_status == 'pending')
-                            <span class="badge badge-warning">Menunggu</span>
+                            <div class="flex items-center gap-1.5">
+                                <svg class="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-semibold text-amber-700">Status</span>
+                                    <span class="text-[10px] text-amber-600">Menunggu</span>
+                                </div>
+                            </div>
                         @else
-                            <span class="badge badge-danger">Ditolak</span>
+                            <div class="flex items-center gap-1.5">
+                                <svg class="h-4 w-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-semibold text-rose-700">Status</span>
+                                    <span class="text-[10px] text-rose-600">Ditolak</span>
+                                </div>
+                            </div>
                         @endif
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <p class="text-muted mb-1">Status Akun</p>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Status Akun</p>
+                    <div class="mt-2">
                         @if($user->status == 'active')
-                            <span class="badge badge-success">Aktif</span>
+                            <div class="flex items-center gap-1.5">
+                                <svg class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-semibold text-emerald-700">Status</span>
+                                    <span class="text-[10px] text-emerald-600">Aktif</span>
+                                </div>
+                            </div>
                         @else
-                            <span class="badge badge-secondary">Tidak Aktif</span>
+                            <div class="flex items-center gap-1.5">
+                                <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-semibold text-slate-700">Status</span>
+                                    <span class="text-[10px] text-slate-600">Tidak Aktif</span>
+                                </div>
+                            </div>
                         @endif
                     </div>
+                </div>
 
-                    @if($user->approved_at)
-                    <div class="mb-3">
-                        <p class="text-muted mb-1">Disetujui Pada</p>
-                        <p>{{ $user->approved_at->format('d M Y H:i') }}</p>
-                    </div>
-                    @endif
+                @if($user->approved_at)
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Disetujui Pada</p>
+                    <p class="mt-2 text-sm font-semibold text-slate-900">{{ $user->approved_at->format('d M Y H:i') }}</p>
+                </div>
+                @endif
 
-                    @if($user->sk_pendaftar)
-                    <div class="mb-3">
-                        <p class="text-muted mb-1">SK Pendaftar</p>
-                        <a href="{{ asset('storage/' . $user->sk_pendaftar) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                            <i class="mdi mdi-file-document"></i> Lihat SK
+                @if($user->sk_pendaftar)
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">SK Pendaftar</p>
+                    <div class="mt-3">
+                        <a href="{{ asset('storage/' . $user->sk_pendaftar) }}" target="_blank" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+                            Lihat SK
                         </a>
                     </div>
-                    @endif
                 </div>
+                @endif
             </div>
         </div>
     </div>

@@ -9,6 +9,7 @@ use App\Models\TeacherParticipant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class ActivityRegistrationController extends Controller
 {
@@ -41,10 +42,20 @@ class ActivityRegistrationController extends Controller
         $existingRegistration = Auth::check()
             ? Registration::where('activity_id', $activity->id)
                 ->where('user_id', Auth::id())
+                ->with(['payment', 'teacherParticipants'])
                 ->first()
             : null;
 
-        return view('activities.show', compact('activity', 'existingRegistration'));
+        if (Auth::check() && Auth::user()->role === 'sekolah') {
+            if ($existingRegistration) {
+                return redirect()->route('sekolah.activities.index')
+                    ->with('open_registration_id', $existingRegistration->id);
+            }
+
+            return redirect()->route('activities.register.form', $activity);
+        }
+
+        abort(404);
     }
 
     /**
@@ -64,7 +75,8 @@ class ActivityRegistrationController extends Controller
             ->first();
 
         if ($existingRegistration) {
-            return redirect()->route('activities.show', $activity)
+            return redirect()->route('sekolah.activities.index')
+                ->with('open_registration_id', $existingRegistration->id)
                 ->with('info', 'Anda sudah terdaftar pada kegiatan ini.');
         }
 
@@ -89,17 +101,18 @@ class ActivityRegistrationController extends Controller
             'kab_kota' => 'required|string|max:255',
             'kecamatan' => 'required|string|max:255',
             'kcd' => 'required|string|max:255',
-            'nama_kepala_sekolah' => 'required|string|max:255',
-            'nik_kepala_sekolah' => 'required|string|size:16|regex:/^[0-9]{16}$/',
             'jumlah_peserta' => 'required|integer|min:0',
-            'jumlah_kepala_sekolah' => 'required|integer|min:0',
+            'jumlah_kepala_sekolah' => 'required|integer|min:0|max:1',
             'jumlah_guru' => 'required|integer|min:0',
         ]);
 
+        $registrationName = Auth::user()->name;
+
+        // Tidak perlu validasi custom: jika hanya kepala sekolah saja, jumlah_guru boleh 0
         $registration = Registration::create([
             'activity_id' => $activity->id,
             'user_id' => Auth::id(),
-            'name' => $validated['nama_kepala_sekolah'], // Use kepala sekolah name as main name
+            'name' => $registrationName,
             'phone' => $request->nomor_telp ?? '', // Optional phone
             'email' => $request->email ?? '', // Optional email
             'position' => 'Kepala Sekolah',
@@ -109,8 +122,6 @@ class ActivityRegistrationController extends Controller
             'kab_kota' => $validated['kab_kota'],
             'kecamatan' => $validated['kecamatan'],
             'kcd' => $validated['kcd'],
-            'nama_kepala_sekolah' => $validated['nama_kepala_sekolah'],
-            'nik_kepala_sekolah' => $validated['nik_kepala_sekolah'],
             'nomor_telp' => $request->nomor_telp ?? null,
             'jumlah_peserta' => $validated['jumlah_peserta'],
             'jumlah_kepala_sekolah' => $validated['jumlah_kepala_sekolah'],
@@ -118,9 +129,7 @@ class ActivityRegistrationController extends Controller
             'status' => 'pending',
         ]);
 
-        $totalPeserta = $validated['jumlah_peserta'] > 0
-            ? $validated['jumlah_peserta']
-            : ($validated['jumlah_kepala_sekolah'] + $validated['jumlah_guru']);
+        $totalPeserta = $validated['jumlah_peserta'];
 
         // Calculate total payment
         $totalBiaya = $registration->calculateTotalPayment();
@@ -136,7 +145,7 @@ class ActivityRegistrationController extends Controller
                 ->with('success', $message);
         }
 
-        return redirect()->route('activities.index')
+        return redirect()->route('sekolah.activities.index')
             ->with('success', $message . " Terima kasih!");
     }
 
@@ -158,7 +167,7 @@ class ActivityRegistrationController extends Controller
 
         // Check if already paid
         if ($registration->payment) {
-            return redirect()->route('activities.index')
+            return redirect()->route('sekolah.activities.index')
                 ->with('info', 'Sekolah ini sudah melakukan pembayaran.');
         }
 
@@ -192,6 +201,11 @@ class ActivityRegistrationController extends Controller
             'proof_file' => 'required|image|max:2048',
             'contact_number' => 'required|string|max:20',
             'surat_tugas_kepala_sekolah' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'kepala_sekolah' => 'nullable|array',
+            'kepala_sekolah.*.nama_lengkap' => 'required|string|max:255',
+            'kepala_sekolah.*.nik' => 'nullable|string|size:16|regex:/^[0-9]{16}$/',
+            'kepala_sekolah.*.email' => 'nullable|email|max:255',
+            'kepala_sekolah.*.surat_tugas' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'teachers' => 'nullable|array',
             'teachers.*.nama_lengkap' => 'required|string|max:255',
             'teachers.*.nip' => 'nullable|string|max:50',
@@ -224,6 +238,26 @@ class ActivityRegistrationController extends Controller
             'status' => 'pending',
         ]);
 
+        // Save kepala sekolah participants data
+        if ($request->has('kepala_sekolah')) {
+            foreach ($request->kepala_sekolah as $kepalaSekolahData) {
+                $suratTugasPath = null;
+                if (isset($kepalaSekolahData['surat_tugas'])) {
+                    $suratTugasPath = $kepalaSekolahData['surat_tugas']->store('surat-tugas', 'public');
+                }
+
+                TeacherParticipant::create([
+                    'registration_id' => $registration->id,
+                    'nama_lengkap' => $kepalaSekolahData['nama_lengkap'],
+                    'nip' => null, // Kepala sekolah tidak ada NIP di form
+                    'nik' => $kepalaSekolahData['nik'] ?? null,
+                    'email' => $kepalaSekolahData['email'] ?? null,
+                    'jabatan' => 'Kepala Sekolah',
+                    'surat_tugas' => $suratTugasPath,
+                ]);
+            }
+        }
+
         // Save teacher participants data
         if ($request->has('teachers')) {
             foreach ($request->teachers as $teacherData) {
@@ -238,6 +272,7 @@ class ActivityRegistrationController extends Controller
                     'nip' => $teacherData['nip'] ?? null,
                     'nik' => $teacherData['nik'] ?? null,
                     'email' => $teacherData['email'] ?? null,
+                    'jabatan' => 'Guru',
                     'surat_tugas' => $suratTugasPath,
                 ]);
             }
@@ -246,7 +281,12 @@ class ActivityRegistrationController extends Controller
         // Update registration status
         $registration->update(['status' => 'payment_uploaded']);
 
-        return redirect()->route('activities.index')
+        if (Auth::check()) {
+            return redirect()->route('sekolah.activities.index')
+                ->with('success', 'Bukti pembayaran untuk ' . $registration->nama_sekolah . ' berhasil diupload. Menunggu validasi admin.');
+        }
+
+        return redirect()->route('home')
             ->with('success', 'Bukti pembayaran untuk ' . $registration->nama_sekolah . ' berhasil diupload. Menunggu validasi admin.');
     }
 }

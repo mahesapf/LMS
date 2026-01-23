@@ -32,12 +32,12 @@ class LoginController extends Controller
     public function username()
     {
         $login = request()->input('email');
-        
+
         // Check if the login input is NPSN (numeric)
         if (is_numeric($login)) {
             return 'npsn';
         }
-        
+
         return 'email';
     }
 
@@ -51,13 +51,22 @@ class LoginController extends Controller
      */
     protected function validateLogin(Request $request)
     {
+        $login = $request->input('email');
+        $loginType = is_numeric($login) ? 'NPSN' : 'Email';
+
         $request->validate([
-            'email' => 'required|string',
-            'password' => 'required|string',
+            'email' => 'required|string|max:100',
+            'password' => 'required|string|min:8|max:255',
         ], [
             'email.required' => 'Email atau NPSN harus diisi',
+            'email.max' => 'Email atau NPSN maksimal 100 karakter',
             'password.required' => 'Password harus diisi',
+            'password.min' => 'Password minimal 8 karakter',
+            'password.max' => 'Password maksimal 255 karakter',
         ]);
+
+        // Set custom message for failed login attempt
+        $this->loginType = $loginType;
     }
 
     /**
@@ -70,7 +79,7 @@ class LoginController extends Controller
     {
         $login = $request->input('email');
         $field = is_numeric($login) ? 'npsn' : 'email';
-        
+
         return [
             $field => $login,
             'password' => $request->input('password'),
@@ -93,20 +102,10 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
-        // Check if sekolah account is still pending approval
-        if ($user->role === 'sekolah' && $user->approval_status === 'pending') {
-            auth()->logout();
-            return redirect()->route('login')->with('error', 'Akun sekolah Anda masih menunggu persetujuan dari administrator. Silakan cek email Anda setelah akun disetujui.');
+        // Sync user with teacher_participants and registrations (only for peserta role)
+        if ($user->role === 'peserta') {
+            $this->syncUserWithParticipants($user);
         }
-
-        // Check if sekolah account was rejected
-        if ($user->role === 'sekolah' && $user->approval_status === 'rejected') {
-            auth()->logout();
-            return redirect()->route('login')->with('error', 'Akun sekolah Anda ditolak oleh administrator. Silakan hubungi administrator untuk informasi lebih lanjut.');
-        }
-
-        // Sync user with teacher_participants and registrations
-        $this->syncUserWithParticipants($user);
 
         return redirect()->intended($this->redirectPath());
     }
@@ -145,22 +144,25 @@ class LoginController extends Controller
                     ->exists();
 
                 if (!$exists) {
+                    // Get system admin (super_admin or first admin) for auto-assignment
+                    $systemAdmin = \App\Models\User::whereIn('role', ['super_admin', 'admin'])
+                        ->orderBy('id')
+                        ->first();
+                    
                     ParticipantMapping::create([
                         'class_id' => $teacher->registration->class_id,
                         'participant_id' => $user->id,
                         'enrolled_date' => now(),
-                        'assigned_by' => 1, // System assigned
+                        'assigned_by' => $systemAdmin ? $systemAdmin->id : 1, // System assigned
                         'status' => 'in',
                     ]);
                 }
             }
         }
 
-        // Sync kepala sekolah by email or NIK
-        $registrations = Registration::where(function($query) use ($user) {
-            $query->where('email', $user->email)
-                  ->orWhere('nik_kepala_sekolah', $user->nik);
-        })->whereNull('kepala_sekolah_user_id')
+        // Sync kepala sekolah by NIK (kepala sekolah doesn't have separate email in registration)
+        $registrations = Registration::where('nik_kepala_sekolah', $user->nik)
+          ->whereNull('kepala_sekolah_user_id')
           ->where('jumlah_kepala_sekolah', '>', 0)
           ->get();
 
@@ -185,11 +187,16 @@ class LoginController extends Controller
                     ->exists();
 
                 if (!$exists) {
+                    // Get system admin (super_admin or first admin) for auto-assignment
+                    $systemAdmin = \App\Models\User::whereIn('role', ['super_admin', 'admin'])
+                        ->orderBy('id')
+                        ->first();
+                    
                     ParticipantMapping::create([
                         'class_id' => $registration->class_id,
                         'participant_id' => $user->id,
                         'enrolled_date' => now(),
-                        'assigned_by' => 1, // System assigned
+                        'assigned_by' => $systemAdmin ? $systemAdmin->id : 1, // System assigned
                         'status' => 'in',
                     ]);
                 }
@@ -214,6 +221,24 @@ class LoginController extends Controller
             'sekolah' => route('sekolah.dashboard'),
             default => route('home'),
         };
+    }
+
+    /**
+     * Get the failed login response instance.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    protected function sendFailedLoginResponse(Request $request)
+    {
+        $login = $request->input('email');
+        $loginType = is_numeric($login) ? 'NPSN' : 'Email';
+
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'email' => ["Login gagal! {$loginType} atau password yang Anda masukkan salah. Pastikan Anda menggunakan kredensial yang benar."],
+        ]);
     }
 
     /**

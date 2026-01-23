@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.peserta')
 
 @section('title', 'Program Tersedia')
 
@@ -15,7 +15,7 @@
 @section('content')
 <div class="container-fluid">
     <h1 class="mb-4">Program Tersedia</h1>
-    
+
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}

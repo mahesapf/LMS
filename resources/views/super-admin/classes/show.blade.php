@@ -7,53 +7,91 @@
 @endsection
 
 @section('content')
-<div class="space-y-6">
-    <!-- Header & Overview -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-semibold text-slate-900">Detail Kelas</h1>
-            <p class="mt-1 text-sm text-slate-500">{{ $class->name }}</p>
-        </div>
-        <a href="{{ route($routePrefix . '.classes.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-            </svg>
-            Kembali
-        </a>
+<div class="space-y-6" x-data="{ activeTab: 'participants' }">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm">
+        <a href="{{ route($routePrefix . '.classes.index') }}" class="text-sky-600 hover:text-sky-700">Daftar Kelas</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+        </svg>
+        <span class="text-slate-600">{{ $class->name }}</span>
     </div>
 
-    <!-- Info Cards -->
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Kegiatan</p>
-            <p class="mt-2 text-lg font-semibold text-slate-900">{{ $class->activity->name ?? '-' }}</p>
+    <!-- Header -->
+    <div>
+        <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-semibold text-slate-900">{{ $class->name }}</h1>
+            <span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{{ $class->code ?? 'CLS-' . $class->id }}</span>
         </div>
-        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Kapasitas</p>
-            <p class="mt-2 text-lg font-semibold text-slate-900">{{ $class->capacity }} peserta</p>
-        </div>
-        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Peserta Terdaftar</p>
-            <div class="mt-2 flex items-baseline gap-2">
-                <span class="text-lg font-semibold text-slate-900">{{ $class->participantMappings->count() }}</span>
-                <span class="text-sm text-slate-500">/ {{ $class->capacity }}</span>
+        <p class="mt-1 text-sm text-slate-500">Kelola peserta, tahap kegiatan, dan fasilitator kelas.</p>
+    </div>
+
+    <!-- Class Info Summary -->
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="grid divide-x divide-slate-200 md:grid-cols-2 lg:grid-cols-4">
+            <!-- Total Peserta -->
+            <div class="p-6">
+                <div class="flex items-center gap-2 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    </svg>
+                    <p class="text-xs font-medium text-slate-500">Total Peserta</p>
+                </div>
+                <p class="text-sm font-semibold text-slate-900">{{ $totalParticipants }} Orang</p>
             </div>
-        </div>
-        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</p>
-            <div class="mt-2">
+
+            <!-- Kapasitas -->
+            <div class="p-6">
+                <div class="flex items-center gap-2 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                    </svg>
+                    <p class="text-xs font-medium text-slate-500">Kapasitas Kelas</p>
+                </div>
+                <p class="text-sm font-semibold text-slate-900">{{ $class->capacity ?? 'Tidak Terbatas' }}</p>
+            </div>
+
+            <!-- Kegiatan -->
+            <div class="p-6">
+                <div class="flex items-center gap-2 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                    </svg>
+                    <p class="text-xs font-medium text-slate-500">Kegiatan</p>
+                </div>
+                <p class="text-sm font-semibold text-slate-900">{{ $class->activity->name ?? '-' }}</p>
+            </div>
+
+            <!-- Status Kelas -->
+            <div class="p-6">
+                <div class="flex items-center gap-2 mb-3">
+                    @if($class->status == 'active')
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    @elseif($class->status == 'completed')
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    @else
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                    @endif
+                    <p class="text-xs font-medium text-slate-500">Status Kelas</p>
+                </div>
                 @if($class->status == 'active')
-                    <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Aktif</span>
+                    <p class="text-sm font-semibold text-slate-900">Aktif</p>
                 @elseif($class->status == 'completed')
-                    <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">Selesai</span>
+                    <p class="text-sm font-semibold text-slate-900">Selesai</p>
                 @else
-                    <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Pending</span>
+                    <p class="text-sm font-semibold text-slate-900">Pending</p>
                 @endif
             </div>
         </div>
     </div>
 
-    <!-- Class Details -->
+    <!-- Informasi Kelas (Always Visible) -->
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-200 px-6 py-4">
             <h2 class="text-lg font-semibold text-slate-900">Informasi Kelas</h2>
@@ -119,106 +157,73 @@
         </div>
     </div>
 
-    <!-- Stages Section -->
-    @if($class->stages->count() > 0)
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div class="border-b border-slate-200 px-6 py-4">
-            <h2 class="text-lg font-semibold text-slate-900">
-                <svg xmlns="http://www.w3.org/2000/svg" class="mb-1 inline-block h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+    <!-- Tabs Navigation -->
+    <div class="border-b border-slate-200">
+        <nav class="-mb-px flex space-x-6">
+            <button @click="activeTab = 'participants'"
+                    :class="activeTab === 'participants' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'"
+                    class="whitespace-nowrap border-b-2 px-1 py-3 text-sm font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mb-1 inline h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                 </svg>
-                Tahap Kegiatan ({{ $class->stages->count() }})
-            </h2>
-        </div>
-        <div class="px-6 py-4">
-            <div class="space-y-4">
-                @foreach($class->stages as $stage)
-                <div class="rounded-lg border {{ $stage->status == 'ongoing' ? 'border-blue-300 bg-blue-50' : ($stage->status == 'completed' ? 'border-green-300 bg-green-50' : 'border-slate-200 bg-white') }} p-4">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-3">
-                                <span class="flex h-8 w-8 items-center justify-center rounded-full {{ $stage->status == 'ongoing' ? 'bg-blue-600 text-white' : ($stage->status == 'completed' ? 'bg-green-600 text-white' : 'bg-slate-300 text-slate-700') }} text-sm font-semibold">
-                                    {{ $stage->order }}
-                                </span>
-                                <div>
-                                    <h3 class="font-semibold text-slate-900">{{ $stage->name }}</h3>
-                                    @if($stage->description)
-                                        <p class="mt-1 text-sm text-slate-600">{{ $stage->description }}</p>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="mt-3 ml-11 grid gap-3 sm:grid-cols-2">
-                                @if($stage->start_date || $stage->end_date)
-                                <div class="flex items-center gap-2 text-sm text-slate-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <span>
-                                        @if($stage->start_date && $stage->end_date)
-                                            {{ $stage->start_date->format('d M Y') }} - {{ $stage->end_date->format('d M Y') }}
-                                        @elseif($stage->start_date)
-                                            Mulai: {{ $stage->start_date->format('d M Y') }}
-                                        @elseif($stage->end_date)
-                                            Selesai: {{ $stage->end_date->format('d M Y') }}
-                                        @endif
-                                    </span>
-                                </div>
-                                @endif
-
-                                <div class="flex items-center gap-2">
-                                    @if($stage->status == 'not_started')
-                                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Belum Dimulai
-                                        </span>
-                                    @elseif($stage->status == 'ongoing')
-                                        <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                            </svg>
-                                            Sedang Berjalan
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Selesai
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
+                Peserta
+            </button>
+            <button @click="activeTab = 'stages'"
+                    :class="activeTab === 'stages' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'"
+                    class="whitespace-nowrap border-b-2 px-1 py-3 text-sm font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mb-1 inline h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm0 4a1 1 0 100 2h6a1 1 0 100-2H7zm0 4a1 1 0 100 2h3a1 1 0 100-2H7z" clip-rule="evenodd" />
+                </svg>
+                Tahap Kegiatan
+            </button>
+            <button @click="activeTab = 'fasilitator'"
+                    :class="activeTab === 'fasilitator' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'"
+                    class="whitespace-nowrap border-b-2 px-1 py-3 text-sm font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mb-1 inline h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.5 1.5H5.75A2.75 2.75 0 003 4.25v11.5A2.75 2.75 0 005.75 18.5h8.5a2.75 2.75 0 002.75-2.75V6.5m-13-5h10m-10 4h10m-10 4h10m-10 4h6" />
+                </svg>
+                Fasilitator & Admin
+            </button>
+        </nav>
     </div>
-    @endif
 
-    <!-- Participants Section -->
+    <!-- Tab Content: Participants -->
+    <div x-show="activeTab === 'participants'" x-cloak>
+        <!-- Participants Section -->
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
             <h2 class="text-lg font-semibold text-slate-900">
                 <svg xmlns="http://www.w3.org/2000/svg" class="mb-1 inline-block h-5 w-5 text-sky-600" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 0 16 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                 </svg>
                 Daftar Peserta
             </h2>
-            <button type="button" onclick="document.getElementById('assignModal').showModal()" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Tambah Peserta
-            </button>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('super-admin.classes.fasilitatorDocuments', $class) }}"
+                   class="inline-flex items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H4zm2 4a1 1 0 011-1h3a1 1 0 110 2H7a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H8z" clip-rule="evenodd" />
+                    </svg>
+                    Dokumen Fasilitator
+                </a>
+                <a href="{{ route($routePrefix . '.classes.attendancePrint', $class) }}" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 9V4h12v5M6 18h12v2H6v-2zm0-7h12v7H6v-7z" />
+                    </svg>
+                    Cetak Daftar Hadir
+                </a>
+                <button type="button" onclick="document.getElementById('assignModal').showModal()" class="inline-flex items-center gap-2 rounded-lg bg-[#0284c7] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0369a1]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah Peserta
+                </button>
+            </div>
         </div>
         <div class="px-6 py-4">
             @if(session('success'))
-                <div class="mb-4 border-l-4 border-emerald-600 bg-emerald-50 p-4 text-emerald-700">
+                <div class="mb-4 border-l-4 border-[#0284c7] bg-[#0284c7]/10 p-4 text-slate-900">
                     {{ session('success') }}
                 </div>
             @endif
@@ -272,11 +277,21 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-2 text-right">
-                                    @if($participant['is_kepala_sekolah'])
+                                    @if(isset($participant['is_manual']) && $participant['is_manual'])
+                                        <form action="{{ route($routePrefix . '.classes.removeParticipant', [$class, $participant['participant_mapping_id']]) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700" onclick="return confirm('Yakin ingin mengeluarkan {{ $participant['nama_lengkap'] }} dari kelas?')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M4 10a1 1 0 011-1h.01a1 1 0 110 2H5a1 1 0 01-1-1zm11-7a1 1 0 100-2 1 1 0 000 2zM13.03 7.03a1 1 0 00-1.414-1.414l-.707.707V4a1 1 0 10-2 0v2.323l-.707-.707a1 1 0 00-1.414 1.414l2.121 2.121a1 1 0 001.414 0l2.121-2.121z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    @elseif($participant['is_kepala_sekolah'])
                                         <form action="{{ route($routePrefix . '.classes.removeKepalaSekolah', [$class, $participant['registration_id']]) }}" method="POST" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="inline-flex items-center rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700" onclick="return confirm('Yakin ingin mengeluarkan {{ $participant['nama_lengkap'] }} dari kelas?')">
+                                            <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700" onclick="return confirm('Yakin ingin mengeluarkan {{ $participant['nama_lengkap'] }} dari kelas?')">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fill-rule="evenodd" d="M4 10a1 1 0 011-1h.01a1 1 0 110 2H5a1 1 0 01-1-1zm11-7a1 1 0 100-2 1 1 0 000 2zM13.03 7.03a1 1 0 00-1.414-1.414l-.707.707V4a1 1 0 10-2 0v2.323l-.707-.707a1 1 0 00-1.414 1.414l2.121 2.121a1 1 0 001.414 0l2.121-2.121z" clip-rule="evenodd" />
                                                 </svg>
@@ -286,7 +301,7 @@
                                         <form action="{{ route($routePrefix . '.classes.removeTeacherParticipant', [$class, $participant['teacher_id']]) }}" method="POST" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="inline-flex items-center rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700" onclick="return confirm('Yakin ingin mengeluarkan {{ $participant['nama_lengkap'] }} dari kelas?')">
+                                            <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700" onclick="return confirm('Yakin ingin mengeluarkan {{ $participant['nama_lengkap'] }} dari kelas?')">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fill-rule="evenodd" d="M4 10a1 1 0 011-1h.01a1 1 0 110 2H5a1 1 0 01-1-1zm11-7a1 1 0 100-2 1 1 0 000 2zM13.03 7.03a1 1 0 00-1.414-1.414l-.707.707V4a1 1 0 10-2 0v2.323l-.707-.707a1 1 0 00-1.414 1.414l2.121 2.121a1 1 0 001.414 0l2.121-2.121z" clip-rule="evenodd" />
                                                 </svg>
@@ -302,8 +317,98 @@
             @endif
         </div>
     </div>
+    </div>
 
-    <!-- Fasilitator Section -->
+    <!-- Tab Content: Stages -->
+    <div x-show="activeTab === 'stages'" x-cloak>
+        @if($class->stages->count() > 0)
+        <div class="space-y-4">
+            @foreach($class->stages as $stage)
+            <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full {{ $stage->status == 'ongoing' ? 'bg-sky-600 text-white' : ($stage->status == 'completed' ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700') }} text-sm font-semibold">
+                            {{ $stage->order }}
+                        </span>
+                        <div>
+                            <h3 class="font-semibold text-slate-900">{{ $stage->name }}</h3>
+                            @if($stage->description)
+                                <p class="mt-1 text-sm text-slate-600">{{ $stage->description }}</p>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        @if($stage->status == 'not_started')
+                            <div class="flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                </svg>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-semibold text-slate-700">Belum Dimulai</span>
+                                    <span class="text-[10px] text-slate-600">Menunggu</span>
+                                </div>
+                            </div>
+                        @elseif($stage->status == 'ongoing')
+                            <div class="flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-semibold text-sky-700">Sedang Berjalan</span>
+                                    <span class="text-[10px] text-sky-600">Aktif</span>
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-semibold text-emerald-700">Selesai</span>
+                                    <span class="text-[10px] text-emerald-600">Tuntas</span>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                <div class="px-6 py-4">
+                    @if($stage->start_date || $stage->end_date)
+                    <div class="flex items-center gap-2 text-sm text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>
+                            @if($stage->start_date && $stage->end_date)
+                                {{ $stage->start_date->format('d M Y') }} - {{ $stage->end_date->format('d M Y') }}
+                            @elseif($stage->start_date)
+                                Mulai: {{ $stage->start_date->format('d M Y') }}
+                            @elseif($stage->end_date)
+                                Selesai: {{ $stage->end_date->format('d M Y') }}
+                            @endif
+                        </span>
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @else
+        <div class="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center">
+            <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <p class="font-semibold text-amber-900">Belum Ada Tahap</p>
+            <p class="mt-1 text-sm text-amber-700">Belum ada tahap (stage) yang dibuat untuk kelas ini</p>
+        </div>
+        @endif
+    </div>
+
+    <!-- Tab Content: Fasilitator & Admin -->
+    <div x-show="activeTab === 'fasilitator'" x-cloak>
+        <div class="space-y-6">
+            <!-- Fasilitator Section -->
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
             <h2 class="text-lg font-semibold text-slate-900">
@@ -312,7 +417,7 @@
                 </svg>
                 Daftar Fasilitator
             </h2>
-            <button type="button" onclick="document.getElementById('assignFasilitatorModal').showModal()" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+            <button type="button" onclick="document.getElementById('assignFasilitatorModal').showModal()" class="inline-flex items-center gap-2 rounded-lg bg-[#0284c7] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0369a1]">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
@@ -352,7 +457,7 @@
                                     <form action="{{ route($routePrefix . '.classes.removeFasilitator', [$class, $mapping]) }}" method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="inline-flex items-center rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700" onclick="return confirm('Yakin ingin mengeluarkan {{ $mapping->fasilitator->name ?? 'fasilitator ini' }} dari kelas?')">
+                                        <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700" onclick="return confirm('Yakin ingin mengeluarkan {{ $mapping->fasilitator->name ?? 'fasilitator ini' }} dari kelas?')">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M4 10a1 1 0 011-1h.01a1 1 0 110 2H5a1 1 0 01-1-1zm11-7a1 1 0 100-2 1 1 0 000 2zM13.03 7.03a1 1 0 00-1.414-1.414l-.707.707V4a1 1 0 10-2 0v2.323l-.707-.707a1 1 0 00-1.414 1.414l2.121 2.121a1 1 0 001.414 0l2.121-2.121z" clip-rule="evenodd" />
                                             </svg>
@@ -370,7 +475,7 @@
 
     <!-- Admin Section -->
     @php
-        $activeAdmins = $class->activity->adminMappings->where('status', 'active')->where('activity_id', $class->activity_id);
+        $activeAdmins = $class->activity->adminMappings->where('status', 'in')->where('activity_id', $class->activity_id);
     @endphp
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -381,11 +486,8 @@
                 Admin yang Ditugaskan
             </h2>
             <div class="flex items-center gap-3">
-                <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                    {{ $activeAdmins->count() }} Admin
-                </span>
                 @if(auth()->user()->role === 'super_admin')
-                <button onclick="document.getElementById('assignAdminModal').showModal()" class="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-700">
+                <button onclick="document.getElementById('assignAdminModal').showModal()" class="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-orange-600">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
                     </svg>
@@ -433,14 +535,22 @@
                                     {{ $mapping->assigned_date ? \Carbon\Carbon::parse($mapping->assigned_date)->format('d/m/Y') : '-' }}
                                 </td>
                                 <td class="px-4 py-2">
-                                    <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Aktif</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#0284c7] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        <div class="flex flex-col">
+                                            <span class="text-xs font-medium text-[#0284c7]">Aktif</span>
+                                            <span class="text-[10px] text-sky-600">Sedang bertugas</span>
+                                        </div>
+                                    </div>
                                 </td>
                                 @if(auth()->user()->role === 'super_admin')
                                 <td class="px-4 py-2 text-right">
                                     <form action="{{ route('super-admin.classes.removeAdmin', [$class, $mapping]) }}" method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="inline-flex items-center rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700" onclick="return confirm('Yakin ingin menghapus {{ $mapping->admin->name ?? 'admin ini' }} dari kegiatan?')">
+                                        <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700" onclick="return confirm('Yakin ingin menghapus {{ $mapping->admin->name ?? 'admin ini' }} dari kegiatan?')">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                                             </svg>
@@ -456,7 +566,13 @@
             @endif
         </div>
     </div>
+        </div>
+    </div>
 </div>
+
+<style>
+[x-cloak] { display: none !important; }
+</style>
 
 <!-- Modal Assign Peserta -->
 <dialog id="assignModal" class="modal">
@@ -504,7 +620,7 @@
         </div>
         <div class="flex items-center justify-between">
             <p class="text-xs text-slate-500">Menampilkan peserta tervalidasi yang belum masuk kelas pada kegiatan ini.</p>
-            <button type="button" onclick="applyLocationFilter()" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Terapkan</button>
+            <button type="button" onclick="applyLocationFilter()" class="rounded-lg bg-[#0284c7] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0369a1]">Terapkan</button>
         </div>
     </form>
 
@@ -560,7 +676,7 @@
                         @if($selectedKecamatan)
                             <input type="hidden" name="kecamatan" value="{{ $selectedKecamatan }}">
                         @endif
-                        <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-[#0284c7] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0369a1]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                             </svg>
@@ -660,7 +776,7 @@
                         ->where('status', 'active')
                         ->whereDoesntHave('adminMappings', function($query) use ($class) {
                             $query->where('activity_id', $class->activity_id)
-                                ->where('status', 'active');
+                                ->where('status', 'in');
                         })
                         ->get();
                 @endphp
@@ -692,7 +808,7 @@
         <div class="modal-action mt-6">
             <button type="button" onclick="document.getElementById('assignAdminModal').close()" class="btn btn-outline">Batal</button>
             @if(!$availableAdmins->isEmpty())
-                <button type="submit" class="btn bg-amber-600 text-white hover:bg-amber-700 border-0">
+                <button type="submit" class="btn bg-orange-500 text-white hover:bg-orange-600 border-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
@@ -724,7 +840,7 @@ function applyLocationFilter() {
     const provinsi = document.getElementById('filter-provinsi').value;
     const kabKota = document.getElementById('filter-kabkota').value;
     const kecamatan = document.getElementById('filter-kecamatan').value;
-    
+
     if (!provinsi && !kabKota && !kecamatan) {
         alert('Silakan pilih minimal satu filter (Provinsi, Kabupaten/Kota, atau Kecamatan)');
         return;
@@ -737,13 +853,13 @@ function applyLocationFilter() {
     const url = new URL(window.location.href);
     if (provinsi) url.searchParams.set('provinsi', provinsi);
     else url.searchParams.delete('provinsi');
-    
+
     if (kabKota) url.searchParams.set('kab_kota', kabKota);
     else url.searchParams.delete('kab_kota');
-    
+
     if (kecamatan) url.searchParams.set('kecamatan', kecamatan);
     else url.searchParams.delete('kecamatan');
-    
+
     window.location.href = url.toString();
 }
 

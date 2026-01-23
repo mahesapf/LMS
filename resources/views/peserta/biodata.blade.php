@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.peserta')
 
 @section('title', 'Biodata Peserta')
 

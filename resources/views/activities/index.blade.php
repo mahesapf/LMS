@@ -106,14 +106,14 @@
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">{{ $activity->name }}</h5>
+                    <h5 class="card-title">{{ Str::title($activity->name) }}</h5>
                     @if($activity->program)
                         <p class="text-muted small mb-2">
                             <i class="bi bi-folder"></i> {{ $activity->program->name }}
                         </p>
                     @endif
                     @if($activity->description)
-                        <p class="card-text">{{ Str::limit($activity->description, 100) }}</p>
+                        <p class="card-text" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ $activity->description }}</p>
                     @endif
                     
                     <ul class="list-unstyled small">

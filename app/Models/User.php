@@ -14,6 +14,74 @@ class User extends Authenticatable
     use HasFactory, Notifiable, SoftDeletes;
 
     /**
+     * Boot method untuk model User.
+     * Menambahkan proteksi saat deleting user.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Event: BEFORE soft delete
+        static::deleting(function ($user) {
+            // Log aktivitas delete untuk audit trail
+            \Log::info('User soft delete initiated', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_role' => $user->role,
+                'user_email' => $user->email,
+                'npsn' => $user->npsn
+            ]);
+
+            // Jika role sekolah, cek apakah ada peserta terkait
+            if ($user->role === 'sekolah' && $user->npsn) {
+                $relatedPeserta = self::where('role', 'peserta')
+                    ->where('npsn', $user->npsn)
+                    ->whereNull('deleted_at')
+                    ->count();
+
+                if ($relatedPeserta > 0) {
+                    \Log::warning('Deleting sekolah with related active peserta', [
+                        'sekolah_id' => $user->id,
+                        'sekolah_name' => $user->name,
+                        'npsn' => $user->npsn,
+                        'related_peserta_count' => $relatedPeserta
+                    ]);
+                }
+            }
+        });
+
+        // Event: BEFORE force delete (permanent delete)
+        static::forceDeleting(function ($user) {
+            // Cegah force delete jika user adalah sekolah dengan peserta aktif
+            if ($user->role === 'sekolah' && $user->npsn) {
+                $relatedPeserta = self::where('role', 'peserta')
+                    ->where('npsn', $user->npsn)
+                    ->whereNull('deleted_at')
+                    ->count();
+
+                if ($relatedPeserta > 0) {
+                    \Log::error('PREVENTED: Attempted force delete of sekolah with active peserta', [
+                        'sekolah_id' => $user->id,
+                        'sekolah_name' => $user->name,
+                        'npsn' => $user->npsn,
+                        'related_peserta_count' => $relatedPeserta
+                    ]);
+
+                    // Lempar exception untuk mencegah force delete
+                    throw new \Exception("Tidak dapat menghapus permanen akun sekolah yang memiliki {$relatedPeserta} peserta aktif. Hapus atau pindahkan peserta terlebih dahulu.");
+                }
+            }
+
+            \Log::warning('User PERMANENT DELETE (force delete)', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_role' => $user->role,
+                'user_email' => $user->email
+            ]);
+        });
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -30,6 +98,7 @@ class User extends Authenticatable
         'address',
         'province',
         'city',
+        'kecamatan',
         'district',
         'institution',
         'instansi',
@@ -64,9 +133,6 @@ class User extends Authenticatable
         'avatar',
         'email_belajar_id',
         'alamat_sekolah',
-        'kabupaten_kota',
-        'provinsi_peserta',
-        'kecamatan',
         'alamat_lengkap',
         'kcd',
         'nama_sekolah',
@@ -81,6 +147,7 @@ class User extends Authenticatable
         'approved_by',
         'provinsi',
         'kabupaten',
+        'kabupaten_kota',
         'pendaftar',
         'sk_pendaftar',
     ];
@@ -162,6 +229,11 @@ class User extends Authenticatable
     public function news()
     {
         return $this->hasMany(News::class, 'created_by');
+    }
+
+    public function approvedByUser()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     // Helper methods

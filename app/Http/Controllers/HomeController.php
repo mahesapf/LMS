@@ -45,6 +45,16 @@ class HomeController extends Controller
         return view('news.index', compact('news'));
     }
 
+    public function activities()
+    {
+        $activities = Activity::whereIn('status', ['planned', 'ongoing'])
+            ->with('program')
+            ->orderBy('start_date')
+            ->paginate(12);
+
+        return view('activities.public-index', compact('activities'));
+    }
+
     public function newsDetail($id)
     {
         $newsItem = News::where('status', 'published')

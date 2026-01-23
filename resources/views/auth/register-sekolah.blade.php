@@ -9,15 +9,20 @@
     <div class="auth-left"></div>
     <div class="auth-right">
         <div class="auth-card">
-            <div class="auth-card-header">
+            <div class="auth-card-header position-relative">
+                <a href="{{ url('/') }}" class="position-absolute top-0 end-0 m-3" style="text-decoration: none;" title="Kembali">
+                    <button class="btn btn-outline-secondary btn-sm" type="button">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                </a>
                 <img src="{{ asset('storage/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="auth-logo">
                 <h4>Registrasi Sekolah</h4>
                 <p>Sistem Informasi Penjaminan Mutu</p>
             </div>
 
-    <div class="auth-card-body">
-        <form method="POST" action="{{ route('sekolah.register.submit') }}" enctype="multipart/form-data">
-            @csrf
+            <div class="auth-card-body">
+                <form method="POST" action="{{ route('sekolah.register.submit') }}" enctype="multipart/form-data">
+                    @csrf
 
             <div class="auth-form-group">
                 <label for="nama_sekolah" class="auth-form-label">Nama Sekolah <span class="text-danger">*</span></label>
@@ -90,11 +95,11 @@
             </div>
 
             <div class="auth-form-group">
-                <label for="kabupaten" class="auth-form-label">Kabupaten/Kota <span class="text-danger">*</span></label>
-                <select id="kabupaten" class="auth-form-control @error('kabupaten') is-invalid @enderror" name="kabupaten" required disabled>
+                <label for="kabupaten_kota" class="auth-form-label">Kabupaten/Kota <span class="text-danger">*</span></label>
+                <select id="kabupaten_kota" class="auth-form-control @error('kabupaten_kota') is-invalid @enderror" name="kabupaten_kota" required disabled>
                     <option value="">Pilih Provinsi Terlebih Dahulu</option>
                 </select>
-                @error('kabupaten')
+                @error('kabupaten_kota')
                     <span class="invalid-feedback" role="alert">
                         <strong>{{ $message }}</strong>
                     </span>
@@ -112,13 +117,21 @@
             </div>
 
             <div class="auth-form-group">
-                <label for="email_belajar_id" class="auth-form-label">Email Belajar.id <span class="text-danger">*</span></label>
-                <input id="email_belajar_id" type="email" class="auth-form-control @error('email_belajar_id') is-invalid @enderror" name="email_belajar_id" value="{{ old('email_belajar_id') }}" required placeholder="namaanda@belajar.id">
-                @error('email_belajar_id')
-                    <span class="invalid-feedback" role="alert">
+                <label for="email_belajar" class="auth-form-label">Email Sekolah <span class="text-danger">*</span></label>
+                <input id="email_belajar"
+                       type="email"
+                       class="auth-form-control @error('email_belajar') is-invalid @enderror"
+                       name="email_belajar"
+                       value="{{ old('email_belajar') }}"
+                       required
+                       autocomplete="off"
+                       placeholder="email@sekolah.sch.id">
+                @error('email_belajar')
+                    <span class="invalid-feedback" role="alert" data-server-error>
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
+                <small class="text-muted">Email ini akan digunakan untuk login. Bisa menggunakan email apa saja.</small>
             </div>
 
             <div class="auth-form-group">
@@ -132,9 +145,9 @@
             </div>
 
             <div class="auth-form-group">
-                <label for="pendaftar" class="auth-form-label">Nama Pendaftar <span class="text-danger">*</span></label>
-                <input id="pendaftar" type="text" class="auth-form-control @error('pendaftar') is-invalid @enderror" name="pendaftar" value="{{ old('pendaftar') }}" required placeholder="Masukkan nama pendaftar">
-                @error('pendaftar')
+                <label for="nama_pendaftar" class="auth-form-label">Nama Pendaftar <span class="text-danger">*</span></label>
+                <input id="nama_pendaftar" type="text" class="auth-form-control @error('nama_pendaftar') is-invalid @enderror" name="nama_pendaftar" value="{{ old('nama_pendaftar') }}" required placeholder="Masukkan nama pendaftar">
+                @error('nama_pendaftar')
                     <span class="invalid-feedback" role="alert">
                         <strong>{{ $message }}</strong>
                     </span>
@@ -170,91 +183,132 @@
                 Daftar Sekolah
             </button>
 
-            <div class="auth-footer-text">
-                Sudah punya akun? <a href="{{ route('login') }}" class="auth-link">Login di sini</a>
+            <div class="auth-footer-text text-center mt-3">
+                <small class="text-muted">
+                    Sudah punya akun?
+                    <a href="{{ route('login') }}" class="auth-link">Login di sini</a>
+                </small>
             </div>
-        </form>
-    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-// Data kabupaten/kota per provinsi
-const kabupatenData = {
-    'Aceh': ['Aceh Barat', 'Aceh Barat Daya', 'Aceh Besar', 'Aceh Jaya', 'Aceh Selatan', 'Aceh Singkil', 'Aceh Tamiang', 'Aceh Tengah', 'Aceh Tenggara', 'Aceh Timur', 'Aceh Utara', 'Bener Meriah', 'Bireuen', 'Gayo Lues', 'Nagan Raya', 'Pidie', 'Pidie Jaya', 'Simeulue', 'Kota Banda Aceh', 'Kota Langsa', 'Kota Lhokseumawe', 'Kota Sabang', 'Kota Subulussalam'],
-    'Sumatera Utara': ['Asahan', 'Batubara', 'Dairi', 'Deli Serdang', 'Humbang Hasundutan', 'Karo', 'Labuhanbatu', 'Labuhanbatu Selatan', 'Labuhanbatu Utara', 'Langkat', 'Mandailing Natal', 'Nias', 'Nias Barat', 'Nias Selatan', 'Nias Utara', 'Padang Lawas', 'Padang Lawas Utara', 'Pakpak Bharat', 'Samosir', 'Serdang Bedagai', 'Simalungun', 'Tapanuli Selatan', 'Tapanuli Tengah', 'Tapanuli Utara', 'Toba Samosir', 'Kota Binjai', 'Kota Gunungsitoli', 'Kota Medan', 'Kota Padangsidimpuan', 'Kota Pematangsiantar', 'Kota Sibolga', 'Kota Tanjungbalai', 'Kota Tebing Tinggi'],
-    'Sumatera Barat': ['Agam', 'Dharmasraya', 'Kepulauan Mentawai', 'Lima Puluh Kota', 'Padang Pariaman', 'Pasaman', 'Pasaman Barat', 'Pesisir Selatan', 'Sijunjung', 'Solok', 'Solok Selatan', 'Tanah Datar', 'Kota Bukittinggi', 'Kota Padang', 'Kota Padangpanjang', 'Kota Pariaman', 'Kota Payakumbuh', 'Kota Sawahlunto', 'Kota Solok'],
-    'Riau': ['Bengkalis', 'Indragiri Hilir', 'Indragiri Hulu', 'Kampar', 'Kepulauan Meranti', 'Kuantan Singingi', 'Pelalawan', 'Rokan Hilir', 'Rokan Hulu', 'Siak', 'Kota Dumai', 'Kota Pekanbaru'],
-    'Kepulauan Riau': ['Bintan', 'Karimun', 'Kepulauan Anambas', 'Lingga', 'Natuna', 'Kota Batam', 'Kota Tanjung Pinang'],
-    'Jambi': ['Batang Hari', 'Bungo', 'Kerinci', 'Merangin', 'Muaro Jambi', 'Sarolangun', 'Tanjung Jabung Barat', 'Tanjung Jabung Timur', 'Tebo', 'Kota Jambi', 'Kota Sungai Penuh'],
-    'Sumatera Selatan': ['Banyuasin', 'Empat Lawang', 'Lahat', 'Muara Enim', 'Musi Banyuasin', 'Musi Rawas', 'Musi Rawas Utara', 'Ogan Ilir', 'Ogan Komering Ilir', 'Ogan Komering Ulu', 'Ogan Komering Ulu Selatan', 'Ogan Komering Ulu Timur', 'Penukal Abab Lematang Ilir', 'Kota Lubuklinggau', 'Kota Pagar Alam', 'Kota Palembang', 'Kota Prabumulih'],
-    'Kepulauan Bangka Belitung': ['Bangka', 'Bangka Barat', 'Bangka Selatan', 'Bangka Tengah', 'Belitung', 'Belitung Timur', 'Kota Pangkal Pinang'],
-    'Bengkulu': ['Bengkulu Selatan', 'Bengkulu Tengah', 'Bengkulu Utara', 'Kaur', 'Kepahiang', 'Lebong', 'Mukomuko', 'Rejang Lebong', 'Seluma', 'Kota Bengkulu'],
-    'Lampung': ['Lampung Barat', 'Lampung Selatan', 'Lampung Tengah', 'Lampung Timur', 'Lampung Utara', 'Mesuji', 'Pesawaran', 'Pesisir Barat', 'Pringsewu', 'Tanggamus', 'Tulang Bawang', 'Tulang Bawang Barat', 'Way Kanan', 'Kota Bandar Lampung', 'Kota Metro'],
-    'DKI Jakarta': ['Jakarta Barat', 'Jakarta Pusat', 'Jakarta Selatan', 'Jakarta Timur', 'Jakarta Utara', 'Kepulauan Seribu'],
-    'Jawa Barat': ['Bandung', 'Bandung Barat', 'Bekasi', 'Bogor', 'Ciamis', 'Cianjur', 'Cirebon', 'Garut', 'Indramayu', 'Karawang', 'Kuningan', 'Majalengka', 'Pangandaran', 'Purwakarta', 'Subang', 'Sukabumi', 'Sumedang', 'Tasikmalaya', 'Kota Bandung', 'Kota Banjar', 'Kota Bekasi', 'Kota Bogor', 'Kota Cimahi', 'Kota Cirebon', 'Kota Depok', 'Kota Sukabumi', 'Kota Tasikmalaya'],
-    'Banten': ['Lebak', 'Pandeglang', 'Serang', 'Tangerang', 'Kota Cilegon', 'Kota Serang', 'Kota Tangerang', 'Kota Tangerang Selatan'],
-    'Jawa Tengah': ['Banjarnegara', 'Banyumas', 'Batang', 'Blora', 'Boyolali', 'Brebes', 'Cilacap', 'Demak', 'Grobogan', 'Jepara', 'Karanganyar', 'Kebumen', 'Kendal', 'Klaten', 'Kudus', 'Magelang', 'Pati', 'Pekalongan', 'Pemalang', 'Purbalingga', 'Purworejo', 'Rembang', 'Semarang', 'Sragen', 'Sukoharjo', 'Tegal', 'Temanggung', 'Wonogiri', 'Wonosobo', 'Kota Magelang', 'Kota Pekalongan', 'Kota Salatiga', 'Kota Semarang', 'Kota Surakarta', 'Kota Tegal'],
-    'DI Yogyakarta': ['Bantul', 'Gunungkidul', 'Kulon Progo', 'Sleman', 'Kota Yogyakarta'],
-    'Jawa Timur': ['Bangkalan', 'Banyuwangi', 'Blitar', 'Bojonegoro', 'Bondowoso', 'Gresik', 'Jember', 'Jombang', 'Kediri', 'Lamongan', 'Lumajang', 'Madiun', 'Magetan', 'Malang', 'Mojokerto', 'Nganjuk', 'Ngawi', 'Pacitan', 'Pamekasan', 'Pasuruan', 'Ponorogo', 'Probolinggo', 'Sampang', 'Sidoarjo', 'Situbondo', 'Sumenep', 'Trenggalek', 'Tuban', 'Tulungagung', 'Kota Batu', 'Kota Blitar', 'Kota Kediri', 'Kota Madiun', 'Kota Malang', 'Kota Mojokerto', 'Kota Pasuruan', 'Kota Probolinggo', 'Kota Surabaya'],
-    'Bali': ['Badung', 'Bangli', 'Buleleng', 'Gianyar', 'Jembrana', 'Karangasem', 'Klungkung', 'Tabanan', 'Kota Denpasar'],
-    'Nusa Tenggara Barat': ['Bima', 'Dompu', 'Lombok Barat', 'Lombok Tengah', 'Lombok Timur', 'Lombok Utara', 'Sumbawa', 'Sumbawa Barat', 'Kota Bima', 'Kota Mataram'],
-    'Nusa Tenggara Timur': ['Alor', 'Belu', 'Ende', 'Flores Timur', 'Kupang', 'Lembata', 'Malaka', 'Manggarai', 'Manggarai Barat', 'Manggarai Timur', 'Nagekeo', 'Ngada', 'Rote Ndao', 'Sabu Raijua', 'Sikka', 'Sumba Barat', 'Sumba Barat Daya', 'Sumba Tengah', 'Sumba Timur', 'Timor Tengah Selatan', 'Timor Tengah Utara', 'Kota Kupang'],
-    'Kalimantan Barat': ['Bengkayang', 'Kapuas Hulu', 'Kayong Utara', 'Ketapang', 'Kubu Raya', 'Landak', 'Melawi', 'Mempawah', 'Sambas', 'Sanggau', 'Sekadau', 'Sintang', 'Kota Pontianak', 'Kota Singkawang'],
-    'Kalimantan Tengah': ['Barito Selatan', 'Barito Timur', 'Barito Utara', 'Gunung Mas', 'Kapuas', 'Katingan', 'Kotawaringin Barat', 'Kotawaringin Timur', 'Lamandau', 'Murung Raya', 'Pulang Pisau', 'Seruyan', 'Sukamara', 'Kota Palangka Raya'],
-    'Kalimantan Selatan': ['Balangan', 'Banjar', 'Barito Kuala', 'Hulu Sungai Selatan', 'Hulu Sungai Tengah', 'Hulu Sungai Utara', 'Kotabaru', 'Tabalong', 'Tanah Bumbu', 'Tanah Laut', 'Tapin', 'Kota Banjarbaru', 'Kota Banjarmasin'],
-    'Kalimantan Timur': ['Berau', 'Kutai Barat', 'Kutai Kartanegara', 'Kutai Timur', 'Mahakam Ulu', 'Paser', 'Penajam Paser Utara', 'Kota Balikpapan', 'Kota Bontang', 'Kota Samarinda'],
-    'Kalimantan Utara': ['Bulungan', 'Malinau', 'Nunukan', 'Tana Tidung', 'Kota Tarakan'],
-    'Sulawesi Utara': ['Bolaang Mongondow', 'Bolaang Mongondow Selatan', 'Bolaang Mongondow Timur', 'Bolaang Mongondow Utara', 'Kepulauan Sangihe', 'Kepulauan Siau Tagulandang Biaro', 'Kepulauan Talaud', 'Minahasa', 'Minahasa Selatan', 'Minahasa Tenggara', 'Minahasa Utara', 'Kota Bitung', 'Kota Kotamobagu', 'Kota Manado', 'Kota Tomohon'],
-    'Gorontalo': ['Boalemo', 'Bone Bolango', 'Gorontalo', 'Gorontalo Utara', 'Pohuwato', 'Kota Gorontalo'],
-    'Sulawesi Tengah': ['Banggai', 'Banggai Kepulauan', 'Banggai Laut', 'Buol', 'Donggala', 'Morowali', 'Morowali Utara', 'Parigi Moutong', 'Poso', 'Sigi', 'Tojo Una-Una', 'Toli-Toli', 'Kota Palu'],
-    'Sulawesi Barat': ['Majene', 'Mamasa', 'Mamuju', 'Mamuju Tengah', 'Pasangkayu', 'Polewali Mandar'],
-    'Sulawesi Selatan': ['Bantaeng', 'Barru', 'Bone', 'Bulukumba', 'Enrekang', 'Gowa', 'Jeneponto', 'Kepulauan Selayar', 'Luwu', 'Luwu Timur', 'Luwu Utara', 'Maros', 'Pangkajene dan Kepulauan', 'Pinrang', 'Sidenreng Rappang', 'Sinjai', 'Soppeng', 'Takalar', 'Tana Toraja', 'Toraja Utara', 'Wajo', 'Kota Makassar', 'Kota Palopo', 'Kota Parepare'],
-    'Sulawesi Tenggara': ['Bombana', 'Buton', 'Buton Selatan', 'Buton Tengah', 'Buton Utara', 'Kolaka', 'Kolaka Timur', 'Kolaka Utara', 'Konawe', 'Konawe Kepulauan', 'Konawe Selatan', 'Konawe Utara', 'Muna', 'Muna Barat', 'Wakatobi', 'Kota Bau-Bau', 'Kota Kendari'],
-    'Maluku': ['Buru', 'Buru Selatan', 'Kepulauan Aru', 'Maluku Barat Daya', 'Maluku Tengah', 'Maluku Tenggara', 'Maluku Tenggara Barat', 'Seram Bagian Barat', 'Seram Bagian Timur', 'Kota Ambon', 'Kota Tual'],
-    'Maluku Utara': ['Halmahera Barat', 'Halmahera Selatan', 'Halmahera Tengah', 'Halmahera Timur', 'Halmahera Utara', 'Kepulauan Sula', 'Pulau Morotai', 'Pulau Taliabu', 'Kota Ternate', 'Kota Tidore Kepulauan'],
-    'Papua': ['Asmat', 'Biak Numfor', 'Boven Digoel', 'Deiyai', 'Dogiyai', 'Intan Jaya', 'Jayapura', 'Jayawijaya', 'Keerom', 'Kepulauan Yapen', 'Lanny Jaya', 'Mamberamo Raya', 'Mamberamo Tengah', 'Mappi', 'Merauke', 'Mimika', 'Nabire', 'Nduga', 'Paniai', 'Pegunungan Bintang', 'Puncak', 'Puncak Jaya', 'Sarmi', 'Supiori', 'Tolikara', 'Waropen', 'Yahukimo', 'Yalimo', 'Kota Jayapura'],
-    'Papua Barat': ['Fakfak', 'Kaimana', 'Manokwari', 'Manokwari Selatan', 'Maybrat', 'Pegunungan Arfak', 'Raja Ampat', 'Sorong', 'Sorong Selatan', 'Tambrauw', 'Teluk Bintuni', 'Teluk Wondama', 'Kota Sorong'],
-    'Papua Tengah': ['Deiyai', 'Dogiyai', 'Intan Jaya', 'Mimika', 'Nabire', 'Paniai', 'Puncak', 'Puncak Jaya'],
-    'Papua Pegunungan': ['Jayawijaya', 'Lanny Jaya', 'Mamberamo Tengah', 'Nduga', 'Pegunungan Bintang', 'Tolikara', 'Yahukimo', 'Yalimo'],
-    'Papua Selatan': ['Asmat', 'Boven Digoel', 'Mappi', 'Merauke'],
-    'Papua Barat Daya': ['Fakfak', 'Kaimana', 'Maybrat', 'Raja Ampat', 'Sorong', 'Sorong Selatan', 'Tambrauw', 'Teluk Bintuni', 'Teluk Wondama']
-};
-
 document.addEventListener('DOMContentLoaded', function() {
     const provinsiSelect = document.getElementById('provinsi');
-    const kabupatenSelect = document.getElementById('kabupaten');
-    
+    const kabupatenSelect = document.getElementById('kabupaten_kota');
+    const emailBelajarInput = document.getElementById('email_belajar');
+    const form = document.querySelector('form');
+
+    // Validasi email standar
+    if (emailBelajarInput) {
+        // Real-time indicator
+        emailBelajarInput.addEventListener('input', function() {
+            const email = this.value.trim();
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (email) {
+                if (regex.test(email)) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            } else {
+                this.classList.remove('is-valid', 'is-invalid');
+            }
+        });
+
+        emailBelajarInput.addEventListener('blur', function() {
+            const email = this.value.trim();
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (email && !regex.test(email)) {
+                this.classList.add('is-invalid');
+                let errorDiv = this.nextElementSibling;
+                if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
+                    errorDiv = document.createElement('span');
+                    errorDiv.classList.add('invalid-feedback');
+                    errorDiv.setAttribute('role', 'alert');
+                    errorDiv.innerHTML = '<strong>Format email tidak valid</strong>';
+                    this.parentNode.insertBefore(errorDiv, this.nextSibling);
+                } else {
+                    errorDiv.innerHTML = '<strong>Format email tidak valid</strong>';
+                }
+            } else {
+                this.classList.remove('is-invalid');
+                const errorDiv = this.nextElementSibling;
+                if (errorDiv && errorDiv.classList.contains('invalid-feedback') && !errorDiv.hasAttribute('data-server-error')) {
+                    errorDiv.remove();
+                }
+            }
+        });
+
+        // Trim whitespace on submit
+        form.addEventListener('submit', function(e) {
+            const emailValue = emailBelajarInput.value.trim();
+            emailBelajarInput.value = emailValue;
+
+            console.log('Form submit - Email value:', emailValue);
+            console.log('Form submit - Email length:', emailValue.length);
+
+            // Final validation check
+            if (!emailValue) {
+                e.preventDefault();
+                alert('Email harus diisi!\n\nField masih kosong. Silakan isi dengan email Anda.');
+                emailBelajarInput.focus();
+                return false;
+            }
+
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!regex.test(emailValue)) {
+                e.preventDefault();
+                alert('Format email tidak valid!\n\nSilakan masukkan email yang benar.');
+                emailBelajarInput.focus();
+                return false;
+            }
+
+            console.log('Form validation passed, submitting...');
+        });
+    }
+
     provinsiSelect.addEventListener('change', function() {
         const selectedProvinsi = this.value;
-        
+
         // Clear existing options
         kabupatenSelect.innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
-        
-        if (selectedProvinsi && kabupatenData[selectedProvinsi]) {
+
+        // Use locationData dari indonesia-location.js
+        if (selectedProvinsi && locationData && locationData[selectedProvinsi]) {
             // Enable kabupaten dropdown
             kabupatenSelect.disabled = false;
-            
+
             // Add kabupaten options
-            kabupatenData[selectedProvinsi].forEach(function(kabupaten) {
-                const option = document.createElement('option');
-                option.value = kabupaten;
-                option.textContent = kabupaten;
-                
-                // Restore old value if exists
-                if (kabupaten === '{{ old("kabupaten") }}') {
-                    option.selected = true;
-                }
-                
-                kabupatenSelect.appendChild(option);
-            });
+            const kabupatenList = locationData[selectedProvinsi];
+
+            // Handle jika locationData adalah object dengan city/kota keys
+            if (typeof kabupatenList === 'object' && !Array.isArray(kabupatenList)) {
+                Object.keys(kabupatenList).forEach(function(kabupaten) {
+                    const option = document.createElement('option');
+                    option.value = kabupaten;
+                    option.textContent = kabupaten;
+
+                    if (kabupaten === '{{ old("kabupaten_kota") }}') {
+                        option.selected = true;
+                    }
+
+                    kabupatenSelect.appendChild(option);
+                });
+            }
         } else {
             // Disable kabupaten dropdown
             kabupatenSelect.disabled = true;
         }
     });
-    
+
     // Trigger change event if old provinsi exists
     @if(old('provinsi'))
         provinsiSelect.value = '{{ old("provinsi") }}';

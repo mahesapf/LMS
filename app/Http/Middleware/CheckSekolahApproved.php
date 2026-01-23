@@ -19,18 +19,18 @@ class CheckSekolahApproved
 
         // Only check for sekolah role
         if ($user && $user->role === 'sekolah') {
-            // Check if account is approved
-            if ($user->approval_status !== 'approved') {
-                auth()->logout();
-                return redirect()->route('login')
-                    ->with('error', 'Akun sekolah Anda belum disetujui atau ditolak oleh administrator.');
-            }
-
-            // Check if account is active
+            // Check if account is approved (status = active)
+            // inactive = pending, suspended = rejected
             if ($user->status !== 'active') {
                 auth()->logout();
-                return redirect()->route('login')
-                    ->with('error', 'Akun sekolah Anda tidak aktif. Silakan hubungi administrator.');
+
+                $message = match($user->status) {
+                    'inactive' => 'Akun sekolah Anda masih menunggu persetujuan dari administrator.',
+                    'suspended' => 'Akun sekolah Anda ditolak oleh administrator. Silakan hubungi administrator untuk informasi lebih lanjut.',
+                    default => 'Akun sekolah Anda tidak aktif. Silakan hubungi administrator.',
+                };
+
+                return redirect()->route('login')->with('error', $message);
             }
         }
 

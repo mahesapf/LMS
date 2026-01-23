@@ -1,195 +1,270 @@
 @extends('layouts.app')
 
+@php
+    $hideNavbar = true;
+@endphp
+
 @section('title', 'Registrasi Sekolah')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 py-12">
-    <div class="mx-auto max-w-3xl px-4">
-        <!-- Header -->
-        <div class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-slate-900">Registrasi Sekolah</h1>
-            <p class="mt-2 text-slate-600">Daftarkan sekolah Anda untuk mengikuti kegiatan penjaminan mutu</p>
-        </div>
-
-        @if(session('success'))
-            <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                <div class="flex items-start">
-                    <svg class="h-5 w-5 text-emerald-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-semibold text-emerald-800">Pendaftaran Berhasil!</h3>
-                        <p class="mt-1 text-sm text-emerald-700">{{ session('success') }}</p>
-                    </div>
-                </div>
+<div class="auth-wrapper">
+    <div class="auth-left"></div>
+    <div class="auth-right">
+        <div class="auth-card">
+            <div class="auth-card-header position-relative">
+                <a href="{{ url('/') }}" class="position-absolute top-0 end-0 m-3" style="text-decoration: none;" title="Kembali">
+                    <button class="btn btn-outline-secondary btn-sm" type="button" style="color: #374151 !important;">
+                        <i class="bi bi-arrow-left" style="color: #374151 !important;"></i>
+                    </button>
+                </a>
+                <img src="{{ asset('storage/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="auth-logo">
+                <h4>Registrasi Sekolah</h4>
+                <p>Sistem Informasi Penjaminan Mutu</p>
             </div>
-        @endif
 
-        @if(session('error'))
-            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-                <div class="flex items-start">
-                    <svg class="h-5 w-5 text-red-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                    </svg>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-semibold text-red-800">Terjadi Kesalahan</h3>
-                        <p class="mt-1 text-sm text-red-700">{{ session('error') }}</p>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-                <div class="flex items-start">
-                    <svg class="h-5 w-5 text-red-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                    </svg>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-semibold text-red-800">Mohon perbaiki kesalahan berikut:</h3>
-                        <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        <!-- Form -->
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <form action="{{ route('sekolah.register.submit') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
-                @csrf
-
-                <!-- Data Sekolah -->
-                <div>
-                    <h2 class="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2">Data Sekolah</h2>
-                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700">Nama Sekolah <span class="text-red-600">*</span></label>
-                            <input type="text" name="nama_sekolah" value="{{ old('nama_sekolah') }}" required
-                                class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('nama_sekolah') border-red-500 @enderror">
-                            @error('nama_sekolah')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">NPSN <span class="text-red-600">*</span></label>
-                            <input type="text" name="npsn" value="{{ old('npsn') }}" required
-                                class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('npsn') border-red-500 @enderror">
-                            @error('npsn')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                            <p class="mt-1 text-xs text-slate-500">NPSN akan digunakan sebagai username dan password default</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Nama Kepala Sekolah <span class="text-red-600">*</span></label>
-                            <input type="text" name="nama_kepala_sekolah" value="{{ old('nama_kepala_sekolah') }}" required
-                                class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('nama_kepala_sekolah') border-red-500 @enderror">
-                            @error('nama_kepala_sekolah')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Provinsi <span class="text-red-600">*</span></label>
-                            <select name="provinsi" id="provinsi" onchange="onProvinsiChange()" required
-                                class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('provinsi') border-red-500 @enderror">
-                                <option value="">Pilih Provinsi</option>
-                            </select>
-                            @error('provinsi')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Kabupaten/Kota <span class="text-red-600">*</span></label>
-                            <select name="kabupaten_kota" id="kabupaten_kota" required
-                                class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('kabupaten_kota') border-red-500 @enderror">
-                                <option value="">Pilih Kabupaten/Kota</option>
-                            </select>
-                            @error('kabupaten_kota')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Email Belajar.id Sekolah <span class="text-red-600">*</span></label>
-                            <input type="email" name="email_belajar_sekolah" value="{{ old('email_belajar_sekolah') }}" required
-                                placeholder="sekolah@belajar.id"
-                                class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('email_belajar_sekolah') border-red-500 @enderror">
-                            @error('email_belajar_sekolah')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Nomor WhatsApp <span class="text-red-600">*</span></label>
-                            <input type="text" name="no_wa" value="{{ old('no_wa') }}" required
-                                placeholder="08xxxxxxxxxx"
-                                class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('no_wa') border-red-500 @enderror">
-                            @error('no_wa')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
+            <div class="auth-card-body">
+                @if(session('success'))
+                    <div class="mb-4 p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-emerald-500 shadow-md">
+                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <h3 class="text-base font-bold text-emerald-900 mb-2">Pendaftaran Berhasil!</h3>
+                                <p class="text-sm text-emerald-800">{{ session('success') }}</p>
+                            </div>
+                            <button type="button" class="ml-3 flex-shrink-0 text-emerald-400 hover:text-emerald-600 transition-colors" onclick="this.parentElement.parentElement.remove()">
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                </div>
+                @endif
 
-                <!-- Data Pendaftar -->
-                <div>
-                    <h2 class="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2">Data Pendaftar</h2>
-                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Nama Pendaftar <span class="text-red-600">*</span></label>
-                            <input type="text" name="nama_pendaftar" value="{{ old('nama_pendaftar') }}" required
-                                class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('nama_pendaftar') border-red-500 @enderror">
-                            @error('nama_pendaftar')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Jabatan Pendaftar <span class="text-red-600">*</span></label>
-                            <select name="jabatan_pendaftar" required
-                                class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm @error('jabatan_pendaftar') border-red-500 @enderror">
-                                <option value="">Pilih Jabatan</option>
-                                <option value="Wakasek Kurikulum" {{ old('jabatan_pendaftar') == 'Wakasek Kurikulum' ? 'selected' : '' }}>Wakasek Kurikulum</option>
-                                <option value="Wakasek Humas Hubin" {{ old('jabatan_pendaftar') == 'Wakasek Humas Hubin' ? 'selected' : '' }}>Wakasek Humas Hubin</option>
-                                <option value="Lainnya" {{ old('jabatan_pendaftar') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
-                            </select>
-                            @error('jabatan_pendaftar')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700">Upload SK Pendaftar <span class="text-red-600">*</span></label>
-                            <input type="file" name="sk_pendaftar" accept=".pdf,.jpg,.jpeg,.png" required
-                                class="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 @error('sk_pendaftar') border-red-500 @enderror">
-                            @error('sk_pendaftar')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                            <p class="mt-1 text-xs text-slate-500">Format: PDF, JPG, JPEG, PNG. Maksimal 2MB</p>
+                @if(session('error'))
+                    <div class="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 shadow-sm">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h3 class="text-sm font-semibold text-red-800 mb-1">Terjadi Kesalahan</h3>
+                                <div class="text-sm text-red-700">
+                                    {{ session('error') }}
+                                </div>
+                            </div>
+                            <button type="button" class="ml-3 flex-shrink-0 text-red-400 hover:text-red-600 transition-colors" onclick="this.parentElement.parentElement.remove()">
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                </div>
+                @endif
 
-                <!-- Submit -->
-                <div class="flex items-center justify-between border-t border-slate-200 pt-6">
-                    <a href="{{ route('home') }}" class="text-sm text-slate-600 hover:text-slate-900">
-                        ← Kembali ke Beranda
-                    </a>
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-sky-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
+                @if($errors->any())
+                    <div class="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 shadow-sm">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h3 class="text-sm font-semibold text-red-800 mb-2">Mohon perbaiki kesalahan berikut:</h3>
+                                <ul class="space-y-1 text-sm text-red-700">
+                                    @foreach($errors->all() as $error)
+                                        <li class="flex items-start">
+                                            <span class="mr-2">•</span>
+                                            <span>{{ $error }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            <button type="button" class="ml-3 flex-shrink-0 text-red-400 hover:text-red-600 transition-colors" onclick="this.parentElement.parentElement.remove()">
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
+                <form action="{{ route('sekolah.register.submit') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+
+                    <div class="auth-form-group">
+                        <label for="nama_sekolah" class="auth-form-label">Nama Sekolah <span class="text-danger">*</span></label>
+                        <input id="nama_sekolah" type="text" name="nama_sekolah" value="{{ old('nama_sekolah') }}" required autofocus maxlength="150"
+                            class="auth-form-control @error('nama_sekolah') is-invalid @enderror" placeholder="Masukkan nama sekolah">
+                        @error('nama_sekolah')
+                            <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                        @enderror
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="auth-form-group">
+                                <label for="npsn" class="auth-form-label">NPSN <span class="text-danger">*</span></label>
+                                <input id="npsn" type="text" name="npsn" value="{{ old('npsn') }}" required maxlength="8" pattern="[0-9]{8}"
+                                    class="auth-form-control @error('npsn') is-invalid @enderror" placeholder="8 digit NPSN">
+                                @error('npsn')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                                <small class="text-muted"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="auth-form-group">
+                                <label for="nama_kepala_sekolah" class="auth-form-label">Nama Kepala Sekolah <span class="text-danger">*</span></label>
+                                <input id="nama_kepala_sekolah" type="text" name="nama_kepala_sekolah" value="{{ old('nama_kepala_sekolah') }}" required maxlength="100"
+                                    class="auth-form-control @error('nama_kepala_sekolah') is-invalid @enderror" placeholder="Nama kepala sekolah">
+                                @error('nama_kepala_sekolah')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="auth-form-group">
+                                <label for="email_belajar" class="auth-form-label">Email Sekolah <span class="text-danger">*</span></label>
+                                <input id="email_belajar"
+                                       type="email"
+                                       name="email_belajar"
+                                       value="{{ old('email_belajar') }}"
+                                       required
+                                       autocomplete="off"
+                                       class="auth-form-control @error('email_belajar') is-invalid @enderror"
+                                       placeholder="email@sekolah.sch.id">
+                                @error('email_belajar')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                                <small class="text-muted"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="auth-form-group">
+                                <label for="no_wa" class="auth-form-label">No. WhatsApp <span class="text-danger">*</span></label>
+                                <input id="no_wa" type="text" name="no_wa" value="{{ old('no_wa') }}" required maxlength="15"
+                                    class="auth-form-control @error('no_wa') is-invalid @enderror" placeholder="08xxx">
+                                @error('no_wa')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="auth-form-group">
+                                <label for="provinsi" class="auth-form-label">Provinsi <span class="text-danger">*</span></label>
+                                <select id="provinsi" name="provinsi" onchange="onProvinsiChange()" required
+                                    class="auth-form-control @error('provinsi') is-invalid @enderror">
+                                    <option value="">Pilih Provinsi</option>
+                                </select>
+                                @error('provinsi')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="auth-form-group">
+                                <label for="kabupaten_kota" class="auth-form-label">Kabupaten/Kota <span class="text-danger">*</span></label>
+                                <select id="kabupaten_kota" name="kabupaten_kota" onchange="onKabupatenChange()" required
+                                    class="auth-form-control @error('kabupaten_kota') is-invalid @enderror">
+                                    <option value="">Pilih Kabupaten/Kota</option>
+                                </select>
+                                @error('kabupaten_kota')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="auth-form-group">
+                                <label for="kecamatan" class="auth-form-label">Kecamatan <span class="text-danger">*</span></label>
+                                <select id="kecamatan" name="kecamatan" required
+                                    class="auth-form-control @error('kecamatan') is-invalid @enderror">
+                                    <option value="">Pilih Kecamatan</option>
+                                </select>
+                                @error('kecamatan')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="auth-form-group">
+                                <label for="alamat_sekolah" class="auth-form-label">Alamat Sekolah <span class="text-danger">*</span></label>
+                                <input id="alamat_sekolah" type="text" name="alamat_sekolah" value="{{ old('alamat_sekolah') }}" required
+                                    class="auth-form-control @error('alamat_sekolah') is-invalid @enderror" placeholder="Masukkan alamat lengkap sekolah">
+                                @error('alamat_sekolah')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="auth-form-group">
+                                <label for="nama_pendaftar" class="auth-form-label">Nama Pendaftar <span class="text-danger">*</span></label>
+                                <input id="nama_pendaftar" type="text" name="nama_pendaftar" value="{{ old('nama_pendaftar') }}" required maxlength="100"
+                                    class="auth-form-control @error('nama_pendaftar') is-invalid @enderror" placeholder="Nama pendaftar">
+                                @error('nama_pendaftar')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="auth-form-group">
+                                <label for="jabatan_pendaftar" class="auth-form-label">Jabatan <span class="text-danger">*</span></label>
+                                <select id="jabatan_pendaftar" name="jabatan_pendaftar" required
+                                    class="auth-form-control @error('jabatan_pendaftar') is-invalid @enderror">
+                                    <option value="">Pilih Jabatan</option>
+                                    <option value="Wakasek Kurikulum" {{ old('jabatan_pendaftar') == 'Wakasek Kurikulum' ? 'selected' : '' }}>Wakasek Kurikulum</option>
+                                    <option value="Wakasek Humas Hubin" {{ old('jabatan_pendaftar') == 'Wakasek Humas Hubin' ? 'selected' : '' }}>Wakasek Humas Hubin</option>
+                                    <option value="Lainnya" {{ old('jabatan_pendaftar') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                                </select>
+                                @error('jabatan_pendaftar')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-form-group">
+                        <label for="sk_pendaftar" class="auth-form-label">Upload SK Pendaftar <span class="text-danger">*</span></label>
+                        <input id="sk_pendaftar" type="file" name="sk_pendaftar" accept=".pdf,.jpg,.jpeg,.png" required
+                            class="auth-form-control @error('sk_pendaftar') is-invalid @enderror">
+                        @error('sk_pendaftar')
+                            <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                        @enderror
+                        <small class="text-muted">Format: PDF, JPG, JPEG, PNG. Maksimal 2MB</small>
+                    </div>
+
+                    <button type="submit" class="auth-btn-primary">
                         Daftar Sekolah
                     </button>
-                </div>
-            </form>
+
+                    <div class="auth-footer-text text-center mt-3">
+                        <small class="text-muted">
+                            Sudah punya akun?
+                            <a href="{{ route('login') }}" class="auth-link">Login di sini</a>
+                        </small>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -200,7 +275,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     const provinsiSelect = document.getElementById('provinsi');
     const kabKotaSelect = document.getElementById('kabupaten_kota');
-    
+    const kecamatanSelect = document.getElementById('kecamatan');
+
     // Populate provinsi
     for (const provinsi in locationData) {
         const option = document.createElement('option');
@@ -211,21 +287,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         provinsiSelect.appendChild(option);
     }
-    
+
     // If old provinsi exists, populate kab/kota
     if ("{{ old('provinsi') }}") {
         onProvinsiChange();
+    }
+
+    // If old kabupaten_kota exists, populate kecamatan
+    if ("{{ old('kabupaten_kota') }}") {
+        onKabupatenChange();
     }
 });
 
 function onProvinsiChange() {
     const provinsiSelect = document.getElementById('provinsi');
     const kabKotaSelect = document.getElementById('kabupaten_kota');
+    const kecamatanSelect = document.getElementById('kecamatan');
     const provinsi = provinsiSelect.value;
-    
-    // Clear kabupaten/kota
+
+    // Clear kabupaten/kota and kecamatan
     kabKotaSelect.innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
-    
+    kecamatanSelect.innerHTML = '<option value="">Pilih Kecamatan</option>';
+
     if (provinsi && locationData[provinsi]) {
         const kabKotaList = Object.keys(locationData[provinsi]);
         kabKotaList.forEach(kabKota => {
@@ -236,6 +319,30 @@ function onProvinsiChange() {
                 option.selected = true;
             }
             kabKotaSelect.appendChild(option);
+        });
+    }
+}
+
+function onKabupatenChange() {
+    const provinsiSelect = document.getElementById('provinsi');
+    const kabKotaSelect = document.getElementById('kabupaten_kota');
+    const kecamatanSelect = document.getElementById('kecamatan');
+    const provinsi = provinsiSelect.value;
+    const kabKota = kabKotaSelect.value;
+
+    // Clear kecamatan
+    kecamatanSelect.innerHTML = '<option value="">Pilih Kecamatan</option>';
+
+    if (provinsi && kabKota && locationData[provinsi] && locationData[provinsi][kabKota]) {
+        const kecamatanList = locationData[provinsi][kabKota];
+        kecamatanList.forEach(kecamatan => {
+            const option = document.createElement('option');
+            option.value = kecamatan;
+            option.textContent = kecamatan;
+            if ("{{ old('kecamatan') }}" === kecamatan) {
+                option.selected = true;
+            }
+            kecamatanSelect.appendChild(option);
         });
     }
 }

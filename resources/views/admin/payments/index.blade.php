@@ -29,6 +29,42 @@
             this.selectedSchools.push(id);
         }
         this.selectAll = this.selectedSchools.length === document.querySelectorAll('.school-checkbox').length;
+    },
+    exportSelected() {
+        if (this.selectedSchools.length === 0) {
+            alert('Pilih minimal satu data untuk diekspor');
+            return;
+        }
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route('super-admin.payments.export-selected') }}';
+        
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = '{{ csrf_token() }}';
+        form.appendChild(csrf);
+        
+        this.selectedSchools.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'school_ids[]';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        @if(request('activity_id'))
+            const activityInput = document.createElement('input');
+            activityInput.type = 'hidden';
+            activityInput.name = 'activity_id';
+            activityInput.value = '{{ request('activity_id') }}';
+            form.appendChild(activityInput);
+        @endif
+        
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
     }
 }">
     <div class="flex items-center justify-between">
@@ -39,9 +75,9 @@
     </div>
 
     <!-- Pending Payments -->
-    <div class="rounded-xl border border-amber-200 bg-white shadow-sm">
-        <div class="border-b border-amber-200 bg-amber-50 px-4 py-3">
-            <h2 class="text-sm font-semibold text-amber-800">Pembayaran Menunggu Validasi ({{ $payments->count() }})</h2>
+    <div class="rounded-xl border border-orange-200 bg-white shadow-sm">
+        <div class="border-b border-orange-200 bg-orange-50 px-4 py-3">
+            <h2 class="text-sm font-semibold text-orange-800">Pembayaran Menunggu Validasi ({{ $payments->count() }})</h2>
         </div>
         <div class="p-4">
             @if($payments->count() > 0)
@@ -86,160 +122,159 @@
                                 <td class="px-4 py-2 text-sm text-slate-700">Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
                                 <td class="px-4 py-2 text-sm text-slate-700">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
                                 <td class="px-4 py-2 text-sm">
-                                    <button @click="openPendingId = openPendingId === {{ $payment->id }} ? null : {{ $payment->id }}"
-                                            class="inline-flex items-center rounded-md border border-sky-300 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 shadow-sm hover:bg-sky-50">
-                                        <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                        Detail
-                                    </button>
+                                    <div class="flex items-center gap-1">
+                                        <button @click="openPendingId = openPendingId === {{ $payment->id }} ? null : {{ $payment->id }}"
+                                                class="inline-flex items-center rounded-md border border-sky-300 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 shadow-sm hover:bg-sky-50">
+                                            <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            Detail
+                                        </button>
+                                        <form action="{{ route('super-admin.payments.destroy', $payment) }}" method="POST" onsubmit="return confirm('Hapus pembayaran ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm hover:bg-red-50">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
 
                             <!-- Detail Row -->
                             <tr x-show="openPendingId === {{ $payment->id }}"
                                 x-transition
-                                class="bg-slate-50">
-                                <td colspan="7" class="px-4 py-6">
-                                    <div class="space-y-5">
-                                        <!-- Top: Amount & Date Cards -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div class="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200">
-                                                <p class="text-xs font-medium text-amber-700 mb-1">Jumlah Transfer</p>
-                                                <p class="text-2xl font-bold text-amber-900">Rp {{ number_format($payment->amount, 0, ',', '.') }}</p>
+                                class="bg-white border-b border-slate-200">
+                                <td colspan="7" class="px-4 py-4">
+                                    <div class="max-w-6xl space-y-4">
+                                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                            <div>
+                                                <p class="text-sm font-semibold text-slate-900">Detail Pembayaran</p>
+                                                <p class="text-xs text-slate-500">Upload {{ $payment->created_at->format('d M Y H:i') }}</p>
                                             </div>
-                                            <div class="p-4 rounded-xl bg-gradient-to-br from-sky-50 to-sky-100 border border-sky-200">
-                                                <p class="text-xs font-medium text-sky-700 mb-1">Tanggal Transfer</p>
-                                                <p class="text-lg font-semibold text-sky-900">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</p>
-                                            </div>
-                                        </div>
-
-                                        <!-- School & Activity Info -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div class="p-4 rounded-lg border border-slate-200 bg-white">
-                                                <h6 class="text-sm font-semibold text-slate-900 mb-3 flex items-center">
-                                                    <svg class="h-5 w-5 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                    </svg>
-                                                    Sekolah
-                                                </h6>
-                                                <div class="space-y-2">
-                                                    <div>
-                                                        <p class="text-xs font-medium text-slate-500">Nama</p>
-                                                        <p class="text-sm font-semibold text-slate-900">{{ $payment->registration->nama_sekolah }}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-xs font-medium text-slate-500">Lokasi</p>
-                                                        <p class="text-sm text-slate-900">
-                                                            {{ $payment->registration->kecamatan ? $payment->registration->kecamatan . ', ' : '' }}{{ $payment->registration->kab_kota }}, {{ $payment->registration->provinsi }}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-xs font-medium text-slate-500">Kepala Sekolah</p>
-                                                        <p class="text-sm font-semibold text-slate-900">{{ $payment->registration->nama_kepala_sekolah ?? '-' }}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-xs font-medium text-slate-500">KCD</p>
-                                                        <p class="text-sm text-slate-900">{{ $payment->registration->kcd ?? '-' }}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="p-4 rounded-lg border border-slate-200 bg-white">
-                                                <h6 class="text-sm font-semibold text-slate-900 mb-3 flex items-center">
-                                                    <svg class="h-5 w-5 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    Kegiatan
-                                                </h6>
-                                                <div class="space-y-2">
-                                                    <div>
-                                                        <p class="text-xs font-medium text-slate-500">Program</p>
-                                                        <p class="text-sm font-semibold text-slate-900">{{ $payment->registration->activity->program->name ?? '-' }}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-xs font-medium text-slate-500">Nama Kegiatan</p>
-                                                        <p class="text-sm font-semibold text-slate-900">{{ $payment->registration->activity->name }}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-xs font-medium text-slate-500">Biaya & Peserta</p>
-                                                        <p class="text-sm text-slate-900">Rp {{ number_format($payment->registration->activity->registration_fee, 0, ',', '.') }} × {{ $totalPeserta }} orang</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Participants Summary -->
-                                        <div class="p-4 rounded-lg border border-slate-200 bg-white">
-                                            <h6 class="text-sm font-semibold text-slate-900 mb-3 flex items-center">
-                                                <svg class="h-5 w-5 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            <div class="flex items-center gap-1.5 w-fit">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
                                                 </svg>
-                                                Daftar Peserta
-                                            </h6>
-                                            <div class="space-y-2">
-                                                @if($payment->registration->jumlah_kepala_sekolah > 0)
-                                                <div class="flex items-center justify-between p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                                                    <div>
-                                                        <p class="text-sm font-semibold text-emerald-900">{{ $payment->registration->kepala_sekolah }}</p>
-                                                        <p class="text-xs text-emerald-700">Kepala Sekolah</p>
+                                                <div class="flex flex-col">
+                                                    <span class="text-xs font-medium text-orange-700">Pending</span>
+                                                    <span class="text-[10px] text-orange-600">Menunggu validasi</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Summary Cards Row -->
+                                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                            <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                                <p class="text-xs font-medium text-slate-500">Jumlah Transfer</p>
+                                                <p class="mt-1 text-base font-semibold text-slate-900">Rp {{ number_format($payment->amount, 0, ',', '.') }}</p>
+                                            </div>
+                                            <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                                <p class="text-xs font-medium text-slate-500">Tanggal Transfer</p>
+                                                <p class="mt-1 text-sm font-semibold text-slate-900">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</p>
+                                            </div>
+                                            <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                                <p class="text-xs font-medium text-slate-500">Total Peserta</p>
+                                                <p class="mt-1 text-sm font-semibold text-slate-900">{{ $totalPeserta }} orang</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 gap-3 lg:grid-cols-5">
+                                            <div class="lg:col-span-3">
+                                                <!-- Info Grid -->
+                                                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                    <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                                        <h6 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Sekolah</h6>
+                                                        <div class="space-y-1.5 text-sm">
+                                                            <p class="font-semibold text-slate-900">{{ $payment->registration->nama_sekolah }}</p>
+                                                            <p class="text-xs text-slate-600">{{ $payment->registration->kecamatan ? $payment->registration->kecamatan . ', ' : '' }}{{ $payment->registration->kab_kota }}{{ $payment->registration->provinsi ? ', ' . $payment->registration->provinsi : '' }}</p>
+                                                            <p class="text-xs text-slate-600">KS: {{ $payment->registration->nama_kepala_sekolah ?? '-' }}</p>
+                                                        </div>
                                                     </div>
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-200 text-emerald-800">1</span>
+
+                                                    <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                                        <h6 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Kegiatan</h6>
+                                                        <div class="space-y-1.5 text-sm">
+                                                            <p class="font-semibold text-slate-900">{{ $payment->registration->activity->name }}</p>
+                                                            <p class="text-xs text-slate-600">Program: {{ $payment->registration->activity->program->name ?? '-' }}</p>
+                                                            <p class="text-xs font-semibold text-emerald-700">Rp {{ number_format($payment->registration->activity->registration_fee, 0, ',', '.') }}/peserta</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="rounded-lg border border-slate-200 bg-white p-3 md:col-span-2">
+                                                        <h6 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Peserta</h6>
+                                                        <div class="space-y-1 text-xs">
+                                                            @if($payment->registration->jumlah_kepala_sekolah > 0)
+                                                                <p class="text-slate-700"><span class="font-semibold">KS:</span> {{ $payment->registration->jumlah_kepala_sekolah }} orang</p>
+                                                            @endif
+                                                            @if($payment->registration->jumlah_guru > 0 && $payment->registration->teacherParticipants->count() > 0)
+                                                                <p class="text-slate-700"><span class="font-semibold">Guru:</span> {{ $payment->registration->teacherParticipants->count() }} orang</p>
+                                                                <div class="mt-2 max-h-24 overflow-y-auto rounded bg-slate-50 p-2 text-xs text-slate-600">
+                                                                    @foreach($payment->registration->teacherParticipants as $teacher)
+                                                                        <div class="flex items-center justify-between gap-2">
+                                                                            <p class="truncate">• {{ $teacher->nama_lengkap }}</p>
+                                                                            @if(!empty($teacher->surat_tugas))
+                                                                                <a href="{{ Storage::url($teacher->surat_tugas) }}" target="_blank" rel="noopener"
+                                                                                   class="shrink-0 inline-flex items-center text-slate-500 hover:text-slate-800"
+                                                                                   title="Lihat Surat Tugas" aria-label="Lihat Surat Tugas">
+                                                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                                    </svg>
+                                                                                </a>
+                                                                            @endif
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="lg:col-span-2">
+                                                <!-- Proof Image (if exists) -->
+                                                @if($payment->proof_file)
+                                                <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                                    <h6 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Bukti Pembayaran</h6>
+                                                    <a href="{{ Storage::url($payment->proof_file) }}" target="_blank" rel="noopener" class="block">
+                                                        <img src="{{ Storage::url($payment->proof_file) }}" alt="Bukti Transfer" class="w-full max-h-72 object-contain rounded border border-slate-200 bg-slate-50">
+                                                    </a>
+                                                    <p class="mt-2 text-xs text-slate-500">Klik gambar untuk membuka ukuran penuh.</p>
                                                 </div>
                                                 @endif
-                                                @if($payment->registration->teacherParticipants->count() > 0)
-                                                <div class="p-3 rounded-lg bg-sky-50 border border-sky-200">
-                                                    <div class="flex items-center justify-between mb-2">
-                                                        <p class="text-sm font-semibold text-sky-900">Guru-Guru</p>
-                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-200 text-sky-800">{{ $payment->registration->teacherParticipants->count() }}</span>
-                                                    </div>
-                                                    <div class="space-y-1">
-                                                        @foreach($payment->registration->teacherParticipants as $teacher)
-                                                        <p class="text-xs text-sky-700">• {{ $teacher->nama_lengkap }}</p>
-                                                        @endforeach
-                                                    </div>
-                                                </div>
-                                                @endif
                                             </div>
                                         </div>
-
-                                        <!-- Proof Image -->
-                                        @if($payment->proof_file)
-                                        <div class="p-4 rounded-lg border border-slate-200 bg-white">
-                                            <h6 class="text-sm font-semibold text-slate-900 mb-3 flex items-center">
-                                                <svg class="h-5 w-5 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                Bukti Pembayaran
-                                            </h6>
-                                            <img src="{{ Storage::url($payment->proof_file) }}" alt="Bukti Transfer" class="rounded border border-slate-300 shadow-sm w-full max-h-80 object-contain">
-                                        </div>
-                                        @endif
 
                                         <!-- Action Buttons -->
-                                        <div class="flex gap-3 justify-end pt-2 border-t border-slate-200">
-                                            <form action="{{ route('super-admin.payments.approve', $payment) }}" method="POST" class="inline-block">
+                                        <div class="flex flex-col sm:flex-row gap-2 justify-end pt-2 border-t border-slate-200">
+                                            <button type="button"
+                                                    @click="showRejectModal = true; rejectPaymentId = {{ $payment->id }}; rejectPaymentUrl = '{{ route('super-admin.payments.reject', $payment) }}'"
+                                                    class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 transition">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                                Tolak
+                                            </button>
+                                            <form action="{{ route('super-admin.payments.approve', $payment) }}" method="POST" class="flex-1 sm:flex-none">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm"
-                                                        onclick="return confirm('Apakah Anda yakin ingin memvalidasi pembayaran ini?')">
+                                                <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition"
+                                                        onclick="return confirm('Validasi pembayaran ini?')">
                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                                     </svg>
                                                     Validasi
                                                 </button>
                                             </form>
-                                            <button type="button"
-                                                    @click="showRejectModal = true; rejectPaymentId = {{ $payment->id }}; rejectPaymentUrl = '{{ route('super-admin.payments.reject', $payment) }}'"
-                                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-rose-600 rounded-lg hover:bg-rose-700 shadow-sm">
-                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                                Tolak
-                                            </button>
                                         </div>
                                     </div>
                                 </td>
+                            </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -253,70 +288,56 @@
     <!-- History -->
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 class="text-sm font-semibold text-slate-800">Riwayat Validasi</h2>
-                <div class="flex items-center gap-2">
-                    <form method="GET" action="{{ route('super-admin.payments.index') }}" class="flex items-center gap-2">
-                        <select name="activity_id" id="activity_filter"
-                                class="form-select form-select-sm border-slate-300 rounded-md text-sm"
-                                onchange="this.form.submit()">
-                            <option value="">Semua Kegiatan</option>
-                            @foreach($activities as $activity)
-                            <option value="{{ $activity->id }}" {{ request('activity_id') == $activity->id ? 'selected' : '' }}>
-                                {{ $activity->name }}
-                                @if($activity->program)
-                                    - {{ $activity->program->name }}
-                                @endif
-                            </option>
-                            @endforeach
-                        </select>
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2">
+                    <form method="GET" action="{{ route('super-admin.payments.index') }}" class="flex flex-1 flex-col gap-2 sm:flex-row sm:items-end sm:gap-2">
+                        <div class="flex-1">
+                            <label class="mb-1 hidden text-xs font-medium text-slate-600">Filter Kegiatan</label>
+                            <select name="activity_id" id="activity_filter"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                                    onchange="this.form.submit()">
+                                <option value="">Semua Kegiatan</option>
+                                @foreach($activities as $activity)
+                                <option value="{{ $activity->id }}" {{ request('activity_id') == $activity->id ? 'selected' : '' }}>
+                                    {{ $activity->name }}
+                                    @if($activity->program)
+                                        - {{ $activity->program->name }}
+                                    @endif
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
                         @if(request('activity_id'))
                         <a href="{{ route('super-admin.payments.index') }}"
-                           class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50">
-                            <svg class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                            <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                             Reset
                         </a>
                         @endif
                     </form>
-
-                    <!-- Bulk Export by Selected Schools -->
-                    <div class="flex items-center gap-2">
-                        <button @click="if(selectedSchools.length === 0) { alert('Pilih minimal 1 sekolah untuk di ekspor'); return; }
-                                        const form = document.createElement('form');
-                                        form.method = 'POST';
-                                        form.action = '{{ route('super-admin.payments.export-by-schools') }}';
-                                        const csrf = document.createElement('input');
-                                        csrf.type = 'hidden';
-                                        csrf.name = '_token';
-                                        csrf.value = '{{ csrf_token() }}';
-                                        form.appendChild(csrf);
-                                        selectedSchools.forEach(id => {
-                                            const input = document.createElement('input');
-                                            input.type = 'hidden';
-                                            input.name = 'school_ids[]';
-                                            input.value = id;
-                                            form.appendChild(input);
-                                        });
-                                        document.body.appendChild(form);
-                                        form.submit();"
-                                x-show="selectedSchools.length > 0"
-                                class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-white bg-sky-600 rounded-md hover:bg-sky-700 shadow-sm">
-                            <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <button type="button" 
+                            @click="exportSelected()"
+                            class="inline-flex items-center rounded-lg border border-emerald-300 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            :disabled="selectedSchools.length === 0">
+                        <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export CSV (<span x-text="selectedSchools.length">0</span>)
+                    </button>
+                    <form method="GET" action="{{ route('super-admin.payments.export-participants') }}" class="flex-shrink-0">
+                        @if(request('activity_id'))
+                            <input type="hidden" name="activity_id" value="{{ request('activity_id') }}">
+                        @endif
+                        <button type="submit" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                            <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            Ekspor Terpilih (<span x-text="selectedSchools.length"></span>)
+                            Export Semua
                         </button>
-
-                        <a href="{{ route('super-admin.payments.export-participants', ['activity_id' => request('activity_id')]) }}"
-                           class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 shadow-sm">
-                            <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Ekspor Semua
-                        </a>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -374,7 +395,15 @@
                             </td>
                             <td class="px-4 py-2 text-sm text-slate-700">Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
                             <td class="px-4 py-2 text-sm">
-                                <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Tervalidasi</span>
+                                <div class="flex items-center gap-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#0284c7] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-medium text-[#0284c7]">Tervalidasi</span>
+                                        <span class="text-[10px] text-sky-600">Sudah disetujui</span>
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-4 py-2 text-sm text-slate-700">{{ $payment->validator->name ?? '-' }}</td>
                             <td class="px-4 py-2 text-sm">
@@ -387,13 +416,16 @@
                                         </svg>
                                         Detail
                                     </button>
-                                    <a href="{{ route('super-admin.payments.export-single', $payment) }}"
-                                       class="inline-flex items-center rounded-md border border-emerald-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm hover:bg-emerald-50"
-                                       title="Ekspor data validasi pembayaran ini">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                    </a>
+                                    <form action="{{ route('super-admin.payments.destroy', $payment) }}" method="POST" onsubmit="return confirm('Hapus pembayaran ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex items-center rounded-md border border-red-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-red-700 shadow-sm hover:bg-red-50">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Hapus
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -401,229 +433,105 @@
                         <!-- Detail Row -->
                         <tr x-show="openHistoryId === {{ $payment->id }}"
                             x-transition
-                            class="bg-slate-50">
-                            <td colspan="8" class="px-4 py-4">
-                                <div class="bg-white rounded-lg border border-slate-200 p-4">
-                                    <!-- Validation Status -->
-                                    <div class="mb-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
-                                        <div class="flex items-start gap-3">
-                                            <div class="flex-1">
-                                                <h6 class="font-semibold text-emerald-900 mb-1">
-                                                    Status: Tervalidasi
-                                                </h6>
-                                                <p class="text-sm text-emerald-700">
-                                                    Validator: {{ $payment->validator->name ?? '-' }} | {{ $payment->validated_at->format('d M Y H:i') }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Payment Info -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                                        <div class="p-3 bg-sky-50 rounded-lg border border-sky-200">
-                                            <p class="text-xs font-medium text-sky-700 mb-1">Jumlah Transfer</p>
-                                            <p class="text-lg font-bold text-sky-900">Rp {{ number_format($payment->amount, 0, ',', '.') }}</p>
-                                        </div>
-                                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                            <p class="text-xs font-medium text-slate-600 mb-1">Tanggal Transfer</p>
-                                            <p class="text-sm font-semibold text-slate-900">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</p>
-                                        </div>
-                                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                            <p class="text-xs font-medium text-slate-600 mb-1">Kontak</p>
-                                            <p class="text-sm font-semibold text-slate-900">{{ $payment->contact_number ?? '-' }}</p>
-                                        </div>
-                                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                            <p class="text-xs font-medium text-slate-600 mb-1">Waktu Upload</p>
-                                            <p class="text-sm font-semibold text-slate-900">{{ $payment->created_at->format('d M Y H:i') }}</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- School and Activity Info -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                            <h6 class="text-sm font-semibold text-slate-800 mb-3 flex items-center">
-                                                <svg class="h-5 w-5 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                </svg>
-                                                Data Sekolah
-                                            </h6>
-                                            <div class="space-y-2">
-                                                <div>
-                                                    <p class="text-xs text-slate-600">Nama Sekolah</p>
-                                                    <p class="text-sm font-semibold text-slate-900">{{ $payment->registration->nama_sekolah }}</p>
-                                                </div>
-                                                <div>
-                                                    <p class="text-xs text-slate-600">Alamat</p>
-                                                    <p class="text-sm text-slate-900">{{ $payment->registration->alamat_sekolah }}</p>
-                                                </div>
-                                                    <div>
-                                                        <p class="text-xs text-slate-600">Kepala Sekolah</p>
-                                                        <p class="text-sm font-semibold text-slate-900">{{ $payment->registration->nama_kepala_sekolah ?? '-' }}</p>
-                                                    </div>
-                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                                    <div>
-                                                        <p class="text-xs text-slate-600">Provinsi</p>
-                                                        <p class="text-sm text-slate-900">{{ $payment->registration->provinsi }}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-xs text-slate-600">Kab/Kota</p>
-                                                        <p class="text-sm text-slate-900">{{ $payment->registration->kab_kota }}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-xs text-slate-600">Kecamatan</p>
-                                                        <p class="text-sm text-slate-900">{{ $payment->registration->kecamatan ?? '-' }}</p>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <p class="text-xs text-slate-600">KCD</p>
-                                                    <p class="text-sm text-slate-900">{{ $payment->registration->kcd }}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                            <h6 class="text-sm font-semibold text-slate-800 mb-3 flex items-center">
-                                                <svg class="h-5 w-5 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                Informasi Kegiatan
-                                            </h6>
-                                            <div class="space-y-2">
-                                                <div>
-                                                    <p class="text-xs text-slate-600">Program</p>
-                                                    <p class="text-sm font-semibold text-slate-900">{{ $payment->registration->activity->program->name ?? '-' }}</p>
-                                                </div>
-                                                <div>
-                                                    <p class="text-xs text-slate-600">Kegiatan</p>
-                                                    <p class="text-sm font-semibold text-slate-900">{{ $payment->registration->activity->name }}</p>
-                                                </div>
-                                                @if($payment->registration->classes)
-                                                <div>
-                                                    <p class="text-xs text-slate-600">Kelas</p>
-                                                    <p class="text-sm text-slate-900">{{ $payment->registration->classes->name }}</p>
-                                                </div>
-                                                @endif
-                                                <div>
-                                                    <p class="text-xs text-slate-600">Total Peserta</p>
-                                                    <p class="text-sm font-semibold text-slate-900">
-                                                        {{ $totalPeserta }} orang
-                                                        <span class="text-xs text-slate-600">(KS: {{ $payment->registration->jumlah_kepala_sekolah }}, Guru: {{ $payment->registration->jumlah_guru }})</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Payment Proof -->
-                                    @if($payment->proof_file)
-                                    <div class="mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                        <h6 class="text-sm font-semibold text-slate-800 mb-3 flex items-center">
-                                            <svg class="h-5 w-5 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            class="bg-white border-b border-slate-200">
+                            <td colspan="9" class="px-4 py-4">
+                                <div class="max-w-6xl space-y-4">
+                                    <!-- Status Banner -->
+                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="h-5 w-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                             </svg>
-                                            Bukti Pembayaran
-                                        </h6>
-                                        <img src="{{ Storage::url($payment->proof_file) }}" alt="Bukti Transfer" class="rounded border border-slate-300 shadow-sm" style="max-height: 400px;">
+                                            <p class="text-sm font-semibold text-emerald-900">Tervalidasi</p>
+                                        </div>
+                                        <p class="text-xs text-emerald-800">{{ $payment->validated_at->format('d M Y H:i') }} oleh {{ $payment->validator->name ?? '-' }}</p>
                                     </div>
-                                    @endif
 
-                                    <!-- Detail Peserta -->
-                                    <div>
-                                        <h6 class="text-sm font-semibold text-slate-800 mb-3 flex items-center">
-                                            <svg class="h-5 w-5 mr-2 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                            </svg>
-                                            Daftar Peserta dari {{ $payment->registration->nama_sekolah }}
-                                        </h6>
+                                    <!-- Summary Cards -->
+                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                                        <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                            <p class="text-xs font-medium text-slate-500">Jumlah Transfer</p>
+                                            <p class="mt-1 text-base font-semibold text-slate-900">Rp {{ number_format($payment->amount, 0, ',', '.') }}</p>
+                                        </div>
+                                        <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                            <p class="text-xs font-medium text-slate-500">Tanggal Bayar</p>
+                                            <p class="mt-1 text-sm font-semibold text-slate-900">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</p>
+                                        </div>
+                                        <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                            <p class="text-xs font-medium text-slate-500">Total Peserta</p>
+                                            <p class="mt-1 text-sm font-semibold text-slate-900">{{ $totalPeserta }} orang</p>
+                                        </div>
+                                        <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                            <p class="text-xs font-medium text-slate-500">Upload</p>
+                                            <p class="mt-1 text-xs font-semibold text-slate-900">{{ $payment->created_at->format('d M Y H:i') }}</p>
+                                        </div>
+                                    </div>
 
-                                        <div class="space-y-3">
-                                            <!-- Kepala Sekolah -->
-                                            @if($payment->registration->jumlah_kepala_sekolah > 0)
-                                            <div class="border border-emerald-200 bg-emerald-50 rounded-lg p-3">
-                                                <div class="flex items-start justify-between">
-                                                    <div class="flex-1">
-                                                        <div class="flex items-center gap-2 mb-2">
-                                                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 text-white font-semibold text-sm">
-                                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                </svg>
-                                                            </span>
-                                                            <div>
-                                                                <h4 class="text-sm font-semibold text-emerald-900">{{ $payment->registration->kepala_sekolah }}</h4>
-                                                                <p class="text-xs text-emerald-700 font-medium">Kepala Sekolah</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 ml-12">
-                                                            <div>
-                                                                <span class="text-xs font-medium text-emerald-700">NIK:</span>
-                                                                <p class="text-sm text-emerald-900">{{ $payment->registration->nik_kepala_sekolah ?? '-' }}</p>
-                                                            </div>
-                                                            <div>
-                                                                <span class="text-xs font-medium text-emerald-700">Email:</span>
-                                                                <p class="text-sm text-emerald-900">{{ $payment->registration->email ?? '-' }}</p>
-                                                            </div>
-                                                            <div>
-                                                                <span class="text-xs font-medium text-emerald-700">Surat Tugas:</span>
-                                                                @if($payment->registration->surat_tugas_kepala_sekolah)
-                                                                <a href="{{ Storage::url($payment->registration->surat_tugas_kepala_sekolah) }}" target="_blank"
-                                                                   class="inline-flex items-center text-sm text-emerald-700 hover:text-emerald-800 font-medium">
-                                                                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    <div class="grid grid-cols-1 gap-3 lg:grid-cols-5">
+                                        <div class="lg:col-span-3">
+                                            <!-- Info Grid -->
+                                            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                                    <h6 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Sekolah</h6>
+                                                    <div class="space-y-1 text-sm">
+                                                        <p class="font-semibold text-slate-900">{{ $payment->registration->nama_sekolah }}</p>
+                                                        <p class="text-xs text-slate-600">{{ $payment->registration->kecamatan ? $payment->registration->kecamatan . ', ' : '' }}{{ $payment->registration->kab_kota }}{{ $payment->registration->provinsi ? ', ' . $payment->registration->provinsi : '' }}</p>
+                                                        <p class="text-xs text-slate-600">KS: {{ $payment->registration->nama_kepala_sekolah ?? '-' }}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                                    <h6 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Kegiatan</h6>
+                                                    <div class="space-y-1 text-sm">
+                                                        <p class="font-semibold text-slate-900">{{ $payment->registration->activity->name }}</p>
+                                                        <p class="text-xs text-slate-600">{{ $payment->registration->activity->program->name ?? '-' }}</p>
+                                                        @if($payment->registration->classes)
+                                                        <p class="text-xs text-slate-600">Kelas: {{ $payment->registration->classes->name }}</p>
+                                                        @endif
+                                                    </div>
+                                                </div>
+
+                                                <div class="rounded-lg border border-slate-200 bg-white p-3 md:col-span-2">
+                                                    <h6 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Peserta</h6>
+                                                    <div class="space-y-1 text-xs">
+                                                        @if($payment->registration->jumlah_kepala_sekolah > 0)
+                                                        <p class="text-slate-700"><span class="font-semibold">KS:</span> {{ $payment->registration->jumlah_kepala_sekolah }} orang</p>
+                                                        @endif
+                                                        @if($payment->registration->teacherParticipants->count() > 0)
+                                                        <p class="text-slate-700"><span class="font-semibold">Guru:</span> {{ $payment->registration->teacherParticipants->count() }} orang</p>
+                                                        <div class="mt-2 max-h-24 overflow-y-auto rounded bg-slate-50 p-2 text-xs text-slate-600">
+                                                            @foreach($payment->registration->teacherParticipants as $teacher)
+                                                            <div class="flex items-center justify-between gap-2">
+                                                                <p class="truncate">• {{ $teacher->nama_lengkap }}</p>
+                                                                @if(!empty($teacher->surat_tugas))
+                                                                <a href="{{ Storage::url($teacher->surat_tugas) }}" target="_blank" rel="noopener"
+                                                                   class="shrink-0 inline-flex items-center text-slate-500 hover:text-slate-800"
+                                                                   title="Lihat Surat Tugas" aria-label="Lihat Surat Tugas">
+                                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                                     </svg>
-                                                                    Lihat File
                                                                 </a>
-                                                                @else
-                                                                <p class="text-sm text-emerald-600">-</p>
                                                                 @endif
                                                             </div>
+                                                            @endforeach
                                                         </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
-                                            @endif
+                                        </div>
 
-                                            <!-- Guru-guru -->
-                                            @if($payment->registration->teacherParticipants->count() > 0)
-                                            @foreach($payment->registration->teacherParticipants as $index => $teacher)
-                                            <div class="border border-slate-200 rounded-lg p-3 hover:border-sky-300 transition-colors">
-                                                <div class="flex items-start justify-between">
-                                                    <div class="flex-1">
-                                                        <div class="flex items-center gap-2 mb-2">
-                                                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-sky-100 text-sky-700 font-semibold text-sm">
-                                                                {{ $index + 1 }}
-                                                            </span>
-                                                            <div>
-                                                                <h4 class="text-sm font-semibold text-slate-900">{{ $teacher->nama_lengkap }}</h4>
-                                                                <p class="text-xs text-slate-500">Guru</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 ml-10">
-                                                            <div>
-                                                                <span class="text-xs font-medium text-slate-500">NIK:</span>
-                                                                <p class="text-sm text-slate-900">{{ $teacher->nik ?? '-' }}</p>
-                                                            </div>
-                                                            <div>
-                                                                <span class="text-xs font-medium text-slate-500">Email:</span>
-                                                                <p class="text-sm text-slate-900">{{ $teacher->email ?? '-' }}</p>
-                                                            </div>
-                                                            <div>
-                                                                <span class="text-xs font-medium text-slate-500">Surat Tugas:</span>
-                                                                @if($teacher->surat_tugas)
-                                                                <a href="{{ Storage::url($teacher->surat_tugas) }}" target="_blank"
-                                                                   class="inline-flex items-center text-sm text-sky-600 hover:text-sky-700">
-                                                                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                    </svg>
-                                                                    Lihat File
-                                                                </a>
-                                                                @else
-                                                                <p class="text-sm text-slate-400">-</p>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        <div class="lg:col-span-2">
+                                            <!-- Proof Image -->
+                                            @if($payment->proof_file)
+                                            <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                                <h6 class="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Bukti Pembayaran</h6>
+                                                <a href="{{ Storage::url($payment->proof_file) }}" target="_blank" rel="noopener" class="block">
+                                                    <img src="{{ Storage::url($payment->proof_file) }}" alt="Bukti Transfer" class="w-full max-h-72 object-contain rounded border border-slate-200 bg-slate-50">
+                                                </a>
+                                                <p class="mt-2 text-xs text-slate-500">Klik gambar untuk membuka ukuran penuh.</p>
                                             </div>
-                                            @endforeach
                                             @endif
                                         </div>
                                     </div>

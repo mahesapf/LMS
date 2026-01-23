@@ -7,12 +7,24 @@ use App\Models\Program;
 use App\Models\Activity;
 use App\Models\AdminMapping;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use App\Models\DocumentRequirement;
+use App\Models\Document;
+use App\Models\Stage;
 
 class SuperAdminController extends Controller
 {
+    /**
+     * Get the users route based on current user role
+     */
+    private function getUsersRoute()
+    {
+        return auth()->user()->role === 'super_admin' ? 'super-admin.users' : 'admin.users';
+    }
+
     public function dashboard()
     {
         $stats = [
@@ -31,69 +43,83 @@ class SuperAdminController extends Controller
     {
         $role = $request->get('role', 'all');
 
-        $query = User::where('role', '!=', 'super_admin');
+        // Exclude super_admin and sekolah from user management
+        $query = User::whereNotIn('role', ['super_admin', 'sekolah']);
+
+        // Admin tidak bisa melihat/kelola user dengan role admin dan super_admin
+        if (auth()->user()->role === 'admin') {
+            $query->whereNotIn('role', ['admin', 'super_admin']);
+        }
 
         if ($role !== 'all') {
             $query->where('role', $role);
         }
 
         $users = $query->latest()->paginate(20);
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
 
         // Load user data for edit modal
         $editUser = null;
         if ($request->has('edit')) {
             $editUser = User::find($request->get('edit'));
+
+            // Prevent admin from editing admin or super_admin users
+            if ($editUser && auth()->user()->role === 'admin' && in_array($editUser->role, ['admin', 'super_admin'])) {
+                return redirect()->route('admin.users')->with('error', 'Anda tidak memiliki akses untuk mengelola user dengan role Admin atau Super Admin');
+            }
         }
 
-        return view('super-admin.users.index', compact('users', 'role', 'editUser'));
+        return view('super-admin.users.index', compact('users', 'role', 'editUser', 'routePrefix'));
     }
 
     public function createUser()
     {
-        return redirect()->route('super-admin.users');
+        return redirect()->route($this->getUsersRoute());
     }
 
     public function storeUser(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
+            'name' => 'required|string|max:50',
+            'email' => 'required|email|max:50|unique:users,email',
+            'password' => 'required|min:8|max:20',
             'role' => 'required|in:admin,fasilitator,peserta',
+            // Data Identitas Pribadi
+            'email_belajar' => 'nullable|email|max:50',
+            'npsn' => 'nullable|size:8|regex:/^[0-9]{8}$/',
+            'nip' => 'nullable|size:18|regex:/^[0-9]{18}$/',
             'nik' => 'nullable|size:16|regex:/^[0-9]{16}$/',
-            'gelar' => 'nullable|string|max:50',
-            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
-            'no_hp' => 'nullable|string|max:20',
-            'email_belajar_id' => 'nullable|email',
-            'jabatan' => 'nullable|string|max:255',
-            'nip_nipy' => 'nullable|string|max:50',
-            'pangkat' => 'nullable|string|max:100',
-            'golongan' => 'nullable|string|max:20',
-            'npsn' => 'nullable|string|max:20',
-            'instansi' => 'nullable|string|max:255',
-            'kcd' => 'nullable|string|max:255',
-            'alamat_sekolah' => 'nullable|string',
-            'provinsi_peserta' => 'nullable|string|max:100',
-            'kabupaten_kota' => 'nullable|string|max:100',
-            'alamat_lengkap' => 'nullable|string',
-            'pendidikan_terakhir' => 'nullable|in:SMA/SMK,D3,S1,S2,S3',
-            'jurusan' => 'nullable|string|max:255',
-            'foto_3x4' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'surat_tugas' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
-            'tanda_tangan' => 'nullable|image|mimes:png|max:1024',
+            'birth_place' => 'nullable|string|max:50',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|in:L,P',
+            // Data Kepegawaian
+            'pns_status' => 'nullable|in:PNS,Non PNS',
+            'rank' => 'nullable|string|max:50',
+            'group' => 'nullable|string|max:10',
+            'position_type' => 'nullable|in:Guru,Kepala Sekolah,Lainnya',
+            'position' => 'nullable|string|max:100',
+            'institution' => 'nullable|string|max:50',
+            // Data Pendidikan
+            'last_education' => 'nullable|in:SMA/SMK,D3,S1,S2,S3',
+            'major' => 'nullable|string|max:50',
+            // Data Kontak
+            'phone' => 'nullable|string|max:16|regex:/^[0-9]{10,16}$/',
+            'address' => 'nullable|string|max:100',
+            'province' => 'nullable|string|max:50',
+            'city' => 'nullable|string|max:50',
+            'district' => 'nullable|string|max:50',
+            // Data Dokumen
+            'photo' => 'nullable|image|max:2048',
+            'digital_signature' => 'nullable|image|max:1024',
         ]);
 
         // Handle file uploads
-        if ($request->hasFile('foto_3x4')) {
-            $validated['foto_3x4'] = $request->file('foto_3x4')->store('peserta/foto', 'public');
+        if ($request->hasFile('photo')) {
+            $validated['photo'] = $request->file('photo')->store('participants/photos', 'public');
         }
 
-        if ($request->hasFile('surat_tugas')) {
-            $validated['surat_tugas'] = $request->file('surat_tugas')->store('peserta/surat-tugas', 'public');
-        }
-
-        if ($request->hasFile('tanda_tangan')) {
-            $validated['tanda_tangan'] = $request->file('tanda_tangan')->store('peserta/tanda-tangan', 'public');
+        if ($request->hasFile('digital_signature')) {
+            $validated['digital_signature'] = $request->file('digital_signature')->store('participants/signatures', 'public');
         }
 
         $validated['password'] = Hash::make($validated['password']);
@@ -101,67 +127,75 @@ class SuperAdminController extends Controller
 
         User::create($validated);
 
-        return redirect()->route('super-admin.users')->with('success', 'User berhasil dibuat');
+        return redirect()->route($this->getUsersRoute())->with('success', 'User berhasil dibuat');
     }
 
     public function editUser(User $user)
     {
-        return redirect()->route('super-admin.users', ['edit' => $user->id]);
+        // Prevent admin from editing admin or super_admin users
+        if (auth()->user()->role === 'admin' && in_array($user->role, ['admin', 'super_admin'])) {
+            return redirect()->route('admin.users')->with('error', 'Anda tidak memiliki akses untuk mengelola user dengan role Admin atau Super Admin');
+        }
+
+        return redirect()->route($this->getUsersRoute(), ['edit' => $user->id]);
     }
 
     public function updateUser(Request $request, User $user)
     {
+        // Prevent admin from updating admin or super_admin users
+        if (auth()->user()->role === 'admin' && in_array($user->role, ['admin', 'super_admin'])) {
+            return redirect()->route('admin.users')->with('error', 'Anda tidak memiliki akses untuk mengelola user dengan role Admin atau Super Admin');
+        }
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'name' => 'required|string|max:50',
+            'email' => 'required|email|max:50|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,fasilitator,peserta',
             'status' => 'required|in:active,suspended,inactive',
+            // Data Identitas Pribadi
+            'email_belajar' => 'nullable|email|max:50',
+            'npsn' => 'nullable|size:8|regex:/^[0-9]{8}$/',
+            'nip' => 'nullable|size:18|regex:/^[0-9]{18}$/',
             'nik' => 'nullable|size:16|regex:/^[0-9]{16}$/',
-            'gelar' => 'nullable|string|max:50',
-            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
-            'no_hp' => 'nullable|string|max:20',
-            'email_belajar_id' => 'nullable|email',
-            'jabatan' => 'nullable|string|max:255',
-            'nip_nipy' => 'nullable|string|max:50',
-            'pangkat' => 'nullable|string|max:100',
-            'golongan' => 'nullable|string|max:20',
-            'npsn' => 'nullable|string|max:20',
-            'instansi' => 'nullable|string|max:255',
-            'kcd' => 'nullable|string|max:255',
-            'alamat_sekolah' => 'nullable|string',
-            'provinsi_peserta' => 'nullable|string|max:100',
-            'kabupaten_kota' => 'nullable|string|max:100',
-            'alamat_lengkap' => 'nullable|string',
-            'pendidikan_terakhir' => 'nullable|in:SMA/SMK,D3,S1,S2,S3',
-            'jurusan' => 'nullable|string|max:255',
-            'foto_3x4' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'surat_tugas' => 'nullable|mimes:pdf,jpeg,png,jpg|max:2048',
-            'tanda_tangan' => 'nullable|image|mimes:png|max:1024',
+            'birth_place' => 'nullable|string|max:50',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|in:L,P',
+            // Data Kepegawaian
+            'pns_status' => 'nullable|in:PNS,Non PNS',
+            'rank' => 'nullable|string|max:50',
+            'group' => 'nullable|string|max:10',
+            'position_type' => 'nullable|in:Guru,Kepala Sekolah,Lainnya',
+            'position' => 'nullable|string|max:100',
+            'institution' => 'nullable|string|max:50',
+            // Data Pendidikan
+            'last_education' => 'nullable|in:SMA/SMK,D3,S1,S2,S3',
+            'major' => 'nullable|string|max:50',
+            // Data Kontak
+            'phone' => 'nullable|string|max:16|regex:/^[0-9]{10,16}$/',
+            'address' => 'nullable|string|max:100',
+            'province' => 'nullable|string|max:50',
+            'city' => 'nullable|string|max:50',
+            'district' => 'nullable|string|max:50',
+            // Data Dokumen
+            'photo' => 'nullable|image|max:2048',
+            'digital_signature' => 'nullable|image|max:1024',
         ]);
 
         // Handle file uploads
-        if ($request->hasFile('foto_3x4')) {
+        if ($request->hasFile('photo')) {
             // Delete old file if exists
-            if ($user->foto_3x4) {
-                Storage::disk('public')->delete($user->foto_3x4);
+            if ($user->photo) {
+                Storage::disk('public')->delete($user->photo);
             }
-            $validated['foto_3x4'] = $request->file('foto_3x4')->store('peserta/foto', 'public');
+            $validated['photo'] = $request->file('photo')->store('participants/photos', 'public');
         }
 
-        if ($request->hasFile('surat_tugas')) {
+        if ($request->hasFile('digital_signature')) {
             // Delete old file if exists
-            if ($user->surat_tugas) {
-                Storage::disk('public')->delete($user->surat_tugas);
+            if ($user->digital_signature) {
+                Storage::disk('public')->delete($user->digital_signature);
             }
-            $validated['surat_tugas'] = $request->file('surat_tugas')->store('peserta/surat-tugas', 'public');
-        }
-
-        if ($request->hasFile('tanda_tangan')) {
-            // Delete old file if exists
-            if ($user->tanda_tangan) {
-                Storage::disk('public')->delete($user->tanda_tangan);
-            }
-            $validated['tanda_tangan'] = $request->file('tanda_tangan')->store('peserta/tanda-tangan', 'public');
+            $validated['digital_signature'] = $request->file('digital_signature')->store('participants/signatures', 'public');
         }
 
         if ($request->filled('password')) {
@@ -170,23 +204,160 @@ class SuperAdminController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('super-admin.users')->with('success', 'User berhasil diupdate');
+        return redirect()->route($this->getUsersRoute())->with('success', 'User berhasil diupdate');
     }
 
     public function deleteUser(User $user)
     {
+        // Prevent admin from deleting admin or super_admin users
+        if (auth()->user()->role === 'admin' && in_array($user->role, ['admin', 'super_admin'])) {
+            return redirect()->route('admin.users')->with('error', 'Anda tidak memiliki akses untuk mengelola user dengan role Admin atau Super Admin');
+        }
+
         $user->forceDelete();
-        return redirect()->route('super-admin.users')->with('success', 'User berhasil dihapus permanent dari database');
+        return redirect()->route($this->getUsersRoute())->with('success', 'User berhasil dihapus permanent dari database');
+    }
+
+    public function bulkDeleteUsers(Request $request)
+    {
+        // Debug logging
+        \Log::info('bulkDeleteUsers called', [
+            'user_ids' => $request->user_ids,
+            'request_method' => $request->method(),
+            'all_data' => $request->all()
+        ]);
+
+        // Skip validation for debugging
+        // $request->validate([
+        //     'user_ids' => 'required|array',
+        //     'user_ids.*' => 'exists:users,id',
+        // ]);
+
+        if (!$request->has('user_ids') || !is_array($request->user_ids)) {
+            \Log::error('Invalid user_ids data', ['user_ids' => $request->user_ids]);
+            return redirect()->back()->with('error', 'Data user tidak valid');
+        }
+
+        $userIds = $request->user_ids;
+
+        // Get users to check permissions
+        $users = User::whereIn('id', $userIds)->get();
+
+        $deletedCount = 0;
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+
+        foreach ($users as $user) {
+            // Prevent admin from deleting admin or super_admin users
+            if (auth()->user()->role === 'admin' && in_array($user->role, ['admin', 'super_admin'])) {
+                \Log::info('Skipping admin user', ['user_id' => $user->id, 'role' => $user->role]);
+                continue;
+            }
+
+            // Prevent deleting super_admin users
+            if ($user->role === 'super_admin') {
+                \Log::info('Skipping super_admin user', ['user_id' => $user->id]);
+                continue;
+            }
+
+            \Log::info('Deleting user', ['user_id' => $user->id, 'role' => $user->role]);
+            $user->delete(); // Use soft delete instead of force delete
+            $deletedCount++;
+        }
+
+        $message = $deletedCount > 0
+            ? "{$deletedCount} user berhasil dihapus"
+            : "Tidak ada user yang dapat dihapus";
+
+        \Log::info('Bulk delete completed', ['deleted_count' => $deletedCount, 'message' => $message]);
+
+        return redirect()->route($routePrefix . '.users', $request->only('role'))->with('success', $message);
+    }
+
+    public function bulkDeleteUsersPost(Request $request)
+    {
+        \Log::info('bulkDeleteUsersPost called', [
+            'user_ids' => $request->user_ids,
+            'method' => $request->method()
+        ]);
+
+        if (!$request->has('user_ids') || !is_array($request->user_ids)) {
+            \Log::error('Invalid user_ids data', ['user_ids' => $request->user_ids]);
+            return response()->json(['error' => 'Data user tidak valid'], 400);
+        }
+
+        $userIds = $request->user_ids;
+
+        // Get users to check permissions
+        $users = User::whereIn('id', $userIds)->get();
+
+        $deletedCount = 0;
+        $skippedCount = 0;
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+
+        foreach ($users as $user) {
+            // Prevent admin from deleting admin or super_admin users
+            if (auth()->user()->role === 'admin' && in_array($user->role, ['admin', 'super_admin'])) {
+                \Log::info('Skipping admin user', ['user_id' => $user->id, 'role' => $user->role]);
+                $skippedCount++;
+                continue;
+            }
+
+            // Prevent deleting super_admin users
+            if ($user->role === 'super_admin') {
+                \Log::info('Skipping super_admin user', ['user_id' => $user->id]);
+                $skippedCount++;
+                continue;
+            }
+
+            \Log::info('Deleting user', ['user_id' => $user->id, 'role' => $user->role]);
+            $user->delete(); // Use soft delete
+            $deletedCount++;
+        }
+
+        $message = $deletedCount > 0
+            ? "{$deletedCount} user berhasil dihapus"
+            : "Tidak ada user yang dapat dihapus";
+
+        if ($skippedCount > 0) {
+            $message .= " ({$skippedCount} user dilewati karena proteksi role)";
+        }
+
+        \Log::info('Bulk delete completed', [
+            'deleted_count' => $deletedCount,
+            'skipped_count' => $skippedCount,
+            'message' => $message
+        ]);
+
+        return redirect()->route($routePrefix . '.users', $request->only('role'))->with('success', $message);
+    }
+
+    public function bulkDeleteTest(Request $request)
+    {
+        return response()->json([
+            'message' => 'Bulk delete route is working',
+            'method' => $request->method(),
+            'data' => $request->all()
+        ]);
     }
 
     public function suspendUser(User $user)
     {
+        // Prevent admin from suspending admin or super_admin users
+        if (auth()->user()->role === 'admin' && in_array($user->role, ['admin', 'super_admin'])) {
+            return redirect()->route('admin.users')->with('error', 'Anda tidak memiliki akses untuk mengelola user dengan role Admin atau Super Admin');
+        }
+
         $user->update(['status' => 'suspended']);
         return redirect()->back()->with('success', 'User berhasil disuspend');
     }
 
     public function activateUser(User $user)
     {
+        // Prevent admin from activating admin or super_admin users
+        if (auth()->user()->role === 'admin' && in_array($user->role, ['admin', 'super_admin'])) {
+            return redirect()->route('admin.users')->with('error', 'Anda tidak memiliki akses untuk mengelola user dengan role Admin atau Super Admin');
+        }
+
         $user->update(['status' => 'active']);
         return redirect()->back()->with('success', 'User berhasil diaktifkan');
     }
@@ -194,7 +365,7 @@ class SuperAdminController extends Controller
     public function importUsers()
     {
         // Redirect ke users index (modal sudah ada di halaman tersebut)
-        return redirect()->route('super-admin.users');
+        return redirect()->route($this->getUsersRoute());
     }
 
     public function processImportUsers(Request $request)
@@ -256,7 +427,7 @@ class SuperAdminController extends Controller
             $imported = 0;
             $skipped = 0;
 
-            foreach ($data as $row) {
+            foreach ($data as $index => $row) {
                 if (empty(array_filter($row))) continue; // Skip empty rows
 
                 $rowData = array_combine($header, $row);
@@ -266,21 +437,33 @@ class SuperAdminController extends Controller
                 $email = trim($rowData['email'] ?? '');
                 $nik = trim($rowData['nik'] ?? '');
 
+                \Log::info('Processing row', [
+                    'index' => $index,
+                    'nama' => $nama,
+                    'email' => $email,
+                    'nik' => $nik,
+                    'raw_row' => $row,
+                    'row_data' => $rowData
+                ]);
+
                 // Skip if nama is empty, dash, or email is empty
                 if (empty($nama) || $nama === '-' || empty($email)) {
+                    \Log::warning('Skipping due to empty data', ['nama' => $nama, 'email' => $email]);
                     $skipped++;
                     continue;
                 }
 
-                // Check if email already exists
-                if (User::where('email', $email)->exists()) {
+                // Check if email already exists (excluding soft deleted)
+                $existingUser = User::where('email', $email)->first();
+                if ($existingUser) {
+                    \Log::warning('Email already exists (active user), skipping', [
+                        'email' => $email,
+                        'existing_user_id' => $existingUser->id,
+                        'existing_name' => $existingUser->name,
+                        'deleted_at' => $existingUser->deleted_at
+                    ]);
                     $skipped++;
                     continue;
-                }
-
-                // Skip if NIK is just dash or invalid format
-                if ($nik === '-' || $nik === '0') {
-                    $nik = null;
                 }
 
                 // Validate NIK if provided (should be 16 digits)
@@ -291,15 +474,47 @@ class SuperAdminController extends Controller
                 // Use NIK as password, or default to 'password123' if NIK is empty
                 $password = $nik ? $nik : 'password123';
 
-                User::create([
-                    'name' => $nama,
-                    'email' => $email,
-                    'nik' => $nik,
-                    'password' => Hash::make($password),
-                    'role' => $request->role,
-                    'status' => 'active',
-                ]);
-                $imported++;
+                // Check if user was soft deleted - restore instead of creating new
+                $deletedUser = User::onlyTrashed()->where('email', $email)->first();
+                if ($deletedUser) {
+                    \Log::info('Restoring soft deleted user', [
+                        'email' => $email,
+                        'deleted_user_id' => $deletedUser->id,
+                        'deleted_at' => $deletedUser->deleted_at
+                    ]);
+
+                    $deletedUser->restore();
+                    $deletedUser->update([
+                        'name' => $nama,
+                        'nik' => $nik,
+                        'password' => Hash::make($password),
+                        'role' => $request->role,
+                        'status' => 'active',
+                    ]);
+                    $imported++;
+                    continue;
+                }
+
+                try {
+                    User::create([
+                        'name' => $nama,
+                        'email' => $email,
+                        'nik' => $nik,
+                        'password' => Hash::make($password),
+                        'role' => $request->role,
+                        'status' => 'active',
+                    ]);
+                    $imported++;
+                    \Log::info('User created successfully', ['email' => $email, 'name' => $nama]);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    if ($e->getCode() == 23000) { // Duplicate entry error
+                        \Log::warning('Duplicate entry caught, skipping', ['email' => $email, 'error' => $e->getMessage()]);
+                        $skipped++;
+                    } else {
+                        \Log::error('Database error during import', ['email' => $email, 'error' => $e->getMessage()]);
+                        throw $e; // Re-throw for other database errors
+                    }
+                }
             }
 
             DB::commit();
@@ -309,7 +524,9 @@ class SuperAdminController extends Controller
                 $message .= ", {$skipped} data dilewati (email sudah terdaftar atau data tidak lengkap)";
             }
 
-            return redirect()->route('super-admin.users')->with('success', $message);
+            \Log::info('Import completed', ['imported' => $imported, 'skipped' => $skipped]);
+
+            return redirect()->route($this->getUsersRoute())->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Import gagal: ' . $e->getMessage());
@@ -332,6 +549,7 @@ class SuperAdminController extends Controller
 
     public function createProgram()
     {
+        // Redirect ke halaman programs (modal ditampilkan di sini)
         return redirect()->route('super-admin.programs');
     }
 
@@ -464,16 +682,20 @@ class SuperAdminController extends Controller
     public function adminMappings()
     {
         $mappings = AdminMapping::with(['admin', 'program', 'activity', 'assignedBy'])->latest()->paginate(20);
-        return view('super-admin.admin-mappings.index', compact('mappings'));
-    }
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
 
-    public function createAdminMapping()
-    {
+        // Provide data for create modal
         $admins = User::where('role', 'admin')->where('status', 'active')->get();
         $programs = Program::where('status', 'active')->get();
         $activities = Activity::whereIn('status', ['planned', 'ongoing'])->get();
 
-        return view('super-admin.admin-mappings.create', compact('admins', 'programs', 'activities'));
+        return view('super-admin.admin-mappings.index', compact('mappings', 'routePrefix', 'admins', 'programs', 'activities'));
+    }
+
+    public function createAdminMapping()
+    {
+        // Redirect to index since create form is now a modal
+        return redirect()->route('super-admin.admin-mappings');
     }
 
     public function storeAdminMapping(Request $request)
@@ -505,6 +727,42 @@ class SuperAdminController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Status mapping berhasil diupdate');
+    }
+
+    public function editAdminMapping(AdminMapping $mapping)
+    {
+        $admins = User::where('role', 'admin')->where('status', 'active')->get();
+        $programs = Program::where('status', 'active')->get();
+        $activities = Activity::whereIn('status', ['planned', 'ongoing'])->get();
+
+        return view('super-admin.admin-mappings.edit', compact('mapping', 'admins', 'programs', 'activities'));
+    }
+
+    public function updateAdminMapping(Request $request, AdminMapping $mapping)
+    {
+        $validated = $request->validate([
+            'admin_id' => 'required|exists:users,id',
+            'program_id' => 'nullable|exists:programs,id',
+            'activity_id' => 'nullable|exists:activities,id',
+            'status' => 'required|in:in,out',
+            'assigned_date' => 'nullable|date',
+        ]);
+
+        if ($validated['status'] === 'out') {
+            $validated['removed_date'] = now();
+        } else {
+            $validated['removed_date'] = null;
+        }
+
+        $mapping->update($validated);
+
+        return redirect()->route('super-admin.admin-mappings')->with('success', 'Admin mapping berhasil diupdate');
+    }
+
+    public function deleteAdminMapping(AdminMapping $mapping)
+    {
+        $mapping->forceDelete();
+        return redirect()->route('super-admin.admin-mappings')->with('success', 'Admin mapping berhasil dihapus permanent dari database');
     }
 
     // Class Management
@@ -623,12 +881,12 @@ class SuperAdminController extends Controller
     public function showClass(Request $request, \App\Models\Classes $class)
     {
         $class->load(['activity.adminMappings.admin', 'participantMappings.participant', 'fasilitatorMappings.fasilitator', 'stages']);
-        
+
         // Get filter parameters
         $selectedProvinsi = $request->get('provinsi');
         $selectedKabKota = $request->get('kab_kota');
         $selectedKecamatan = $request->get('kecamatan');
-        
+
         // Normalize filters
         $selectedProvinsiNormalized = $selectedProvinsi
             ? preg_replace('/\s+|_+/', '', strtolower(trim($selectedProvinsi)))
@@ -643,7 +901,7 @@ class SuperAdminController extends Controller
         $kecamatanStatuses = ['validated', 'payment_uploaded', 'payment_validated', 'approved', 'accepted', 'belum ditentukan', 'belum_ditentukan'];
 
         // Load registrations yang sudah di-assign ke kelas ini (untuk ditampilkan sebagai peserta)
-        $assignedRegistrations = \App\Models\Registration::with(['user', 'teacherParticipants'])
+        $assignedRegistrations = \App\Models\Registration::with(['user', 'teacherParticipants.user'])
             ->where('activity_id', $class->activity_id)
             ->where('class_id', $class->id)
             ->whereIn('status', $kecamatanStatuses)
@@ -654,12 +912,21 @@ class SuperAdminController extends Controller
         foreach ($assignedRegistrations as $reg) {
             // Add kepala sekolah if exists
             if ($reg->jumlah_kepala_sekolah > 0 && $reg->nama_kepala_sekolah) {
+                // Get kepala sekolah email from User if exists, otherwise use placeholder
+                $kepalaSekolahEmail = '-';
+                if ($reg->kepala_sekolah_user_id) {
+                    $kepalaUser = \App\Models\User::find($reg->kepala_sekolah_user_id);
+                    if ($kepalaUser) {
+                        $kepalaSekolahEmail = $kepalaUser->email;
+                    }
+                }
+
                 $teacherParticipants->push([
                     'registration_id' => $reg->id,
                     'nama_sekolah' => $reg->nama_sekolah,
                     'nama_lengkap' => $reg->nama_kepala_sekolah,
                     'nip' => $reg->nik_kepala_sekolah ?? '-',
-                    'email' => $reg->email,
+                    'email' => $kepalaSekolahEmail,
                     'kecamatan' => $reg->kecamatan,
                     'status' => $reg->status,
                     'jabatan' => 'Kepala Sekolah',
@@ -670,6 +937,20 @@ class SuperAdminController extends Controller
 
             // Add guru/teachers from teacher_participants
             foreach ($reg->teacherParticipants as $teacher) {
+                // Get jabatan with priority: teacher_participants.jabatan > user.position_type > user.jabatan > default
+                $jabatan = 'Guru'; // default
+
+                // First check if jabatan is set directly in teacher_participants table
+                if (!empty($teacher->jabatan)) {
+                    $jabatan = $teacher->jabatan;
+                }
+                // Otherwise, try to get from related user if available
+                elseif ($teacher->user_id && $teacher->user) {
+                    $jabatan = $teacher->user->position_type
+                        ?? $teacher->user->jabatan
+                        ?? ($teacher->user->role === 'kepala_sekolah' ? 'Kepala Sekolah' : 'Guru');
+                }
+
                 $teacherParticipants->push([
                     'registration_id' => $reg->id,
                     'nama_sekolah' => $reg->nama_sekolah,
@@ -678,9 +959,9 @@ class SuperAdminController extends Controller
                     'email' => $teacher->email,
                     'kecamatan' => $reg->kecamatan,
                     'status' => $reg->status,
-                    'jabatan' => 'Guru',
+                    'jabatan' => $jabatan,
                     'teacher_id' => $teacher->id,
-                    'is_kepala_sekolah' => false,
+                    'is_kepala_sekolah' => ($jabatan === 'Kepala Sekolah'),
                 ]);
             }
         };
@@ -742,6 +1023,44 @@ class SuperAdminController extends Controller
         \App\Models\ParticipantMapping::where('class_id', $class->id)
             ->whereNotIn('status', ['in', 'move', 'out'])
             ->update(['status' => 'in']);
+
+        // Get participant mappings yang tidak dari registrations (manually added)
+        $manualParticipantIds = $assignedRegistrations->pluck('user_id')->merge(
+            $assignedRegistrations->pluck('kepala_sekolah_user_id')
+        )->merge(
+            \App\Models\TeacherParticipant::whereIn('registration_id', $assignedRegistrations->pluck('id'))->pluck('user_id')
+        )->filter();
+
+        $manualParticipants = \App\Models\ParticipantMapping::with('participant')
+            ->where('class_id', $class->id)
+            ->where('status', 'in')
+            ->whereNotIn('participant_id', $manualParticipantIds)
+            ->get();
+
+        // Add manual participants to teacherParticipants collection
+        foreach ($manualParticipants as $mapping) {
+            if ($mapping->participant) {
+                // Determine jabatan from position_type, jabatan field, or role
+                $jabatan = $mapping->participant->position_type
+                    ?? $mapping->participant->jabatan
+                    ?? ($mapping->participant->role === 'kepala_sekolah' ? 'Kepala Sekolah' : 'Guru');
+
+                $teacherParticipants->push([
+                    'registration_id' => null,
+                    'nama_sekolah' => $mapping->participant->institution ?? $mapping->participant->instansi ?? '-',
+                    'nama_lengkap' => $mapping->participant->name,
+                    'nip' => $mapping->participant->nip ?? '-',
+                    'email' => $mapping->participant->email,
+                    'kecamatan' => $mapping->participant->district ?? '-',
+                    'status' => 'manual',
+                    'jabatan' => $jabatan,
+                    'teacher_id' => null,
+                    'is_kepala_sekolah' => ($jabatan === 'Kepala Sekolah'),
+                    'participant_mapping_id' => $mapping->id,
+                    'is_manual' => true,
+                ]);
+            }
+        }
 
         // Build base query for filter options
         $baseFilterQuery = \App\Models\Registration::where('activity_id', $class->activity_id)
@@ -828,10 +1147,17 @@ class SuperAdminController extends Controller
 
         $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
 
-        return view('super-admin.classes.show', compact(
+        // Calculate total participants: individual teachers from registrations + individual participant mappings
+        $totalParticipants = $teacherParticipants->count();
+
+        // Use different view based on user role
+        $view = $routePrefix === 'admin' ? 'admin.classes.show' : 'super-admin.classes.show';
+
+        return view($view, compact(
             'class',
             'assignedRegistrations',
             'teacherParticipants',
+            'totalParticipants',
             'availableRegistrations',
             'availableParticipants',
             'availableFasilitators',
@@ -843,6 +1169,175 @@ class SuperAdminController extends Controller
             'selectedKabKota',
             'selectedKecamatan'
         ));
+    }
+
+    public function printClassAttendance(\App\Models\Classes $class)
+    {
+        $class->load(['activity', 'participantMappings.participant']);
+
+        $kecamatanStatuses = ['validated', 'payment_uploaded', 'payment_validated', 'approved', 'accepted', 'belum ditentukan', 'belum_ditentukan'];
+
+        $assignedRegistrations = \App\Models\Registration::with(['user', 'teacherParticipants.user'])
+            ->where('activity_id', $class->activity_id)
+            ->where('class_id', $class->id)
+            ->whereIn('status', $kecamatanStatuses)
+            ->get();
+
+        $participants = collect();
+
+        foreach ($assignedRegistrations as $reg) {
+            if ($reg->jumlah_kepala_sekolah > 0 && $reg->nama_kepala_sekolah) {
+                $participants->push([
+                    'nama_lengkap' => $reg->nama_kepala_sekolah,
+                    'nama_sekolah' => $reg->nama_sekolah,
+                    'jabatan' => 'KS',
+                ]);
+            }
+
+            foreach ($reg->teacherParticipants as $teacher) {
+                // Get jabatan with priority: teacher_participants.jabatan > user.position_type > user.jabatan > default
+                $jabatan = 'Guru'; // default
+
+                // First check if jabatan is set directly in teacher_participants table
+                if (!empty($teacher->jabatan)) {
+                    $jabatan = $teacher->jabatan;
+                }
+                // Otherwise, try to get from related user if available
+                elseif ($teacher->user_id && $teacher->user) {
+                    $jabatan = $teacher->user->position_type
+                        ?? $teacher->user->jabatan
+                        ?? ($teacher->user->role === 'kepala_sekolah' ? 'Kepala Sekolah' : 'Guru');
+                }
+
+                $participants->push([
+                    'nama_lengkap' => $teacher->nama_lengkap,
+                    'nama_sekolah' => $reg->nama_sekolah,
+                    'jabatan' => $jabatan,
+                ]);
+            }
+        }
+
+        // Include manually added participants (participant_mappings) that are not represented in registrations
+        $registrationUserIds = $assignedRegistrations->pluck('user_id')
+            ->merge($assignedRegistrations->pluck('kepala_sekolah_user_id'))
+            ->merge(\App\Models\TeacherParticipant::whereIn('registration_id', $assignedRegistrations->pluck('id'))->pluck('user_id'))
+            ->filter();
+
+        $manualParticipants = \App\Models\ParticipantMapping::with('participant')
+            ->where('class_id', $class->id)
+            ->where('status', 'in')
+            ->whereNotIn('participant_id', $registrationUserIds)
+            ->get();
+
+        foreach ($manualParticipants as $mapping) {
+            if ($mapping->participant) {
+                // Determine jabatan from position_type, jabatan field, or role
+                $jabatan = $mapping->participant->position_type
+                    ?? $mapping->participant->jabatan
+                    ?? ($mapping->participant->role === 'kepala_sekolah' ? 'Kepala Sekolah' : 'Guru');
+
+                $participants->push([
+                    'nama_lengkap' => $mapping->participant->name,
+                    'nama_sekolah' => $mapping->participant->institution ?? $mapping->participant->instansi ?? '-',
+                    'jabatan' => $jabatan,
+                ]);
+            }
+        }
+
+        $participants = $participants
+            ->filter(fn ($p) => !empty($p['nama_lengkap']))
+            ->values();
+
+        return view('super-admin.classes.attendance-print', compact('class', 'participants'));
+    }
+
+    public function fasilitatorDocuments(\App\Models\Classes $class)
+    {
+        $class->load(['activity', 'stages']);
+
+        $generalRequirements = DocumentRequirement::forFasilitator()
+            ->where('class_id', $class->id)
+            ->whereNull('stage_id')
+            ->orderBy('created_at')
+            ->get();
+
+        $stages = Stage::with(['documentRequirements' => function ($query) {
+                $query->forFasilitator()->orderBy('created_at');
+            }])
+            ->where('class_id', $class->id)
+            ->ordered()
+            ->get();
+
+        return view('super-admin.classes.fasilitator-documents', compact('class', 'stages', 'generalRequirements'));
+    }
+
+    public function storeFasilitatorDocumentRequirement(Request $request, \App\Models\Classes $class)
+    {
+        $validated = $request->validate([
+            'stage_id' => 'nullable|exists:stages,id',
+            'document_name' => 'required|string|max:255',
+            'document_type' => 'nullable|string',
+            'description' => 'nullable|string',
+            'max_file_size' => 'nullable|integer|min:100',
+            'is_required' => 'nullable|boolean',
+            'template_file' => 'nullable|file|max:10240',
+        ]);
+
+        if (!empty($validated['stage_id'])) {
+            Stage::where('id', $validated['stage_id'])
+                ->where('class_id', $class->id)
+                ->firstOrFail();
+        }
+
+        $templatePath = null;
+        $templateName = null;
+        if ($request->hasFile('template_file')) {
+            $file = $request->file('template_file');
+            $templatePath = $file->store('document-templates/fasilitator', 'public');
+            $templateName = $file->getClientOriginalName();
+        }
+
+        DocumentRequirement::create([
+            'class_id' => $class->id,
+            'stage_id' => $validated['stage_id'] ?? null,
+            'target_role' => DocumentRequirement::TARGET_FASILITATOR,
+            'document_name' => $validated['document_name'],
+            'document_type' => $validated['document_type'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'max_file_size' => $validated['max_file_size'] ?? 5120,
+            'is_required' => $request->has('is_required'),
+            'template_file_path' => $templatePath,
+            'template_file_name' => $templateName,
+        ]);
+
+        return redirect()->back()->with('success', 'Requirement dokumen fasilitator berhasil ditambahkan');
+    }
+
+    public function deleteFasilitatorDocumentRequirement(\App\Models\Classes $class, DocumentRequirement $requirement)
+    {
+        if ($requirement->class_id !== $class->id) {
+            abort(403, 'Requirement tidak termasuk dalam kelas ini');
+        }
+
+        if ($requirement->target_role !== DocumentRequirement::TARGET_FASILITATOR) {
+            abort(403, 'Requirement ini bukan untuk fasilitator');
+        }
+
+        $requirement->load('documents');
+        foreach ($requirement->documents as $document) {
+            if ($document->file_path) {
+                Storage::disk('public')->delete($document->file_path);
+            }
+            $document->delete();
+        }
+
+        if (!empty($requirement->template_file_path)) {
+            Storage::disk('public')->delete($requirement->template_file_path);
+        }
+
+        $requirement->delete();
+
+        return redirect()->back()->with('success', 'Requirement dokumen fasilitator berhasil dihapus');
     }
 
     public function removeParticipant(\App\Models\Classes $class, \App\Models\ParticipantMapping $participant)
@@ -911,7 +1406,7 @@ class SuperAdminController extends Controller
         }
 
         // Normalize filters
-        $provinsiNormalized = !empty($validated['provinsi']) 
+        $provinsiNormalized = !empty($validated['provinsi'])
             ? preg_replace('/\s+|_+/', '', strtolower(trim($validated['provinsi'])))
             : null;
         $kabKotaNormalized = !empty($validated['kab_kota'])
@@ -1131,7 +1626,7 @@ class SuperAdminController extends Controller
             // Check if admin is already assigned to this activity
             $existingMapping = \App\Models\AdminMapping::where('admin_id', $validated['admin_id'])
                 ->where('activity_id', $class->activity_id)
-                ->where('status', 'active')
+                ->where('status', 'in')
                 ->first();
 
             if ($existingMapping) {
@@ -1144,7 +1639,7 @@ class SuperAdminController extends Controller
                 'admin_id' => $validated['admin_id'],
                 'assigned_by' => auth()->id(),
                 'assigned_date' => now(),
-                'status' => 'active',
+                'status' => 'in',
             ]);
 
             return redirect()->route('super-admin.classes.show', $class)
@@ -1163,8 +1658,8 @@ class SuperAdminController extends Controller
                 return redirect()->back()->with('error', 'Admin mapping tidak valid');
             }
 
-            // Set status to inactive instead of deleting
-            $adminMapping->update(['status' => 'inactive']);
+            // Set status to out instead of deleting
+            $adminMapping->update(['status' => 'out']);
 
             return redirect()->route('super-admin.classes.show', $class)
                 ->with('success', 'Admin berhasil dihapus dari kegiatan');
@@ -1172,5 +1667,96 @@ class SuperAdminController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    // Class Reports Management
+    public function classReports(Request $request)
+    {
+        $search = $request->get('search');
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+
+        $classes = \App\Models\Classes::with(['activity.program', 'fasilitatorMappings.fasilitator'])
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('activity', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->withCount(['documents' => function ($query) {
+                $query->whereHas('uploader', function ($q) {
+                    $q->where('role', 'fasilitator');
+                });
+            }])
+            ->latest()
+            ->paginate(15);
+
+        return view('super-admin.class-reports.index', compact('classes', 'search', 'routePrefix'));
+    }
+
+    public function showClassReports(\App\Models\Classes $class)
+    {
+        $class->load([
+            'activity.program',
+            'fasilitatorMappings.fasilitator',
+            'documents.uploader',
+            'documents.requirement'
+        ]);
+
+        // Dokumen laporan dari fasilitator
+        $documents = $class->documents()
+            ->with(['uploader', 'requirement'])
+            ->whereHas('uploader', function ($query) {
+                $query->where('role', 'fasilitator');
+            })
+            ->latest('uploaded_date')
+            ->paginate(20, ['*'], 'doc_page');
+
+        // Laporan Nilai
+        $grades = \App\Models\Grade::where('class_id', $class->id)
+            ->with(['participant', 'fasilitator'])
+            ->orderBy('final_score', 'desc')
+            ->paginate(20, ['*'], 'grade_page');
+
+        // Laporan Pengumpulan Tugas
+        $assignments = $class->documents()
+            ->with(['uploader', 'requirement'])
+            ->whereHas('uploader', function ($query) {
+                $query->where('role', 'peserta');
+            })
+            ->latest('uploaded_date')
+            ->paginate(20, ['*'], 'assignment_page');
+
+        $routePrefix = auth()->user()->role === 'admin' ? 'admin' : 'super-admin';
+
+        return view('super-admin.class-reports.show', compact('class', 'documents', 'grades', 'assignments', 'routePrefix'));
+    }
+
+    public function downloadClassReport(\App\Models\Document $document)
+    {
+        if (!$document->file_path) {
+            return redirect()->back()->with('error', 'File tidak ditemukan di database');
+        }
+
+        // Try different storage disks
+        if (Storage::disk('public')->exists($document->file_path)) {
+            return Storage::disk('public')->download($document->file_path, $document->file_name);
+        }
+
+        if (Storage::disk('local')->exists($document->file_path)) {
+            return Storage::disk('local')->download($document->file_path, $document->file_name);
+        }
+
+        // Try without any disk prefix (default)
+        if (Storage::exists($document->file_path)) {
+            return Storage::download($document->file_path, $document->file_name);
+        }
+
+        // Check if file exists in public path directly
+        $publicPath = public_path('storage/' . $document->file_path);
+        if (file_exists($publicPath)) {
+            return response()->download($publicPath, $document->file_name);
+        }
+
+        return redirect()->back()->with('error', 'File tidak ditemukan: ' . $document->file_path);
     }
 }

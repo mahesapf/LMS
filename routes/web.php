@@ -11,20 +11,25 @@ use App\Http\Controllers\SekolahManagementController;
 use App\Http\Controllers\Auth\SekolahRegisterController;
 use Illuminate\Support\Facades\Route;
 
-// Public Routes
-Route::get('/', [HomeController::class, 'index'])->name('home');
+// Public Routes (only for guests - logged in users will be redirected to dashboard)
+Route::middleware('guest')->group(function () {
+    Route::get('/', [HomeController::class, 'index'])->name('home');
+});
+
 Route::get('/news', [HomeController::class, 'news'])->name('news');
 Route::get('/news/{id}', [HomeController::class, 'newsDetail'])->name('news.detail');
+Route::get('/activities', [HomeController::class, 'activities'])->name('activities.index');
 
 // Registrasi Sekolah (Public)
 Route::get('/sekolah/register', [PublicSekolahController::class, 'showRegistrationForm'])->name('sekolah.register');
-Route::post('/sekolah/register', [PublicSekolahController::class, 'register'])->name('sekolah.register.submit');
+Route::post('/sekolah/register', [PublicSekolahController::class, 'register'])->middleware('throttle:5,1')->name('sekolah.register.submit');
 
-// Activity Registration Routes (public access)
-Route::get('/activities', [\App\Http\Controllers\ActivityRegistrationController::class, 'index'])->name('activities.index');
-Route::get('/activities/{activity}', [\App\Http\Controllers\ActivityRegistrationController::class, 'show'])->name('activities.show');
-Route::get('/activities/{activity}/register', [\App\Http\Controllers\ActivityRegistrationController::class, 'showRegisterForm'])->name('activities.register.form');
-Route::post('/activities/{activity}/register', [\App\Http\Controllers\ActivityRegistrationController::class, 'register'])->name('activities.register');
+// Activity Registration - Only for Sekolah Role
+Route::middleware(['auth', 'role:sekolah'])->group(function () {
+    Route::get('/activities/{activity}', [\App\Http\Controllers\ActivityRegistrationController::class, 'show'])->name('activities.show');
+    Route::get('/activities/{activity}/register', [\App\Http\Controllers\ActivityRegistrationController::class, 'showRegisterForm'])->name('activities.register.form');
+    Route::post('/activities/{activity}/register', [\App\Http\Controllers\ActivityRegistrationController::class, 'register'])->name('activities.register');
+});
 
 // Payment Routes (public - can be accessed without login for public registrations)
 Route::get('/registrations/{registration}/payment', [\App\Http\Controllers\ActivityRegistrationController::class, 'createPayment'])->name('payment.create');
@@ -64,6 +69,8 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::get('/users/{user}/edit', [SuperAdminController::class, 'editUser'])->name('users.edit');
     Route::put('/users/{user}', [SuperAdminController::class, 'updateUser'])->name('users.update');
     Route::delete('/users/{user}', [SuperAdminController::class, 'deleteUser'])->name('users.delete');
+    Route::delete('/users/bulk-delete', [SuperAdminController::class, 'bulkDeleteUsers'])->name('users.bulkDelete');
+Route::post('/users/bulk-delete', [SuperAdminController::class, 'bulkDeleteUsersPost'])->name('users.bulkDeletePost');
     Route::post('/users/{user}/suspend', [SuperAdminController::class, 'suspendUser'])->name('users.suspend');
     Route::post('/users/{user}/activate', [SuperAdminController::class, 'activateUser'])->name('users.activate');
     Route::post('/users/import', [SuperAdminController::class, 'processImportUsers'])->name('users.import.process');
@@ -78,30 +85,45 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
 
     // Admin Mapping
     Route::get('/admin-mappings', [SuperAdminController::class, 'adminMappings'])->name('admin-mappings');
-    Route::get('/admin-mappings/create', [SuperAdminController::class, 'createAdminMapping'])->name('admin-mappings.create');
     Route::post('/admin-mappings', [SuperAdminController::class, 'storeAdminMapping'])->name('admin-mappings.store');
+    Route::get('/admin-mappings/{mapping}/edit', [SuperAdminController::class, 'editAdminMapping'])->name('admin-mappings.edit');
+    Route::put('/admin-mappings/{mapping}', [SuperAdminController::class, 'updateAdminMapping'])->name('admin-mappings.update');
+    Route::delete('/admin-mappings/{mapping}', [SuperAdminController::class, 'deleteAdminMapping'])->name('admin-mappings.delete');
     Route::post('/admin-mappings/{mapping}/status/{status}', [SuperAdminController::class, 'updateAdminMappingStatus'])->name('admin-mappings.update-status');
 
     // Payment Validation (Super Admin Only)
     Route::get('/payments', [\App\Http\Controllers\PaymentValidationController::class, 'index'])->name('payments.index');
+    Route::get('/payments/export/csv', [\App\Http\Controllers\PaymentValidationController::class, 'exportCsv'])->name('payments.export-csv');
     Route::get('/payments/export/participants', [\App\Http\Controllers\PaymentValidationController::class, 'exportParticipants'])->name('payments.export-participants');
+Route::post('/payments/export/selected', [\App\Http\Controllers\PaymentValidationController::class, 'exportSelected'])->name('payments.export-selected');
     Route::get('/payments/export/single/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'exportSinglePayment'])->name('payments.export-single');
     Route::post('/payments/export/by-schools', [\App\Http\Controllers\PaymentValidationController::class, 'exportBySchools'])->name('payments.export-by-schools');
     Route::get('/payments/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'show'])->name('payments.show');
     Route::patch('/payments/{payment}/approve', [\App\Http\Controllers\PaymentValidationController::class, 'approve'])->name('payments.approve');
+Route::patch('/payments/{payment}/reject', [\App\Http\Controllers\PaymentValidationController::class, 'reject'])->name('payments.reject');
+Route::delete('/payments/{payment}', [\App\Http\Controllers\PaymentValidationController::class, 'destroy'])->name('payments.destroy');
 
     // Sekolah Management
-    Route::get('/sekolah', [SekolahManagementController::class, 'index'])->name('sekolah.index');
-    Route::get('/sekolah/{sekolah}', [SekolahManagementController::class, 'show'])->name('sekolah.show');
-    Route::patch('/sekolah/{sekolah}/approve', [SekolahManagementController::class, 'approve'])->name('sekolah.approve');
-    Route::patch('/sekolah/{sekolah}/reject', [SekolahManagementController::class, 'reject'])->name('sekolah.reject');
-    Route::get('/sekolah/{sekolah}/download-sk', [SekolahManagementController::class, 'downloadSK'])->name('sekolah.download-sk');
-    Route::delete('/sekolah/{sekolah}', [SekolahManagementController::class, 'destroy'])->name('sekolah.destroy');
-    Route::patch('/payments/{payment}/reject', [\App\Http\Controllers\PaymentValidationController::class, 'reject'])->name('payments.reject');
+    Route::get('/sekolah', [\App\Http\Controllers\SekolahManagementController::class, 'index'])->name('sekolah.index');
+    Route::get('/sekolah/{sekolah}', [\App\Http\Controllers\SekolahManagementController::class, 'show'])->name('sekolah.show');
+    Route::patch('/sekolah/{sekolah}/approve', [\App\Http\Controllers\SekolahManagementController::class, 'approve'])->name('sekolah.approve');
+    Route::patch('/sekolah/{sekolah}/reject', [\App\Http\Controllers\SekolahManagementController::class, 'reject'])->name('sekolah.reject');
+    Route::get('/sekolah/{sekolah}/download-sk', [\App\Http\Controllers\SekolahManagementController::class, 'downloadSK'])->name('sekolah.download-sk');
+    Route::delete('/sekolah/{sekolah}', [\App\Http\Controllers\SekolahManagementController::class, 'destroy'])->name('sekolah.destroy');
+
+    // Class Reports (Laporan Kelas)
+    Route::get('/class-reports', [SuperAdminController::class, 'classReports'])->name('class-reports.index');
+    Route::get('/class-reports/{class}', [SuperAdminController::class, 'showClassReports'])->name('class-reports.show');
+    Route::get('/class-reports/document/{document}/download', [SuperAdminController::class, 'downloadClassReport'])->name('class-reports.download');
+
+    // Facilitator Document Requirements (Super Admin Only)
+    Route::get('/classes/{class}/fasilitator-documents', [SuperAdminController::class, 'fasilitatorDocuments'])->name('classes.fasilitatorDocuments');
+    Route::post('/classes/{class}/fasilitator-documents', [SuperAdminController::class, 'storeFasilitatorDocumentRequirement'])->name('classes.fasilitatorDocuments.store');
+    Route::delete('/classes/{class}/fasilitator-documents/{requirement}', [SuperAdminController::class, 'deleteFasilitatorDocumentRequirement'])->name('classes.fasilitatorDocuments.delete');
 });
 
-// Routes for Super Admin AND Admin (Kegiatan, Kelas, Manajemen Peserta)
-Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:super_admin,admin'])->group(function () {
+// Routes for Super Admin ONLY (Activity Management)
+Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:super_admin'])->group(function () {
     // Activity Management
     Route::get('/activities', [SuperAdminController::class, 'activities'])->name('activities');
     Route::get('/activities/create', [SuperAdminController::class, 'createActivity'])->name('activities.create');
@@ -109,7 +131,10 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::get('/activities/{activity}/edit', [SuperAdminController::class, 'editActivity'])->name('activities.edit');
     Route::put('/activities/{activity}', [SuperAdminController::class, 'updateActivity'])->name('activities.update');
     Route::delete('/activities/{activity}', [SuperAdminController::class, 'deleteActivity'])->name('activities.delete');
+});
 
+// Routes for Super Admin AND Admin (Kelas, Manajemen Peserta)
+Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:super_admin,admin'])->group(function () {
     // Registration Management
     Route::get('/registrations', [\App\Http\Controllers\RegistrationManagementController::class, 'index'])->name('registrations.index');
     Route::patch('/registrations/{registration}/assign', [\App\Http\Controllers\RegistrationManagementController::class, 'assignToClass'])->name('registrations.assignToClass');
@@ -123,6 +148,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
     Route::get('/classes/{class}/edit', [SuperAdminController::class, 'editClass'])->name('classes.edit');
     Route::put('/classes/{class}', [SuperAdminController::class, 'updateClass'])->name('classes.update');
     Route::delete('/classes/{class}', [SuperAdminController::class, 'deleteClass'])->name('classes.delete');
+    Route::get('/classes/{class}/attendance-print', [SuperAdminController::class, 'printClassAttendance'])->name('classes.attendancePrint');
     Route::post('/classes/{class}/participants', [SuperAdminController::class, 'assignParticipantToClass'])->name('classes.assignParticipant');
     Route::post('/classes/{class}/participants/bulk', [SuperAdminController::class, 'assignParticipantsByLocation'])->name('classes.assignParticipantsByLocation');
     Route::post('/classes/{class}/participants/by-kecamatan', [SuperAdminController::class, 'assignParticipantsByKecamatan'])->name('classes.assignParticipantsByKecamatan');
@@ -137,10 +163,30 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'role:su
 });
 
 // Admin Routes
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin,admin'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-    // Activity Management (sama seperti super admin)
+    // User Management (sama seperti super admin)
+    Route::get('/users', [SuperAdminController::class, 'users'])->name('users');
+    Route::get('/users/create', [SuperAdminController::class, 'createUser'])->name('users.create');
+    Route::post('/users', [SuperAdminController::class, 'storeUser'])->name('users.store');
+    Route::get('/users/{user}/edit', [SuperAdminController::class, 'editUser'])->name('users.edit');
+    Route::put('/users/{user}', [SuperAdminController::class, 'updateUser'])->name('users.update');
+    Route::delete('/users/{user}', [SuperAdminController::class, 'deleteUser'])->name('users.delete');
+    Route::delete('/users/bulk-delete', [SuperAdminController::class, 'bulkDeleteUsers'])->name('users.bulkDelete');
+Route::post('/users/bulk-delete', [SuperAdminController::class, 'bulkDeleteUsersPost'])->name('users.bulkDeletePost');
+    Route::post('/users/{user}/suspend', [SuperAdminController::class, 'suspendUser'])->name('users.suspend');
+    Route::post('/users/{user}/activate', [SuperAdminController::class, 'activateUser'])->name('users.activate');
+    Route::post('/users/import', [SuperAdminController::class, 'processImportUsers'])->name('users.import.process');
+
+    // Sekolah Management (copy dari super-admin, pakai controller yang sama)
+    Route::get('/sekolah', [\App\Http\Controllers\SekolahManagementController::class, 'index'])->name('sekolah.index');
+    Route::get('/sekolah/{sekolah}', [\App\Http\Controllers\SekolahManagementController::class, 'show'])->name('sekolah.show');
+
+    // Tambah route untuk tolak sekolah
+    Route::patch('/sekolah/{sekolah}/reject', [\App\Http\Controllers\SekolahManagementController::class, 'reject'])->name('sekolah.reject');
+
+    // Activity Management (CRUD for both admin and super-admin)
     Route::get('/activities', [SuperAdminController::class, 'activities'])->name('activities');
     Route::get('/activities/create', [SuperAdminController::class, 'createActivity'])->name('activities.create');
     Route::post('/activities', [SuperAdminController::class, 'storeActivity'])->name('activities.store');
@@ -156,6 +202,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/classes/{class}/edit', [SuperAdminController::class, 'editClass'])->name('classes.edit');
     Route::put('/classes/{class}', [SuperAdminController::class, 'updateClass'])->name('classes.update');
     Route::delete('/classes/{class}', [SuperAdminController::class, 'deleteClass'])->name('classes.delete');
+    Route::get('/classes/{class}/attendance-print', [SuperAdminController::class, 'printClassAttendance'])->name('classes.attendancePrint');
     Route::post('/classes/{class}/participants', [SuperAdminController::class, 'assignParticipantToClass'])->name('classes.assignParticipant');
     Route::post('/classes/{class}/participants/bulk', [SuperAdminController::class, 'assignParticipantsByLocation'])->name('classes.assignParticipantsByLocation');
     Route::post('/classes/{class}/participants/by-kecamatan', [SuperAdminController::class, 'assignParticipantsByKecamatan'])->name('classes.assignParticipantsByKecamatan');
@@ -170,6 +217,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/registrations', [\App\Http\Controllers\RegistrationManagementController::class, 'index'])->name('registrations.index');
     Route::patch('/registrations/{registration}/assign', [\App\Http\Controllers\RegistrationManagementController::class, 'assignToClass'])->name('registrations.assignToClass');
     Route::delete('/registrations/{registration}/remove', [\App\Http\Controllers\RegistrationManagementController::class, 'removeFromClass'])->name('registrations.removeFromClass');
+
+    // Class Reports (akses admin & super-admin)
+    Route::get('/class-reports', [SuperAdminController::class, 'classReports'])->name('class-reports.index');
+    Route::get('/class-reports/{class}', [SuperAdminController::class, 'showClassReports'])->name('class-reports.show');
+    Route::get('/class-reports/document/{document}/download', [SuperAdminController::class, 'downloadClassReport'])->name('class-reports.download');
 });
 
 // Fasilitator Routes
@@ -188,7 +240,12 @@ Route::prefix('fasilitator')->name('fasilitator.')->middleware(['auth', 'role:fa
     Route::get('/classes/{class}/grades', [FasilitatorController::class, 'grades'])->name('grades');
     Route::post('/classes/{class}/grades', [FasilitatorController::class, 'storeGrade'])->name('grades.store');
 
-    // Documents - Removed: Upload now handled within class context via document-requirements
+    // Tasks (Document Requirements)
+    Route::post('/classes/{class}/tasks', [FasilitatorController::class, 'storeTask'])->name('tasks.store');
+    Route::delete('/classes/{class}/tasks/{task}', [FasilitatorController::class, 'deleteTask'])->name('tasks.delete');
+
+    // Task Submissions - View who submitted tasks
+    Route::get('/classes/{class}/tasks/submissions', [FasilitatorController::class, 'taskSubmissions'])->name('tasks.submissions');
 
     // Document Requirements & Submissions
     Route::get('/classes/{class}/document-requirements', [FasilitatorController::class, 'viewDocumentRequirements'])->name('classes.document-requirements');
@@ -196,6 +253,9 @@ Route::prefix('fasilitator')->name('fasilitator.')->middleware(['auth', 'role:fa
     Route::post('/classes/{class}/document-requirements', [FasilitatorController::class, 'storeDocumentRequirement'])->name('classes.document-requirements.store');
     Route::delete('/classes/{class}/document-requirements/{requirement}', [FasilitatorController::class, 'deleteDocumentRequirement'])->name('classes.document-requirements.delete');
     Route::get('/classes/{class}/requirements/{requirement}/submissions', [FasilitatorController::class, 'viewSubmissions'])->name('classes.submissions');
+
+    // Upload required documents for facilitator (created by super admin)
+    Route::post('/documents/upload-required', [FasilitatorController::class, 'uploadRequiredDocument'])->name('documents.upload-required');
 
     // Participant Mappings (Read Only)
     Route::get('/mappings', [FasilitatorController::class, 'participantMappingsIndex'])->name('mappings.index');
@@ -215,10 +275,6 @@ Route::prefix('peserta')->name('peserta.')->middleware(['auth', 'role:peserta'])
     Route::get('/profile', [PesertaController::class, 'profile'])->name('profile');
     Route::put('/profile', [PesertaController::class, 'updateProfile'])->name('profile.update');
 
-    // Biodata
-    Route::get('/biodata', [PesertaController::class, 'biodata'])->name('biodata');
-    Route::put('/biodata', [PesertaController::class, 'updateBiodata'])->name('biodata.update');
-
     // Classes
     Route::get('/classes', [PesertaController::class, 'myClasses'])->name('classes');
     Route::get('/classes/{class}', [PesertaController::class, 'classDetail'])->name('classes.detail');
@@ -229,19 +285,31 @@ Route::prefix('peserta')->name('peserta.')->middleware(['auth', 'role:peserta'])
     })->name('grades');
 
     // Documents
-    Route::get('/documents', [PesertaController::class, 'documents'])->name('documents');
+    Route::get('/documents', [PesertaController::class, 'documentClasses'])->name('documents');
+    Route::get('/documents/{class}/view', [PesertaController::class, 'documents'])->name('documents.class');
     Route::post('/documents/upload', [PesertaController::class, 'uploadDocument'])->name('documents.upload');
     Route::delete('/documents/{document}', [PesertaController::class, 'destroyDocument'])->name('documents.destroy');
+    Route::get('/documents/{document}/download', [PesertaController::class, 'downloadDocument'])->name('documents.download');
 });
 
 // Sekolah Routes
 Route::prefix('sekolah')->name('sekolah.')->middleware(['auth', 'role:sekolah'])->group(function () {
     Route::get('/dashboard', [SekolahController::class, 'dashboard'])->name('dashboard');
+    Route::get('/activities', [SekolahController::class, 'activities'])->name('activities.index');
     Route::get('/profile', [SekolahController::class, 'profile'])->name('profile');
     Route::put('/profile', [SekolahController::class, 'updateProfile'])->name('profile.update');
     Route::get('/registrations', [SekolahController::class, 'registrations'])->name('registrations');
+    Route::get('/account-info', [SekolahController::class, 'accountInfo'])->name('account-info');
 });
 
-Auth::routes();
+// Global document routes
+Route::get('/documents/{document}/download', [PesertaController::class, 'downloadDocument'])->middleware('auth')->name('documents.download');
+
+Auth::routes(['verify' => false]);
+
+// Apply throttle to login route
+Route::post('login', '\App\Http\Controllers\Auth\LoginController@login')
+    ->middleware('throttle:5,1')
+    ->name('login');
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
