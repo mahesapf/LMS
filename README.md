@@ -2,9 +2,9 @@
 
 Platform terpadu untuk mengelola program dan kegiatan penjaminan mutu pendidikan dengan 4 role berbeda: Super Admin, Admin, Fasilitator, dan Peserta.
 
-## 🌟 Fitur Utama
+## Fitur Utama
 
-### 🔐 Multi-Role Authentication
+### Multi-Role Authentication
 - **Super Admin**: Mengelola seluruh sistem, membuat akun, program, dan kegiatan
 - **Admin**: Mengelola peserta, kegiatan, dan kelas
 - **Fasilitator**: Mendampingi kegiatan dan menilai peserta
