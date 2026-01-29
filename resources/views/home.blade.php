@@ -39,7 +39,7 @@
             <div class="space-y-3 text-center flex flex-col items-center">
                 <h2 class="text-xl font-semibold text-slate-900">Peta sebaran guru binaan</h2>
                 <div class="flex items-center justify-center w-full">
-                    <img src="{{ asset('storage/peta-sebaran-guru-binaan.svg') }}" alt="Peta sebaran guru binaan" class="w-full max-w-xl h-auto">
+                    <img src="{{ asset('images/peta-sebaran-guru-binaan.svg') }}" alt="Peta sebaran guru binaan" class="w-full max-w-xl h-auto">
                 </div>
             </div>
         </div>
@@ -331,7 +331,7 @@
             <!-- Brand -->
             <div class="lg:col-span-2 space-y-4">
                 <div class="flex items-center gap-3 mb-4">
-                    <img src="{{ asset('storage/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Logo" class="h-12 w-12">
+                    <img src="{{ asset('images/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Logo" class="h-12 w-12">
                     <div>
                         <span class="text-xl font-bold text-white block">{{ config('app.name', 'SIPM') }}</span>
                         <span class="text-xs text-slate-400">Kementerian Pendidikan</span>

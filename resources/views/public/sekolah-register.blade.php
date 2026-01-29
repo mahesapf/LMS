@@ -17,7 +17,7 @@
                         <i class="bi bi-arrow-left" style="color: #374151 !important;"></i>
                     </button>
                 </a>
-                <img src="{{ asset('storage/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="auth-logo">
+                <img src="{{ asset('images/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="auth-logo">
                 <h4>Registrasi Sekolah</h4>
                 <p>Sistem Informasi Penjaminan Mutu</p>
             </div>

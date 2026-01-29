@@ -16,7 +16,7 @@
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
-    
+
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
@@ -38,21 +38,21 @@
             overflow-y: auto;
             min-height: 100vh;
         }
-        
+
         /* Only apply touch restrictions to auth pages */
         body.auth-page {
             overscroll-behavior: none;
             touch-action: pan-y;
             overflow: hidden;
         }
-        
+
         /* Override Tailwind CSS for auth back button */
         .auth-card-header .btn-outline-secondary,
         .auth-card-header .btn-outline-secondary i,
         .auth-card-header .btn-outline-secondary .bi {
             color: #374151 !important;
         }
-        
+
         .auth-card-header .btn-outline-secondary:hover,
         .auth-card-header .btn-outline-secondary:hover i,
         .auth-card-header .btn-outline-secondary:hover .bi {
@@ -68,7 +68,7 @@
             <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
                 <div class="flex items-center gap-3">
                     <a href="{{ url('/') }}" class="flex items-center gap-3">
-                        <img src="{{ asset('storage/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="h-10 w-10 object-contain">
+                        <img src="{{ asset('images/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="h-10 w-10 object-contain">
                         <span class="text-base font-semibold text-slate-900">{{ config('app.name', 'SIPM') }}</span>
                     </a>
                 </div>

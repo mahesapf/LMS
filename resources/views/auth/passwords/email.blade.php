@@ -15,62 +15,80 @@
                         <i class="bi bi-arrow-left" style="color: #374151 !important;"></i>
                     </button>
                 </a>
-                <img src="{{ asset('storage/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="auth-logo">
+                <img src="{{ asset('images/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="auth-logo">
                 <h4>Lupa Password?</h4>
                 <p>Hubungi Customer Service Kami</p>
             </div>
 
             <div class="auth-card-body">
-                <div class="bg-light p-4 rounded-3 border border-light shadow-sm mb-4">
-                    <h6 class="text-dark fw-bold mb-3">Hubungi Tim Customer Service</h6>
-                    
-                    <div class="mb-3 pb-3 border-bottom">
-                        <div class="d-flex align-items-center">
-                            <div class="text-primary me-3">
-                                <i class="bi bi-telephone fs-5"></i>
-                            </div>
-                            <div>
-                                <small class="text-muted d-block">Telepon</small>
-                                <span class="text-dark fw-semibold" id="phone">+62 (belum tersedia)</span>
+                <!-- Informasi Header -->
+                <div class="mb-5 text-center">
+                    <p class="text-muted mb-0">
+                        Untuk keperluan reset password, silakan hubungi tim Customer Service kami. Tim kami siap membantu Anda 24/7.
+                    </p>
+                </div>
+
+                <!-- Contact Information Grid -->
+                <div class="row g-3 mb-5">
+                    <!-- Telepon -->
+                    <div class="col-12">
+                        <div class="contact-box p-3 rounded-2 border border-light-subtle bg-light">
+                            <div class="d-flex align-items-start">
+                                <div class="contact-icon me-3 mt-1">
+                                    <i class="bi bi-telephone text-primary fs-5"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="text-dark fw-bold mb-1">Telepon</h6>
+                                    <p class="text-muted small mb-0" id="phone">+62 (belum tersedia)</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mb-3 pb-3 border-bottom">
-                        <div class="d-flex align-items-center">
-                            <div class="text-primary me-3">
-                                <i class="bi bi-envelope fs-5"></i>
-                            </div>
-                            <div>
-                                <small class="text-muted d-block">Email</small>
-                                <span class="text-dark fw-semibold" id="email">cs@example.com</span>
+                    <!-- Email -->
+                    <div class="col-12">
+                        <div class="contact-box p-3 rounded-2 border border-light-subtle bg-light">
+                            <div class="d-flex align-items-start">
+                                <div class="contact-icon me-3 mt-1">
+                                    <i class="bi bi-envelope text-primary fs-5"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="text-dark fw-bold mb-1">Email</h6>
+                                    <p class="text-muted small mb-0" id="email">cs@example.com</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div>
-                        <div class="d-flex align-items-center">
-                            <div class="text-primary me-3">
-                                <i class="bi bi-clock fs-5"></i>
-                            </div>
-                            <div>
-                                <small class="text-muted d-block">Jam Operasional</small>
-                                <span class="text-dark fw-semibold" id="hours">Senin - Jumat, 08:00 - 17:00</span>
+                    <!-- Jam Operasional -->
+                    <div class="col-12">
+                        <div class="contact-box p-3 rounded-2 border border-light-subtle bg-light">
+                            <div class="d-flex align-items-start">
+                                <div class="contact-icon me-3 mt-1">
+                                    <i class="bi bi-clock-history text-primary fs-5"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="text-dark fw-bold mb-1">Jam Operasional</h6>
+                                    <p class="text-muted small mb-0" id="hours">Senin - Jumat, 08:00 - 17:00</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="alert alert-info d-flex align-items-start" role="alert">
-                    <i class="bi bi-info-circle me-2 flex-shrink-0 mt-1"></i>
-                    <div class="small">
-                        <strong>Perhatian:</strong> Untuk reset password, silakan hubungi CS dengan menyertakan informasi akun Anda.
-                    </div>
+                <!-- Steps Information -->
+                <div class="bg-light rounded-2 p-4 border border-light-subtle">
+                    <h6 class="text-dark fw-bold mb-3 d-flex align-items-center">
+                        <i class="bi bi-list-check text-primary me-2"></i>
+                        Langkah Mengajukan Reset Password:
+                    </h6>
+                    <ol class="small text-muted ps-3 mb-0">
+                        <li class="mb-2">Hubungi Customer Service melalui telepon atau email</li>
+                        <li class="mb-2">Siapkan informasi akun Anda (email/NPSN yang terdaftar)</li>
+                        <li class="mb-2">Verifikasi identitas sesuai instruksi CS</li>
+                        <li>Tim CS akan melakukan reset password untuk Anda</li>
+                    </ol>
                 </div>
-
-                <a href="{{ route('login') }}" class="auth-btn-primary w-100">
-                    Kembali ke Login
-                </a>
             </div>
         </div>
     </div>

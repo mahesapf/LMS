@@ -103,7 +103,7 @@
                 <!-- Logo/Brand Section -->
                 <div class="p-6 border-b border-slate-200">
                     <div class="flex items-center gap-3">
-                        <img src="{{ asset('storage/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="h-12 w-12 object-contain">
+                        <img src="{{ asset('images/tut-wuri-handayani-kemdikdasmen-masafidhan.svg') }}" alt="Tut Wuri Handayani" class="h-12 w-12 object-contain">
                         <div class="leading-tight">
                             <h2 class="text-[17px] font-semibold text-slate-900">{{ config('app.name', 'Sistem Informasi Penjaminan Mutu') }}</h2>
                         </div>
